@@ -285,6 +285,14 @@ StackHelper::PointToPointNetDeviceCallback(Ptr<Node> node, Ptr<L3Protocol> ndn,
   opts.allowReassembly = true;
   opts.allowCongestionMarking = true;
 
+  auto mobility = node->GetObject<MobilityModel>();
+  if (mobility != nullptr) {
+    opts.enableGeoTags = [mobility] {
+      auto pos = mobility->GetPosition();
+      return std::make_shared<::ndn::lp::GeoTag>(std::make_tuple(pos.x, pos.y, pos.z));
+    };
+  }
+
   auto linkService = make_unique<::nfd::face::GenericLinkService>(opts);
 
   auto transport = make_unique<NetDeviceTransport>(node, netDevice,
@@ -311,6 +319,14 @@ StackHelper::LteUeNetDeviceCallback(Ptr<Node> node, Ptr<L3Protocol> ndn, Ptr<Net
   opts.allowFragmentation = true;
   opts.allowReassembly = true;
   opts.allowCongestionMarking = true;
+
+  auto mobility = node->GetObject<MobilityModel>();
+  if (mobility != nullptr) {
+    opts.enableGeoTags = [mobility] {
+      auto pos = mobility->GetPosition();
+      return std::make_shared<::ndn::lp::GeoTag>(std::make_tuple(pos.x, pos.y, pos.z));
+    };
+  }
 
   auto linkService = make_unique<::nfd::face::GenericLinkService>(opts);
 
