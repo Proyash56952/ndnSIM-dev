@@ -48,7 +48,7 @@ public:
                           const std::string& remoteUri,
                           ::ndn::nfd::FaceScope scope = ::ndn::nfd::FACE_SCOPE_NON_LOCAL,
                           ::ndn::nfd::FacePersistency persistency = ::ndn::nfd::FACE_PERSISTENCY_PERSISTENT,
-                          ::ndn::nfd::LinkType linkType = ::ndn::nfd::LINK_TYPE_POINT_TO_POINT);
+                          ::ndn::nfd::LinkType linkType = ::ndn::nfd::LINK_TYPE_AD_HOC);
 
   ~LteUeNetDeviceTransport();
 
