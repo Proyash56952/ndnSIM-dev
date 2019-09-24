@@ -110,7 +110,7 @@ int main (int argc, char *argv[])
   Ptr<ListPositionAllocator> positionAllocUe2 = CreateObject<ListPositionAllocator> ();
   positionAllocUe2->Add (Vector (400.0, 0.0, 0.0));
   Ptr<ListPositionAllocator> positionAllocUe3 = CreateObject<ListPositionAllocator> ();
-  positionAllocUe3->Add (Vector (500.0, 0.0, 0.0));
+  positionAllocUe3->Add (Vector (400.0, 100.0, 0.0));
     Ptr<ListPositionAllocator> positionAllocUe4 = CreateObject<ListPositionAllocator> ();
     positionAllocUe4->Add (Vector (1000.0, 0.0, 0.0));
 

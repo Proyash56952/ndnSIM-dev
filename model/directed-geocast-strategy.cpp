@@ -46,7 +46,6 @@
 #include <cstdlib>
 namespace nfd {
 namespace fw {
-
         NFD_REGISTER_STRATEGY(DirectedGeocastStrategy);
 
         NFD_LOG_INIT(DirectedGeocastStrategy);
@@ -216,25 +215,25 @@ namespace fw {
            // std::srand(time(0));
             double minTime = 0.002;
             double maxDist = 1000;
-            double maxTime = 2;
+            double maxTime = 1.5;
             if (distance < maxDist) {
                 //auto waitTime = time::duration_cast<time::nanoseconds>(time::duration<double>{(minTime * (maxDist-distance)/maxDist)});
-                double randomNumber = static_cast <double> (rand()) / (static_cast <double> (RAND_MAX));
+                //double randomNumber = static_cast <double> (rand()) / (static_cast <double> (RAND_MAX));
                 ns3::RngSeedManager::SetSeed (3);
                 ns3::SeedManager::SetRun (7);
-                double min = 0.0;
-                double max = 2.0;
+                double min = minTime;
+                double max = maxTime;
 
                 ns3::Ptr<ns3::UniformRandomVariable> x = ns3::CreateObject<ns3::UniformRandomVariable> ();
                 x->SetAttribute ("Min", ns3::DoubleValue(min));
                 x->SetAttribute ("Max", ns3::DoubleValue(max));
-                auto myRandomNo = x->GetValue ();
+                auto RandomNo = x->GetValue ();
                 //float randomNumber = 0.003;
-                NFD_LOG_DEBUG("the random number is " << myRandomNo);
+                NFD_LOG_DEBUG("the random number is " << RandomNo);
 
                 auto waitTime = time::duration_cast<time::nanoseconds>(time::duration < double >
                                                                        {((maxTime * (maxDist - distance) / maxDist) +
-                                                                         minTime + myRandomNo)});
+                                                                         minTime + RandomNo)});
                 // auto waitTime = ((maxTime * (maxDist-distance)/maxDist) + minTime);
                 NFD_LOG_DEBUG("distance to last hop is " << distance << " meter");
                 //NFD_LOG_DEBUG("distance to last hop is "<<distance<<" meter");
@@ -261,7 +260,7 @@ namespace fw {
             }
 
             //oldFrom->GetLength() is the problem, it does not contain any value
-            //NFD_LOG_DEBUG("self, oldform and newform are " << self->GetLength() << " " << newFrom->GetLength() << " " << oldFrom->GetLength());
+            NFD_LOG_DEBUG("self, oldform and newform are " << self->GetLength() << " " << newFrom->GetLength() << " " << oldFrom->GetLength());
             //distance calculation
             double distanceToLasthop = (self->GetLength() - newFrom->GetLength());
             NFD_LOG_DEBUG("distance to last hop is " << distanceToLasthop);
@@ -274,14 +273,15 @@ namespace fw {
             double Angle_rad = acos(
                     (pow(distanceToOldhop, 2) + pow(distanceBetweenLasthops, 2) - pow(distanceToLasthop, 2)) /
                     (2 * distanceToOldhop * distanceBetweenLasthops));
-            //double Angle_Deg = Angle_rad * 180 / 3.141592;
-            double Angle_Deg = 91.00;
+            double Angle_Deg = Angle_rad * 180 / 3.141592;
+           // double Angle_Deg = 91.00;
             NFD_LOG_DEBUG("angle is " << Angle_Deg);
 
             // Projection Calculation
             double cosine_Angle_at_self =
                     (pow(distanceToOldhop, 2) + pow(distanceToLasthop, 2) - pow(distanceBetweenLasthops, 2)) /
                     (2 * distanceToOldhop * distanceToLasthop);
+            NFD_LOG_DEBUG("cosine-angle is " << cosine_Angle_at_self);
             double projection = abs(distanceToLasthop * cosine_Angle_at_self);
             NFD_LOG_DEBUG("projection is " << projection);
             //bool state;
