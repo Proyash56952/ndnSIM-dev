@@ -204,7 +204,9 @@ int main (int argc, char *argv[])
 
     //* Choosing forwarding strategy *//
   ns3::ndn::StrategyChoiceHelper::InstallAll("/", "/localhost/nfd/strategy/directed-geocast");
-
+    
+ // Tarannum will add packetloss and powerloss vs distance trace here
+    
   // Consumer
   ::ns3::ndn::AppHelper consumerHelper("ns3::ndn::ConsumerCbr");
   // Consumer will request /prefix/0, /prefix/1, ...
