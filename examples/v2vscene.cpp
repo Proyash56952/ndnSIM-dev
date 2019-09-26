@@ -8,7 +8,7 @@
 #include "ns3/config-store.h"
 #include <cfloat>
 #include <sstream>
-
+#include <cmath>
 #include "ns3/ndnSIM-module.h"
 
 using namespace ns3;
@@ -21,11 +21,13 @@ int main (int argc, char *argv[])
   Time simTime = Seconds (6);
   bool enableNsLogs = false;
   bool useIPv6 = false;
+  double distance=atoi(argv[1]);
 
   CommandLine cmd;
   cmd.AddValue ("simTime", "Total duration of the simulation", simTime);
   cmd.AddValue ("enableNsLogs", "Enable ns-3 logging (debug builds)", enableNsLogs);
-  cmd.AddValue ("useIPv6", "Use IPv6 instead of IPv4", useIPv6);
+  cmd.AddValue("distance", "Distance apart to place nodes (in meters).",distance);
+
   cmd.Parse (argc, argv);
 
   //Configure the UE for UE_SELECTED scenario
@@ -110,11 +112,10 @@ int main (int argc, char *argv[])
   Ptr<ListPositionAllocator> positionAllocUe2 = CreateObject<ListPositionAllocator> ();
   positionAllocUe2->Add (Vector (400.0, 0.0, 0.0));
   Ptr<ListPositionAllocator> positionAllocUe3 = CreateObject<ListPositionAllocator> ();
-  positionAllocUe3->Add (Vector (400.0, 100.0, 0.0));
-    Ptr<ListPositionAllocator> positionAllocUe4 = CreateObject<ListPositionAllocator> ();
-    positionAllocUe4->Add (Vector (1000.0, 0.0, 0.0));
-
-  //Install mobility
+  positionAllocUe3->Add (Vector (500.0, 0.0, 0.0));
+  Ptr<ListPositionAllocator> positionAllocUe4 = CreateObject<ListPositionAllocator> ();
+  positionAllocUe4->Add (Vector (distance, 0.0, 0.0)); // add "v2vscene --distance = value" in commandline 
+  
 
   MobilityHelper mobilityUe1;
   mobilityUe1.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
@@ -201,28 +202,26 @@ int main (int argc, char *argv[])
   ::ns3::ndn::StackHelper helper;
   helper.SetDefaultRoutes(true);
   helper.InstallAll();
-
-    //* Choosing forwarding strategy *//
+  
+  //* Choosing forwarding strategy *//
   ns3::ndn::StrategyChoiceHelper::InstallAll("/", "/localhost/nfd/strategy/directed-geocast");
     
- // Tarannum will add packetloss and powerloss vs distance trace here
-    
+ //Will add cost231Propagationloss model loss here for and packet loss
+ 
   // Consumer
   ::ns3::ndn::AppHelper consumerHelper("ns3::ndn::ConsumerCbr");
   // Consumer will request /prefix/0, /prefix/1, ...
-  consumerHelper.SetPrefix("/v2safety/8thStreet/5");
+  consumerHelper.SetPrefix("/v2safety/8thStreet/parking");
   consumerHelper.SetAttribute("Frequency", StringValue("0.1")); // 10 interests a second
   consumerHelper.Install(ueNodes.Get(0));                        // first node
-  //consumerHelper.Install(ueNodes.Get(1));
-  //consumerHelper.Install(ueNodes.Get(2));
+
   // Producer
   ::ns3::ndn::AppHelper producerHelper("ns3::ndn::Producer");
   // Producer will reply to all requests starting with /prefix
-  producerHelper.SetPrefix("/v2safety/8thStreet/5");
+  producerHelper.SetPrefix("/v2safety/8thStreet/");
   producerHelper.SetAttribute("PayloadSize", StringValue("1024"));
   producerHelper.Install(ueNodes.Get(3));
-  //producerHelper.Install(ueNodes.Get(2));
-  //producerHelper.Install(ueNodes.Get(3));// last node
+
 
   Simulator::Stop (Seconds(20));
 
