@@ -10,6 +10,7 @@
 #include <sstream>
 #include <cmath>
 #include "ns3/ndnSIM-module.h"
+#include "ns3/random-direction-2d-mobility-model.h"
 
 using namespace ns3;
 
@@ -27,6 +28,7 @@ int main (int argc, char *argv[])
   cmd.AddValue ("simTime", "Total duration of the simulation", simTime);
   cmd.AddValue ("enableNsLogs", "Enable ns-3 logging (debug builds)", enableNsLogs);
  // cmd.AddValue("distance", "Distance apart to place nodes (in meters).",distance);
+
   cmd.Parse (argc, argv);
 
   //Configure the UE for UE_SELECTED scenario
@@ -100,55 +102,111 @@ int main (int argc, char *argv[])
 
   //Create nodes (UEs)
   NodeContainer ueNodes;
-  ueNodes.Create (4);
+  ueNodes.Create (6);
   NS_LOG_INFO ("UE 1 node id = [" << ueNodes.Get (0)->GetId () << "]");
   NS_LOG_INFO ("UE 2 node id = [" << ueNodes.Get (1)->GetId () << "]");
   NS_LOG_INFO ("UE 3 node id = [" << ueNodes.Get (2)->GetId () << "]");
-/*
+
   //Position of the nodes
   Ptr<ListPositionAllocator> positionAllocUe1 = CreateObject<ListPositionAllocator> ();
-  positionAllocUe1->Add (Vector (0.0, 0.0, 0.0));
+  positionAllocUe1->Add (Vector (-800.0, -50.0, 0.0));
   Ptr<ListPositionAllocator> positionAllocUe2 = CreateObject<ListPositionAllocator> ();
-  positionAllocUe1->Add (Vector (400.0, 0.0, 0.0));
+  positionAllocUe2->Add (Vector (-500.0, -50.0, 0.0));
   Ptr<ListPositionAllocator> positionAllocUe3 = CreateObject<ListPositionAllocator> ();
-  positionAllocUe3->Add (Vector (500.0, 0.0, 0.0));
-  Ptr<ListPositionAllocator> positionAllocUe4 = CreateObject<ListPositionAllocator> ();
-  positionAllocUe4->Add (Vector (distance, 0.0, 0.0)); // add "v2vscene --distance = value" in commandline 
+
+  positionAllocUe3->Add (Vector (-300.0, 50.0, 0.0));
   
+  positionAllocUe3->Add (Vector (-100.0, 150.0, 0.0));
+  positionAllocUe3->Add (Vector (50.0, -150.0, 0.0));
+  Ptr<ListPositionAllocator> positionAllocUe4 = CreateObject<ListPositionAllocator> ();
+  positionAllocUe4->Add (Vector (0.0, 25.0, 0.0));
+
+  //Install mobility
+
 
   MobilityHelper mobilityUe1;
-  mobilityUe1.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+  /*
+  mobilityUe1.SetMobilityModel ("ns3::RandomDirection2dMobilityModel",
+                             "Bounds", RectangleValue (Rectangle (-400, 0, 0, 0)),
+                             "Speed", StringValue ("ns3::ConstantRandomVariable[Constant=0.0001]"),
+                             "Pause", StringValue ("ns3::ConstantRandomVariable[Constant=0.2]"));
+  */
+  //mobilityUe1.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+  
+  mobilityUe1.SetMobilityModel ("ns3::SteadyStateRandomWaypointMobilityModel");
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MinX", DoubleValue (-800.0));
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MinY", DoubleValue (-50.0));
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MaxX", DoubleValue (-750.0));
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MaxY", DoubleValue (-49.0));
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::Z", DoubleValue (0.0));
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MaxSpeed", DoubleValue (16.67));
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MinSpeed", DoubleValue (5));
+  
   mobilityUe1.SetPositionAllocator (positionAllocUe1);
   mobilityUe1.Install (ueNodes.Get (0));
 
   MobilityHelper mobilityUe2;
-  mobilityUe2.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-  mobilityUe2.SetPositionAllocator (positionAllocUe1);
+  //mobilityUe2.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+  
+  
+  mobilityUe2.SetMobilityModel ("ns3::SteadyStateRandomWaypointMobilityModel");
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MinX", DoubleValue (-500.0));
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MinY", DoubleValue (-50.0));
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MaxX", DoubleValue (-450.0));
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MaxY", DoubleValue (-49.0));
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::Z", DoubleValue (0.0));
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MaxSpeed", DoubleValue (15));
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MinSpeed", DoubleValue (3));
+  mobilityUe2.SetPositionAllocator (positionAllocUe2);
   mobilityUe2.Install (ueNodes.Get (1));
 
   MobilityHelper mobilityUe3;
   mobilityUe3.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-  mobilityUe3.SetPositionAllocator (positionAllocUe1);
+  
+  
+  mobilityUe3.SetPositionAllocator (positionAllocUe3);
   mobilityUe3.Install (ueNodes.Get (2));
 
+  mobilityUe3.Install (ueNodes.Get (3));
+  mobilityUe3.Install (ueNodes.Get (4));
   MobilityHelper mobilityUe4;
-  mobilityUe4.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-  mobilityUe4.SetPositionAllocator (positionAllocUe1);
-  mobilityUe4.Install (ueNodes.Get (3));
-*/
+  //mobilityUe4.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+  
+  mobilityUe4.SetMobilityModel ("ns3::SteadyStateRandomWaypointMobilityModel");
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MinX", DoubleValue (-25.0));
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MinY", DoubleValue (24.5));
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MaxX", DoubleValue (25.0));
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MaxY", DoubleValue (25.5));
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::Z", DoubleValue (0.0));
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MaxSpeed", DoubleValue (5));
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MinSpeed", DoubleValue (0.5));
+  mobilityUe4.SetPositionAllocator (positionAllocUe4);
+  mobilityUe4.Install (ueNodes.Get (5));
 
+  /*
   MobilityHelper mobility;
   Ptr<ListPositionAllocator> initialAlloc = CreateObject<ListPositionAllocator> ();
   initialAlloc->Add(Vector(0.0,0.0,0.0));
   initialAlloc->Add(Vector(400.0,0.0,0.0));
-  initialAlloc->Add(Vector(-300.0,100.0,0.0));
+  initialAlloc->Add(Vector(300.0,100.0,0.0));
   initialAlloc->Add(Vector(800.0,0.0,0.0));
   mobility.SetPositionAllocator(initialAlloc);
-  mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+  //mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+  mobility.SetMobilityModel ("ns3::RandomDirection2dMobilityModel",
+                             "Bounds", RectangleValue (Rectangle (-500, 500, -500, 500)) ,
+                             "Speed", StringValue ("ns3::ConstantRandomVariable[Constant=2]"),
+                             "Pause", StringValue ("ns3::ConstantRandomVariable[Constant=0.2]"));
+  //mobility.SetMobilityModel("ns3::RandomDirection2dMobilityModel",
+                            //"Bounds", Rectangle(0, 1000, 0, 1000),
+                            //"Speed", "2000",
+                            //"Pause", "0.2");
+  //mobility.SetMobilityModel ("ns3::RandomWalk2dMobilityModel",
+  //"Bounds", RectangleValue (Rectangle (-50, 50, -50, 50)));
   mobility.Install(ueNodes.Get (0));
   mobility.Install(ueNodes.Get (1));
   mobility.Install(ueNodes.Get (2));
   mobility.Install(ueNodes.Get (3));
+   */
 
 
 
@@ -214,14 +272,16 @@ int main (int argc, char *argv[])
 
   //Set Sidelink bearers
   proseHelper->ActivateSidelinkBearer (slBearersActivationTime, ueDevs, tft);
-  
+
   ///*** End of application configuration ***///
   ::ns3::ndn::StackHelper helper;
   helper.SetDefaultRoutes(true);
   helper.InstallAll();
-  
+
   //* Choosing forwarding strategy *//
   ns3::ndn::StrategyChoiceHelper::InstallAll("/", "/localhost/nfd/strategy/directed-geocast");
+
+ //Will add cost231Propagationloss model loss here for and packet loss
 
   // Consumer
   ::ns3::ndn::AppHelper consumerHelper("ns3::ndn::ConsumerCbr");
@@ -236,7 +296,7 @@ int main (int argc, char *argv[])
   // Producer will reply to all requests starting with /prefix
   producerHelper.SetPrefix("/v2safety/8thStreet/5");
   producerHelper.SetAttribute("PayloadSize", StringValue("1024"));
-  producerHelper.Install(ueNodes.Get(3));
+  producerHelper.Install(ueNodes.Get(5));
 
 
   Simulator::Stop (Seconds(20));
@@ -246,3 +306,4 @@ int main (int argc, char *argv[])
   return 0;
 
 }
+
