@@ -222,8 +222,8 @@ DirectedGeocastStrategy::calculateDelay(const Interest& interest)
  // ns3::Vector s = (ns3::Vector) self;
 
   // TODO
-  //double distance = abs(self->GetLength() - from->GetLength());
-  double distance = CalculateDistance(self,from);
+  double distance = abs(self->GetLength() - from->GetLength());
+  //double distance = CalculateDistance(self,from);
   NFD_LOG_DEBUG("the distance is " << distance);
            // std::srand(time(0));
   double minTime = 0.002;

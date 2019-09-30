@@ -21,12 +21,12 @@ int main (int argc, char *argv[])
   Time simTime = Seconds (6);
   bool enableNsLogs = false;
   bool useIPv6 = false;
-  double distance=atoi(argv[1]);
+  //double distance=atoi(argv[1]);
 
   CommandLine cmd;
   cmd.AddValue ("simTime", "Total duration of the simulation", simTime);
   cmd.AddValue ("enableNsLogs", "Enable ns-3 logging (debug builds)", enableNsLogs);
-  cmd.AddValue("distance", "Distance apart to place nodes (in meters).",distance);
+ // cmd.AddValue("distance", "Distance apart to place nodes (in meters).",distance);
 
   cmd.Parse (argc, argv);
 
@@ -236,14 +236,15 @@ int main (int argc, char *argv[])
   // Consumer
   ::ns3::ndn::AppHelper consumerHelper("ns3::ndn::ConsumerCbr");
   // Consumer will request /prefix/0, /prefix/1, ...
-  consumerHelper.SetPrefix("/v2safety/8thStreet/parking");
+  //consumerHelper.SetPrefix("/v2safety/8thStreet/parking");
+    consumerHelper.SetPrefix("/v2safety/8thStreet/5");
   consumerHelper.SetAttribute("Frequency", StringValue("0.1")); // 10 interests a second
   consumerHelper.Install(ueNodes.Get(0));                        // first node
 
   // Producer
   ::ns3::ndn::AppHelper producerHelper("ns3::ndn::Producer");
   // Producer will reply to all requests starting with /prefix
-  producerHelper.SetPrefix("/v2safety/8thStreet/");
+  producerHelper.SetPrefix("/v2safety/8thStreet/5");
   producerHelper.SetAttribute("PayloadSize", StringValue("1024"));
   producerHelper.Install(ueNodes.Get(3));
 
