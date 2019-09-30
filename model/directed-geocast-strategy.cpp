@@ -222,13 +222,13 @@ DirectedGeocastStrategy::calculateDelay(const Interest& interest)
  // ns3::Vector s = (ns3::Vector) self;
 
   // TODO
-  double distance = abs(self->GetLength() - from->GetLength());
-  //double distance = CalculateDistance(self,from);
+  //double distance = abs(self->GetLength() - from->GetLength());
+  double distance = CalculateDistance(*self,*from);
   NFD_LOG_DEBUG("the distance is " << distance);
            // std::srand(time(0));
   double minTime = 0.002;
   double maxDist = 1000;
-  double maxTime = 1.5;
+  double maxTime = 2;
   if (distance < maxDist) {
     //auto waitTime = time::duration_cast<time::nanoseconds>(time::duration<double>{(minTime * (maxDist-distance)/maxDist)});
     //double randomNumber = static_cast <double> (rand()) / (static_cast <double> (RAND_MAX));
@@ -274,30 +274,33 @@ DirectedGeocastStrategy::shouldCancelTransmission(const pit::Entry& oldPitEntry,
   }
 
   // TODO
-  NFD_LOG_DEBUG("self, oldform and newform are " << self->GetLength() << " " << newFrom->GetLength() << " " << oldFrom->GetLength());
+  NFD_LOG_DEBUG("self, oldform and newform are " << self->GetLength() << " " << oldFrom->GetLength() << " " << newFrom->GetLength());
   //distance calculation
-  double distanceToLasthop = (self->GetLength() - newFrom->GetLength());
+  //double distanceToLasthop = (self->GetLength() - newFrom->GetLength());
+  double distanceToLasthop = CalculateDistance(*self,*newFrom);
   NFD_LOG_DEBUG("distance to last hop is " << distanceToLasthop);
-  double distanceToOldhop = (self->GetLength() - oldFrom->GetLength());
+  double distanceToOldhop = CalculateDistance(*self,*oldFrom);
+  //double distanceToOldhop = (self->GetLength() - oldFrom->GetLength());
   NFD_LOG_DEBUG("distance to old hop is " << distanceToOldhop);
-  double distanceBetweenLasthops = (newFrom->GetLength() - oldFrom->GetLength());
+  double distanceBetweenLasthops = CalculateDistance(*newFrom,*oldFrom);
+  //double distanceBetweenLasthops = (newFrom->GetLength() - oldFrom->GetLength());
   NFD_LOG_DEBUG("distance between last hops is " << distanceBetweenLasthops);
 
   //Angle calculation
-  double Angle_rad = acos((pow(distanceToOldhop, 2) + pow(distanceBetweenLasthops, 2) - pow(distanceToLasthop, 2)) /
+  double angleRad = acos((pow(distanceToOldhop, 2) + pow(distanceBetweenLasthops, 2) - pow(distanceToLasthop, 2)) /
                     (2 * distanceToOldhop * distanceBetweenLasthops));
-  double Angle_Deg = Angle_rad * 180 / 3.141592;
+  double angleDeg = angleRad * 180 / 3.141592;
   // double Angle_Deg = 91.00;
-  NFD_LOG_DEBUG("angle is " << Angle_Deg);
+  NFD_LOG_DEBUG("angle is " << angleDeg);
 
   // Projection Calculation
-  double cosine_Angle_at_self = (pow(distanceToOldhop, 2) + pow(distanceToLasthop, 2) - pow(distanceBetweenLasthops, 2)) /
-                    (2 * distanceToOldhop * distanceToLasthop);
-  NFD_LOG_DEBUG("cosine-angle is " << cosine_Angle_at_self);
-  double projection = abs(distanceToLasthop * cosine_Angle_at_self);
+  double cosineAngleAtSelf = (pow(distanceToOldhop, 2) - pow(distanceToLasthop, 2) + pow(distanceBetweenLasthops, 2)) /
+                    (2 * distanceToOldhop * distanceBetweenLasthops);
+  NFD_LOG_DEBUG("cosine-angle is " << cosineAngleAtSelf);
+  double projection = abs(distanceBetweenLasthops * cosineAngleAtSelf);
   NFD_LOG_DEBUG("projection is " << projection);
             
-  if (Angle_Deg >= 90) {
+  if (angleDeg >= 90) {
     NFD_LOG_DEBUG("Interest need not to be cancelled");
     return false;
    }

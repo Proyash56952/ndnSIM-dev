@@ -145,12 +145,13 @@ int main (int argc, char *argv[])
   mobilityUe4.SetPositionAllocator (positionAllocUe1);
   mobilityUe4.Install (ueNodes.Get (3));
 */
+
   MobilityHelper mobility;
   Ptr<ListPositionAllocator> initialAlloc = CreateObject<ListPositionAllocator> ();
   initialAlloc->Add(Vector(0.0,0.0,0.0));
   initialAlloc->Add(Vector(400.0,0.0,0.0));
-  initialAlloc->Add(Vector(400.0,100.0,0.0));
-  initialAlloc->Add(Vector(1000.0,0.0,0.0));
+  initialAlloc->Add(Vector(300.0,100.0,0.0));
+  initialAlloc->Add(Vector(800.0,0.0,0.0));
   mobility.SetPositionAllocator(initialAlloc);
   mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
   mobility.Install(ueNodes.Get (0));
