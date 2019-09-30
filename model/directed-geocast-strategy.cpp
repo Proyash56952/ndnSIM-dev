@@ -189,7 +189,7 @@ DirectedGeocastStrategy::getSelfPosition()
   if (mobility == nullptr) {
     return nullopt;
   }
-
+    NFD_LOG_DEBUG("self position is: " << mobility->GetPosition());
   return mobility->GetPosition();
 }
 
@@ -203,22 +203,28 @@ DirectedGeocastStrategy::extractPositionFromTag(const Interest& interest)
   }
 
   auto pos = tag->getPos();
+   NFD_LOG_DEBUG("the psotion is " << ns3::Vector(std::get<0>(pos), std::get<1>(pos), std::get<2>(pos)));
   return ns3::Vector(std::get<0>(pos), std::get<1>(pos), std::get<2>(pos));
 }
 
 time::nanoseconds
 DirectedGeocastStrategy::calculateDelay(const Interest& interest)
 {
-  auto self = getSelfPosition();
-  auto from = extractPositionFromTag(interest);
+    auto self = getSelfPosition();
+    auto from = extractPositionFromTag(interest);
+    //NFD_LOG_DEBUG("the psotion is " << ns3::Vector(std::get<0>(from->getPos())));
+   // NFD_LOG_DEBUG("the form is " << std::basic_ostream<from>);
 
   if (!self || !from) {
     NFD_LOG_DEBUG("self or from position is missing");
     return 0_s;
   }
+ // ns3::Vector s = (ns3::Vector) self;
 
   // TODO
-  double distance = abs(self->GetLength() - from->GetLength());
+  //double distance = abs(self->GetLength() - from->GetLength());
+  double distance = CalculateDistance(self,from);
+  NFD_LOG_DEBUG("the distance is " << distance);
            // std::srand(time(0));
   double minTime = 0.002;
   double maxDist = 1000;

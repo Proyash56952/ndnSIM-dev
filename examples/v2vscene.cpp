@@ -103,16 +103,16 @@ int main (int argc, char *argv[])
   NS_LOG_INFO ("UE 1 node id = [" << ueNodes.Get (0)->GetId () << "]");
   NS_LOG_INFO ("UE 2 node id = [" << ueNodes.Get (1)->GetId () << "]");
   NS_LOG_INFO ("UE 3 node id = [" << ueNodes.Get (2)->GetId () << "]");
-
+/*
   //Position of the nodes
   Ptr<ListPositionAllocator> positionAllocUe1 = CreateObject<ListPositionAllocator> ();
   positionAllocUe1->Add (Vector (0.0, 0.0, 0.0));
   Ptr<ListPositionAllocator> positionAllocUe2 = CreateObject<ListPositionAllocator> ();
-  positionAllocUe2->Add (Vector (400.0, 0.0, 0.0));
+  positionAllocUe1->Add (Vector (400.0, 0.0, 0.0));
   Ptr<ListPositionAllocator> positionAllocUe3 = CreateObject<ListPositionAllocator> ();
-  positionAllocUe3->Add (Vector (400.0, 100.0, 0.0));
-    Ptr<ListPositionAllocator> positionAllocUe4 = CreateObject<ListPositionAllocator> ();
-    positionAllocUe4->Add (Vector (1000.0, 0.0, 0.0));
+  positionAllocUe1->Add (Vector (400.0, 100.0, 0.0));
+  Ptr<ListPositionAllocator> positionAllocUe4 = CreateObject<ListPositionAllocator> ();
+  positionAllocUe1->Add (Vector (1000.0, 0.0, 0.0));
 
   //Install mobility
 
@@ -123,18 +123,35 @@ int main (int argc, char *argv[])
 
   MobilityHelper mobilityUe2;
   mobilityUe2.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-  mobilityUe2.SetPositionAllocator (positionAllocUe2);
+  mobilityUe2.SetPositionAllocator (positionAllocUe1);
   mobilityUe2.Install (ueNodes.Get (1));
 
   MobilityHelper mobilityUe3;
   mobilityUe3.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-  mobilityUe3.SetPositionAllocator (positionAllocUe3);
+  mobilityUe3.SetPositionAllocator (positionAllocUe1);
   mobilityUe3.Install (ueNodes.Get (2));
 
-    MobilityHelper mobilityUe4;
-    mobilityUe4.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-    mobilityUe4.SetPositionAllocator (positionAllocUe4);
-    mobilityUe4.Install (ueNodes.Get (3));
+  MobilityHelper mobilityUe4;
+  mobilityUe4.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+  mobilityUe4.SetPositionAllocator (positionAllocUe1);
+  mobilityUe4.Install (ueNodes.Get (3));
+*/
+  MobilityHelper mobility;
+  Ptr<ListPositionAllocator> initialAlloc = CreateObject<ListPositionAllocator> ();
+  initialAlloc->Add(Vector(0.0,0.0,0.0));
+  initialAlloc->Add(Vector(400.0,0.0,0.0));
+  initialAlloc->Add(Vector(400.0,100.0,0.0));
+  initialAlloc->Add(Vector(1000.0,0.0,0.0));
+  mobility.SetPositionAllocator(initialAlloc);
+  mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+  mobility.Install(ueNodes.Get (0));
+  mobility.Install(ueNodes.Get (1));
+  mobility.Install(ueNodes.Get (2));
+  mobility.Install(ueNodes.Get (3));
+
+
+
+
 
   //Install LTE UE devices to the nodes
   NetDeviceContainer ueDevs = lteHelper->InstallUeDevice (ueNodes);
