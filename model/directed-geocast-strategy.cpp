@@ -228,7 +228,7 @@ DirectedGeocastStrategy::calculateDelay(const Interest& interest)
            // std::srand(time(0));
   double minTime = 0.002;
   double maxDist = 1000;
-  double maxTime = 2;
+  double maxTime = 1;
   if (distance < maxDist) {
     //auto waitTime = time::duration_cast<time::nanoseconds>(time::duration<double>{(minTime * (maxDist-distance)/maxDist)});
     //double randomNumber = static_cast <double> (rand()) / (static_cast <double> (RAND_MAX));
