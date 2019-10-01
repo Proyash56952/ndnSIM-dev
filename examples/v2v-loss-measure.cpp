@@ -224,7 +224,10 @@ int main (int argc, char *argv[])
 
 
   Simulator::Stop (Seconds(20));
+  // Tracer:
 
+  L2RateTracer::InstallAll("packet-drop.txt", Seconds(0.5));
+  ns3::ndn::AppDelayTracer::InstallAll("app-delays-trace.txt");
   Simulator::Run ();
   Simulator::Destroy ();
   return 0;
