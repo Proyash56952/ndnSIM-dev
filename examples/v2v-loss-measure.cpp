@@ -226,7 +226,7 @@ int main (int argc, char *argv[])
   Simulator::Stop (Seconds(20));
   
   // Tracer: will be saved in ns-3 folder
-  s3::ndn::L3RateTracer::InstallAll("rate-trace.txt", Seconds(0.25));
+  ns3::ndn::L3RateTracer::InstallAll("rate-trace.txt", Seconds(0.25));
   L2RateTracer::InstallAll("packet-drop.txt", Seconds(0.5));
   ns3::ndn::AppDelayTracer::InstallAll("app-delays-trace.txt");
   
