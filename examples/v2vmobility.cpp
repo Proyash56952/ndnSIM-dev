@@ -116,7 +116,7 @@ int main (int argc, char *argv[])
 
   positionAllocUe3->Add (Vector (-300.0, 50.0, 0.0));
   Ptr<ListPositionAllocator> positionAllocUe4 = CreateObject<ListPositionAllocator> ();
-  positionAllocUe4->Add (Vector (1800.0, 25.0, 0.0));
+  positionAllocUe4->Add (Vector (0.0, 25.0, 0.0));
 
   //Install mobility
 
@@ -129,29 +129,32 @@ int main (int argc, char *argv[])
                              "Pause", StringValue ("ns3::ConstantRandomVariable[Constant=0.2]"));
   */
   //mobilityUe1.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+  
+  mobilityUe1.SetMobilityModel ("ns3::SteadyStateRandomWaypointMobilityModel");
   Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MinX", DoubleValue (-800.0));
-      Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MinY", DoubleValue (-50.0));
-      Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MaxX", DoubleValue (-600.0));
-      Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MaxY", DoubleValue (-50.0));
-      Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::Z", DoubleValue (0.0));
-      Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MaxSpeed", DoubleValue (0.5));
-      Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MinSpeed", DoubleValue (0.1));
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MinY", DoubleValue (-50.0));
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MaxX", DoubleValue (-750.0));
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MaxY", DoubleValue (-49.0));
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::Z", DoubleValue (0.0));
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MaxSpeed", DoubleValue (16.67));
+  Config::SetDefault ("ns3::SteadyStateRandomWaypointMobilityModel::MinSpeed", DoubleValue (5));
+  
   mobilityUe1.SetPositionAllocator (positionAllocUe1);
   mobilityUe1.Install (ueNodes.Get (0));
 
   MobilityHelper mobilityUe2;
   mobilityUe2.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-  mobilityUe2.SetPositionAllocator (positionAllocUe1);
+  mobilityUe2.SetPositionAllocator (positionAllocUe2);
   mobilityUe2.Install (ueNodes.Get (1));
 
   MobilityHelper mobilityUe3;
   mobilityUe3.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-  mobilityUe3.SetPositionAllocator (positionAllocUe1);
+  mobilityUe3.SetPositionAllocator (positionAllocUe3);
   mobilityUe3.Install (ueNodes.Get (2));
 
   MobilityHelper mobilityUe4;
   mobilityUe4.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-  mobilityUe4.SetPositionAllocator (positionAllocUe1);
+  mobilityUe4.SetPositionAllocator (positionAllocUe4);
   mobilityUe4.Install (ueNodes.Get (3));
 
   /*
@@ -164,7 +167,7 @@ int main (int argc, char *argv[])
   mobility.SetPositionAllocator(initialAlloc);
   //mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
   mobility.SetMobilityModel ("ns3::RandomDirection2dMobilityModel",
-                             "Bounds", RectangleValue (Rectangle (-500, 500, -500, 500)),
+                             "Bounds", RectangleValue (Rectangle (-500, 500, -500, 500)) ,
                              "Speed", StringValue ("ns3::ConstantRandomVariable[Constant=2]"),
                              "Pause", StringValue ("ns3::ConstantRandomVariable[Constant=0.2]"));
   //mobility.SetMobilityModel("ns3::RandomDirection2dMobilityModel",
