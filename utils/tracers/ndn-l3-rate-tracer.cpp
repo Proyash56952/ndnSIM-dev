@@ -266,21 +266,21 @@ L3RateTracer::Print(std::ostream& os) const
   for (auto& stats : m_stats) {
     if (stats.first == nfd::face::INVALID_FACEID)
       continue;
+    
+    PRINTER("OutInterests", m_outInterests); //transmitted interest trace
+    PRINTER("OutData", m_outData); //trace of oitgoing data
 
-    PRINTER("InInterests", m_inInterests);
-    PRINTER("OutInterests", m_outInterests);
+    //PRINTER("InInterests", m_inInterests);
+    //PRINTER("InData", m_inData);
+  
+    //PRINTER("InNacks", m_inNack);
+    //PRINTER("OutNacks", m_outNack);
 
-    PRINTER("InData", m_inData);
-    PRINTER("OutData", m_outData);
+    //PRINTER("InSatisfiedInterests", m_satisfiedInterests);
+    //PRINTER("InTimedOutInterests", m_timedOutInterests);
 
-    PRINTER("InNacks", m_inNack);
-    PRINTER("OutNacks", m_outNack);
-
-    PRINTER("InSatisfiedInterests", m_satisfiedInterests);
-    PRINTER("InTimedOutInterests", m_timedOutInterests);
-
-    PRINTER("OutSatisfiedInterests", m_outSatisfiedInterests);
-    PRINTER("OutTimedOutInterests", m_outTimedOutInterests);
+    //PRINTER("OutSatisfiedInterests", m_outSatisfiedInterests);
+    //PRINTER("OutTimedOutInterests", m_outTimedOutInterests)
   }
 
   {
