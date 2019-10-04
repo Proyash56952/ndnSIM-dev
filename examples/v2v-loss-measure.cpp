@@ -21,12 +21,12 @@ int main (int argc, char *argv[])
   Time simTime = Seconds (6);
   bool enableNsLogs = false;
   bool useIPv6 = false;
-  double distance=atoi(argv[1]);
+  //double distance=atoi(argv[1]);
 
   CommandLine cmd;
   cmd.AddValue ("simTime", "Total duration of the simulation", simTime);
   cmd.AddValue ("enableNsLogs", "Enable ns-3 logging (debug builds)", enableNsLogs);
-  cmd.AddValue("distance", "Distance apart to place nodes (in meters).",distance);
+  //cmd.AddValue("distance", "Distance apart to place nodes (in meters).",distance);
 
   cmd.Parse (argc, argv);
 
@@ -114,7 +114,7 @@ int main (int argc, char *argv[])
   Ptr<ListPositionAllocator> positionAllocUe3 = CreateObject<ListPositionAllocator> ();
   positionAllocUe3->Add (Vector (500.0, 0.0, 0.0));
   Ptr<ListPositionAllocator> positionAllocUe4 = CreateObject<ListPositionAllocator> ();
-  positionAllocUe4->Add (Vector (distance, 0.0, 0.0)); // add "v2vscene --distance = value" in commandline 
+  positionAllocUe4->Add (Vector (500, 0.0, 0.0)); // add "v2vscene --distance = value" in commandline 
   
 
   MobilityHelper mobilityUe1;
