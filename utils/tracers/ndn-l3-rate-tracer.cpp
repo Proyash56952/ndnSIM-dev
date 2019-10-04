@@ -288,7 +288,7 @@ L3RateTracer::Print(std::ostream& os) const
     if (i != m_stats.end()) {
       auto& stats = *i;
       PRINTER("SatisfiedInterests", m_satisfiedInterests);
-      PRINTER("TimedOutInterests", m_timedOutInterests);
+      //PRINTER("TimedOutInterests", m_timedOutInterests);
     }
   }
 }
