@@ -21,12 +21,12 @@ int main (int argc, char *argv[])
   Time simTime = Seconds (6);
   bool enableNsLogs = false;
   bool useIPv6 = false;
-  //double distance=atoi(argv[1]);
+  double distance=atoi(argv[1]);
 
   CommandLine cmd;
   cmd.AddValue ("simTime", "Total duration of the simulation", simTime);
   cmd.AddValue ("enableNsLogs", "Enable ns-3 logging (debug builds)", enableNsLogs);
-  //cmd.AddValue("distance", "Distance apart to place nodes (in meters).",distance);
+  cmd.AddValue("distance", "Distance apart to place nodes (in meters).",distance);
 
   cmd.Parse (argc, argv);
 
@@ -114,7 +114,7 @@ int main (int argc, char *argv[])
   Ptr<ListPositionAllocator> positionAllocUe3 = CreateObject<ListPositionAllocator> ();
   positionAllocUe3->Add (Vector (500.0, 0.0, 0.0));
   Ptr<ListPositionAllocator> positionAllocUe4 = CreateObject<ListPositionAllocator> ();
-  positionAllocUe4->Add (Vector (500, 0.0, 0.0)); // add "v2vscene --distance = value" in commandline 
+  positionAllocUe4->Add (Vector (distance, 0.0, 0.0)); // add "v2vscene --distance = value" in commandline 
   
 
   MobilityHelper mobilityUe1;
@@ -212,7 +212,7 @@ int main (int argc, char *argv[])
   ::ns3::ndn::AppHelper consumerHelper("ns3::ndn::ConsumerCbr");
   // Consumer will request /prefix/0, /prefix/1, ...
   consumerHelper.SetPrefix("/v2safety/8thStreet/parking");
-  consumerHelper.SetAttribute("Frequency", StringValue("0.1")); // 10 interests a second
+  consumerHelper.SetAttribute("Frequency", StringValue("1")); // 10 interests a second
   consumerHelper.Install(ueNodes.Get(0));                        // first node
 
   // Producer
@@ -226,8 +226,13 @@ int main (int argc, char *argv[])
   Simulator::Stop (Seconds(20));
   
   // Tracer: will be saved in ns-3 folder
-  //std::cout<<"For distance " << distance << " Packet drop is "; //&ForwardingStrategy::m_dropData<<"\n";
-  ns3::ndn::L3RateTracer::InstallAll("packet-trace.txt", Seconds(0.25));
+  char filename[250];
+  string prefix = "src/ndnSIM/examples/loss/";
+  std::cout<<"Tracer Files are at "<<prefix<<"\n";
+  sprintf (filename, "rate-trace-%f",distance);
+  ns3::ndn::L3RateTracer::InstallAll(prefix + filename , Seconds(1.0));
+  sprintf (filename, "packet-trace-%f",distance);
+  L2RateTracer::InstallAll(prefix + filename, Seconds(0.5));
   
   
   Simulator::Run ();
