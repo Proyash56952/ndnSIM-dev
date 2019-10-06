@@ -228,10 +228,10 @@ int main (int argc, char *argv[])
   // Tracer: will be saved in ns-3 folder
   char filename[250];
   string prefix = "src/ndnSIM/examples/loss/";
-  std::cout<<"Tracer Files are at "<<prefix<<"\n";
-  sprintf (filename, "rate-trace-%f",distance);
-  ns3::ndn::L3RateTracer::InstallAll(prefix + filename , Seconds(1.0));
-  sprintf (filename, "packet-trace-%f",distance);
+  std::cout<<"Tracer Files are at "<<prefix<<"\n"; // create a loss folder in the ndnSIM/examples folder 
+  sprintf (filename, "rate-trace-%f.txt",distance);
+  ns3::ndn::L3RateTracer::InstallAll(prefix + filename , Seconds(1)); //seconds() means time intereval between data collection not duration
+  sprintf (filename, "packet-trace-%f.txt",distance);
   L2RateTracer::InstallAll(prefix + filename, Seconds(0.5));
   
   
