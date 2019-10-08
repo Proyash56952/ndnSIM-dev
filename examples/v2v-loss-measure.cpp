@@ -37,8 +37,8 @@ int main (int argc, char *argv[])
   Config::SetDefault ("ns3::LteUeMac::UseSetTrp", BooleanValue (true)); //use default Trp index of 0
 
   //Set the frequency
-  uint32_t ulEarfcn = 18100;
-  uint16_t ulBandwidth = 50;
+  uint32_t ulEarfcn = 18100;// This propagation loss model allows upto 2GHz
+  uint16_t ulBandwidth = 75; // bandwidth DSRC standard
 
   // Set error models
   Config::SetDefault ("ns3::LteSpectrumPhy::SlCtrlErrorModelEnabled", BooleanValue (true));
@@ -225,14 +225,14 @@ int main (int argc, char *argv[])
 
   Simulator::Stop (Seconds(20));
   
-  // Tracer: will be saved in ns-3 folder
+  // Tracer: will be saved in src/ndnSIM/examples/loss folder
   char filename[250];
   string prefix = "src/ndnSIM/examples/loss/";
   std::cout<<"Tracer Files are at "<<prefix<<"\n"; // create a loss folder in the ndnSIM/examples folder 
   sprintf (filename, "rate-trace-%f.txt",distance);
   ns3::ndn::L3RateTracer::InstallAll(prefix + filename , Seconds(1)); //seconds() means time intereval between data collection not duration
-  sprintf (filename, "packet-trace-%f.txt",distance);
-  L2RateTracer::InstallAll(prefix + filename, Seconds(0.5));
+  //sprintf (filename, "packet-trace-%f.txt",distance);
+  //L2RateTracer::InstallAll(prefix + filename, Seconds(0.5));
   
   
   Simulator::Run ();

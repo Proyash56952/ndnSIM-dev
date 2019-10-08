@@ -267,7 +267,7 @@ L3RateTracer::Print(std::ostream& os) const
     if (stats.first == nfd::face::INVALID_FACEID)
       continue;
     
-    PRINTER("OutInterests", m_outInterests); //transmitted interest trace
+    //PRINTER("OutInterests", m_outInterests); //transmitted interest trace
     PRINTER("OutData", m_outData); //trace of oitgoing data
 
     //PRINTER("InInterests", m_inInterests);
