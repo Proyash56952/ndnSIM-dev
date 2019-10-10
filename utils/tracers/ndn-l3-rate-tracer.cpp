@@ -268,10 +268,10 @@ L3RateTracer::Print(std::ostream& os) const
       continue;
     
     //PRINTER("OutInterests", m_outInterests); //transmitted interest trace
-    PRINTER("OutData", m_outData); //trace of oitgoing data
+    //PRINTER("OutData", m_outData); //trace of oitgoing data
 
     //PRINTER("InInterests", m_inInterests);
-    //PRINTER("InData", m_inData);
+    PRINTER("InData", m_inData);
   
     //PRINTER("InNacks", m_inNack);
     //PRINTER("OutNacks", m_outNack);
