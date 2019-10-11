@@ -213,7 +213,7 @@ int main (int argc, char *argv[])
   // Consumer will request /prefix/0, /prefix/1, ...
   consumerHelper.SetPrefix("/v2safety/8thStreet/parking");
   consumerHelper.SetAttribute("Frequency", StringValue("1")); // 10 interests a second
-  consumerHelper.Install(ueNodes.Get(0));                        // first node
+  consumerHelper.Install(ueNodes.Get(0)).Start(Seconds(10.0));                        // first node
 
   // Producer
   ::ns3::ndn::AppHelper producerHelper("ns3::ndn::Producer");

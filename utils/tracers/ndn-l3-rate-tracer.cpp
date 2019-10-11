@@ -287,7 +287,7 @@ L3RateTracer::Print(std::ostream& os) const
     auto i = m_stats.find(nfd::face::INVALID_FACEID);
     if (i != m_stats.end()) {
       auto& stats = *i;
-      PRINTER("SatisfiedInterests", m_satisfiedInterests);
+      //PRINTER("SatisfiedInterests", m_satisfiedInterests);
       //PRINTER("TimedOutInterests", m_timedOutInterests);
     }
   }
