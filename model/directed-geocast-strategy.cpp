@@ -45,6 +45,8 @@
 #include <ctime>
 #include <cstdlib>
 
+#include <string>
+
 namespace nfd {
 namespace fw {
 
@@ -77,6 +79,7 @@ void
 DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const Interest& interest,
                                               const shared_ptr<pit::Entry>& pitEntry)
 {
+  NFD_LOG_DEBUG("ReceivedInterest: ");
   const fib::Entry& fibEntry = this->lookupFib(*pitEntry);
   const fib::NextHopList& nexthops = fibEntry.getNextHops();
 
@@ -107,6 +110,10 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
         NFD_LOG_DEBUG(interest << " already scheduled pitEntry-to=" << outFace.getId());
         continue;
       }
+
+      std::string interestName = interest.getName().toUri();
+      NFD_LOG_DEBUG("Interest Name is " << interestName);
+
 
       // calculate time to delay interest
       auto delay = calculateDelay(interest);
@@ -212,6 +219,12 @@ DirectedGeocastStrategy::calculateDelay(const Interest& interest)
 {
     auto self = getSelfPosition();
     auto from = extractPositionFromTag(interest);
+    NFD_LOG_DEBUG("the interest is " << interest);
+    std::string interestName = interest.getName().toUri();
+    //std::string g = f.toUri();
+    NFD_LOG_DEBUG("the interest name is " << interestName);
+    //std::string s = std::to_string(f);
+    //NFD_LOG_DEBUG("the interest is " << interestName);
     //NFD_LOG_DEBUG("the psotion is " << ns3::Vector(std::get<0>(from->getPos())));
    // NFD_LOG_DEBUG("the form is " << std::basic_ostream<from>);
 
@@ -226,9 +239,9 @@ DirectedGeocastStrategy::calculateDelay(const Interest& interest)
   double distance = CalculateDistance(*self,*from);
   NFD_LOG_DEBUG("the distance is " << distance);
            // std::srand(time(0));
-  double minTime = 0.002;
-  double maxDist = 1000;
-  double maxTime = 1;
+  double minTime = 0.05;
+  double maxDist = 600;
+  double maxTime = 0.15;
   if (distance < maxDist) {
     //auto waitTime = time::duration_cast<time::nanoseconds>(time::duration<double>{(minTime * (maxDist-distance)/maxDist)});
     //double randomNumber = static_cast <double> (rand()) / (static_cast <double> (RAND_MAX));
@@ -308,8 +321,8 @@ DirectedGeocastStrategy::shouldCancelTransmission(const pit::Entry& oldPitEntry,
     NFD_LOG_DEBUG("Interest need to be cancelled");
     return true;
    }
-
-   return false;
+  NFD_LOG_DEBUG("Interest need not to be cancelled");
+  return false;
 }
 
 } // namespace fw
