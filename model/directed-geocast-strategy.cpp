@@ -336,7 +336,7 @@ DirectedGeocastStrategy::shouldLimitTransmission(const Interest& interest)
   double limitX = 0.0;
   //int count = 0;
   if(limitPos != std::string::npos){
-      limitPos+=8;
+    limitPos+=8;
     int i = limitPos;
     NFD_LOG_DEBUG("Entered into Should Limit Transmission");
     //char[] limit = 
@@ -377,14 +377,14 @@ DirectedGeocastStrategy::shouldLimitTransmission(const Interest& interest)
   k+=3;
   srcPos = k;
   while(interestName[k] != '%'){
-      k++;
+    k++;
   }
   std::string srcYAxis = interestName.substr(srcPos, k-srcPos);
   double srcy = atof(srcYAxis.c_str());
   k+=3;
   srcPos = k;
   while(interestName[k] != '/'){
-      k++;
+    k++;
   }
   std::string srcZAxis = interestName.substr(srcPos,k-srcPos);
   double srcz = atof(srcZAxis.c_str());
@@ -394,9 +394,7 @@ DirectedGeocastStrategy::shouldLimitTransmission(const Interest& interest)
   int destPos = interestName.find("dest");
   destPos = destPos+7;
   int j = destPos;
-  //int countDest = 0;
   while(interestName[j] != '%'){
-    //countDest++;
     j++;
   }
   std::string xAxis = interestName.substr(destPos,j-destPos);
@@ -420,7 +418,7 @@ DirectedGeocastStrategy::shouldLimitTransmission(const Interest& interest)
    
   ndn::optional<ns3::Vector> dest = ns3::Vector3D(x,y,z);
   auto self = getSelfPosition();
-  NFD_LOG_DEBUG("the type is : " << typeid(dest).name() << "  " << typeid(self).name());
+  //NFD_LOG_DEBUG("the type is : " << typeid(dest).name() << "  " << typeid(self).name());
   //std::cout << typeid(p).name() << std::endl;
   //auto self = extractPositionFromTag(interest);
   double distSrcDest = CalculateDistance(*src,*dest);

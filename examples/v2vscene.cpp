@@ -153,7 +153,7 @@ int main (int argc, char *argv[])
   initialAlloc->Add(Vector(200.0,0.0,0.0));
   initialAlloc->Add(Vector(300.0,0.0,0.0));
   initialAlloc->Add(Vector(400,0.0,0.0));
-  initialAlloc->Add(Vector(500.0,0.0,0.0));
+  initialAlloc->Add(Vector(750.0,0.0,0.0));
   //initialAlloc->Add(Vector(200.0,0.0,0.0));
   initialAlloc->Add(Vector(600.0,0.0,0.0));
   mobility.SetPositionAllocator(initialAlloc);
@@ -248,8 +248,8 @@ int main (int argc, char *argv[])
   ::ns3::ndn::AppHelper consumerHelper("ns3::ndn::ConsumerCbr");
   // Consumer will request /prefix/0, /prefix/1, ...
   //consumerHelper.SetPrefix("/v2safety/8thStreet/parking");
-  consumerHelper.SetPrefix("/v2safety/8thStreet/(600,0,0)/100");
-  consumerHelper.SetAttribute("Frequency", StringValue("1")); // 10 interests a second
+  consumerHelper.SetPrefix("/v2safety/8thStreet/src:0,0,0/dest:600,0,0/100");
+  consumerHelper.SetAttribute("Frequency", StringValue("0.5")); // 10 interests a second
   consumerHelper.Install(ueNodes.Get(0));                        // first node
 
   // Producer
@@ -257,10 +257,10 @@ int main (int argc, char *argv[])
   // Producer will reply to all requests starting with /prefix
   producerHelper.SetPrefix("/v2safety/8thStreet");
   producerHelper.SetAttribute("PayloadSize", StringValue("1024"));
-  producerHelper.Install(ueNodes.Get(3));
+  producerHelper.Install(ueNodes.Get(6));
 
   ns3::ndn::L3RateTracer::InstallAll("trace.txt", Seconds(1));
-  Simulator::Stop (Seconds(5));
+  Simulator::Stop (Seconds(20));
 
   Simulator::Run ();
   Simulator::Destroy ();
