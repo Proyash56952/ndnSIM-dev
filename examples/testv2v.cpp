@@ -16,18 +16,30 @@ using namespace ns3;
 
 NS_LOG_COMPONENT_DEFINE ("LteSlOutOfCovrg");
 
-void p(const std::string& type, Ptr<Node> n)
+void 
+p1(const ns3::ndn::Interest&, const ns3::ndn::Face& f)
 {
-    std::cout << type << "," << n->GetId() << "," << Simulator::Now().ToDouble(Time::S) << std::endl;
+    std::cout << "out" << "," << f.getLocalUri() << "," << Simulator::Now().ToDouble(Time::S) << std::endl;
 }
+
+void 
+p2(const ns3::ndn::Interest&, const ns3::ndn::Face& f)
+{
+    std::cout << "in" << "," << f.getLocalUri() << "," << Simulator::Now().ToDouble(Time::S) << std::endl;
+}
+
+// void ttt(const ns3::ndn::Interest&, const ns3::ndn::Face&)
+// {
+// }
 
 int main (int argc, char *argv[])
 {
   Time simTime = Seconds (6);
   bool enableNsLogs = false;
   bool useIPv6 = false;
-
+  double count = atoi(argv[1]);
   CommandLine cmd;
+  cmd.AddValue("count", "count the iteration number",count);
   cmd.AddValue ("simTime", "Total duration of the simulation", simTime);
   cmd.AddValue ("enableNsLogs", "Enable ns-3 logging (debug builds)", enableNsLogs);
 
@@ -41,7 +53,7 @@ int main (int argc, char *argv[])
 
   //Set the frequency
   uint32_t ulEarfcn = 18100;
-  uint16_t ulBandwidth = 50;
+  uint16_t ulBandwidth = 75;
 
   // Set error models
   Config::SetDefault ("ns3::LteSpectrumPhy::SlCtrlErrorModelEnabled", BooleanValue (true));
@@ -111,8 +123,11 @@ int main (int argc, char *argv[])
   MobilityHelper mobility;
   Ptr<ListPositionAllocator> initialAlloc = CreateObject<ListPositionAllocator> ();
   initialAlloc->Add(Vector(0.0,0.0,0.0));
-  initialAlloc->Add(Vector(100.0,0.0,0.0));
-
+  initialAlloc->Add(Vector(200.0,0.0,0.0));
+  mobility.SetPositionAllocator(initialAlloc);
+  mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+  mobility.Install(ueNodes.Get(0));
+  mobility.Install(ueNodes.Get(1));
 
   //Install LTE UE devices to the nodes
   NetDeviceContainer ueDevs = lteHelper->InstallUeDevice (ueNodes);
@@ -186,29 +201,32 @@ int main (int argc, char *argv[])
  //Will add cost231Propagationloss model loss here for and packet loss
 
   // Consumer
+  //::ns3::ndn::AppHelper consumerHelper("ns3::ndn::ConsumerBatches");
   ::ns3::ndn::AppHelper consumerHelper("ns3::ndn::ConsumerCbr");
   // Consumer will request /prefix/0, /prefix/1, ...
   //consumerHelper.SetPrefix("/v2safety/8thStreet/parking");
-  consumerHelper.SetPrefix("/v2safety/8thStreet/100");
-  consumerHelper.SetAttribute("Frequency", StringValue("2")); // 2 interests a second
-  consumerHelper.Install(ueNodes.Get(0));                        // first node
+  consumerHelper.SetPrefix("/v2safety/8thStreet/100/src:0,0,0/dest:600,0,0/limit:100");
+  //consumerHelper.SetAttribute("Batches", StringValue("3s 4"));
+  //consumerHelper.SetAttribute("Batches", StringValue("1s 1 2s 5 10s 2"));
+  consumerHelper.SetAttribute("Frequency", StringValue("1")); // 2 interests a second
+  consumerHelper.Install(ueNodes.Get(0)).Start(Seconds(count));                        // first node
 
   // Producer
   ::ns3::ndn::AppHelper producerHelper("ns3::ndn::Producer");
   // Producer will reply to all requests starting with /prefix
   producerHelper.SetPrefix("/v2safety/8thStreet");
   producerHelper.SetAttribute("PayloadSize", StringValue("1024"));
-  producerHelper.Install(ueNodes.Get(1));
+  //producerHelper.Install(ueNodes.Get(1));
   
   auto l3 = ueNodes.Get(0)->GetObject<ns3::ndn::L3Protocol>();
-  l3->TraceConnectWithoutContext("OutInterests", MakeCallback(&p, "out", ueNodes.Get(0)));
+  l3->TraceConnectWithoutContext("OutInterests", MakeCallback(&p1));
 
+  l3 = ueNodes.Get(1)->GetObject<ns3::ndn::L3Protocol>();
+  l3->TraceConnectWithoutContext("InInterests", MakeCallback(&p2));
 
-  auto l3 = ueNodes.Get(1)->GetObject<ns3::ndn::L3Protocol>();
-  l3->TraceConnectWithoutContext("InInterests", ns3::ndn::MakeCallback(&p, "in", ueNodes.Get(1)));
-
-  Simulator::Stop (Seconds(20));
-
+  Simulator::Stop (Seconds(3));
+  ns3::ndn::AppDelayTracer::InstallAll("app-delays-trace.txt");
+  //ns3::ndn::L3RateTracer::InstallAll("trace.txt", Seconds(1));
   Simulator::Run ();
   Simulator::Destroy ();
   return 0;

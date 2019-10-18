@@ -66,7 +66,8 @@ private:
    */
   static bool
   shouldCancelTransmission(const pit::Entry& oldPitEntry, const Interest& newInterest);
-
+  static bool
+  shouldLimitTransmission(const Interest& interest);
 private: // StrategyInfo
   /** \brief StrategyInfo on PIT entry
    */
