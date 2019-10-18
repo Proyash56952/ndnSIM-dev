@@ -111,8 +111,10 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
         continue;
       }
 
-      std::string interestName = interest.getName().toUri();
-      NFD_LOG_DEBUG("Interest Name is " << interestName);
+      //std::string interestName = interest.getName().toUri();
+      //NFD_LOG_DEBUG("Interest Name is " << interestName);
+      bool limitTransmission = shouldLimitTransmission(interest);
+      NFD_LOG_DEBUG("The result of limit tranmission is " << limitTransmission);
 
 
       // calculate time to delay interest
@@ -217,16 +219,16 @@ DirectedGeocastStrategy::extractPositionFromTag(const Interest& interest)
 time::nanoseconds
 DirectedGeocastStrategy::calculateDelay(const Interest& interest)
 {
-    auto self = getSelfPosition();
-    auto from = extractPositionFromTag(interest);
-    NFD_LOG_DEBUG("the interest is " << interest);
-    std::string interestName = interest.getName().toUri();
-    //std::string g = f.toUri();
-    NFD_LOG_DEBUG("the interest name is " << interestName);
-    //std::string s = std::to_string(f);
-    //NFD_LOG_DEBUG("the interest is " << interestName);
-    //NFD_LOG_DEBUG("the psotion is " << ns3::Vector(std::get<0>(from->getPos())));
-   // NFD_LOG_DEBUG("the form is " << std::basic_ostream<from>);
+  auto self = getSelfPosition();
+  auto from = extractPositionFromTag(interest);
+  NFD_LOG_DEBUG("the interest is " << interest);
+  std::string interestName = interest.getName().toUri();
+  //std::string g = f.toUri();
+  NFD_LOG_DEBUG("the interest name is " << interestName);
+  //std::string s = std::to_string(f);
+  //NFD_LOG_DEBUG("the interest is " << interestName);
+  //NFD_LOG_DEBUG("the psotion is " << ns3::Vector(std::get<0>(from->getPos())));
+  // NFD_LOG_DEBUG("the form is " << std::basic_ostream<from>);
 
   if (!self || !from) {
     NFD_LOG_DEBUG("self or from position is missing");
@@ -322,6 +324,114 @@ DirectedGeocastStrategy::shouldCancelTransmission(const pit::Entry& oldPitEntry,
     return true;
    }
   NFD_LOG_DEBUG("Interest need not to be cancelled");
+  return false;
+}
+
+bool
+DirectedGeocastStrategy::shouldLimitTransmission(const Interest& interest)
+{
+  std::string interestName = interest.getName().toUri();
+  NFD_LOG_DEBUG("Interest Name is : " << interestName);
+  int limitPos = interestName.find("limit");
+  double limitX = 0.0;
+  //int count = 0;
+  if(limitPos != std::string::npos){
+      limitPos+=8;
+    int i = limitPos;
+    NFD_LOG_DEBUG("Entered into Should Limit Transmission");
+    //char[] limit = 
+    while(interestName[i]!='/'){
+      //count++; 
+      i++; 
+    }
+    //NFD_LOG_DEBUG("The limitpos and count values are: " <<limitPos <<" and " <<count);
+    std::string limitXStr = interestName.substr(limitPos,i-limitPos);
+    NFD_LOG_DEBUG("The limit in string is: " << limitXStr);
+    limitX = atof(limitXStr.c_str());
+    NFD_LOG_DEBUG("The limit is: " << limitX);
+    /*
+    i+=3;
+    limitPos = i;
+    while(interestName[i] != '%'){
+      i++;
+    }
+    std::string limitYStr = interestName.substr(limitPos, i-limitPos);
+    double limitY =atof(limitYStr.c_str());
+    NFD_LOG_DEBUG("The limits in x and y are: "<< limitX << "&" <<limitY);
+     */
+  }
+  else{
+    return false;
+  }
+
+  int srcPos = interestName.find("src");
+  srcPos = srcPos+6;
+  int k = srcPos;
+
+  while(interestName[k] != '%'){
+      k++;
+  }
+  std::string srcXAxis = interestName.substr(srcPos,k-srcPos);
+  NFD_LOG_DEBUG("The X axis coordinate is: " << srcXAxis);
+  double srcx = atof(srcXAxis.c_str());
+  k+=3;
+  srcPos = k;
+  while(interestName[k] != '%'){
+      k++;
+  }
+  std::string srcYAxis = interestName.substr(srcPos, k-srcPos);
+  double srcy = atof(srcYAxis.c_str());
+  k+=3;
+  srcPos = k;
+  while(interestName[k] != '/'){
+      k++;
+  }
+  std::string srcZAxis = interestName.substr(srcPos,k-srcPos);
+  double srcz = atof(srcZAxis.c_str());
+  NFD_LOG_DEBUG(" The source coordinate is (" << srcx << "," << srcy << "," << srcz << ")");
+  ndn::optional<ns3::Vector> src = ns3::Vector3D(srcx,srcy,srcz);
+
+  int destPos = interestName.find("dest");
+  destPos = destPos+7;
+  int j = destPos;
+  //int countDest = 0;
+  while(interestName[j] != '%'){
+    //countDest++;
+    j++;
+  }
+  std::string xAxis = interestName.substr(destPos,j-destPos);
+  NFD_LOG_DEBUG("The X axis coordinate is: " << xAxis);
+  double x = atof(xAxis.c_str());
+  j+=3;
+  destPos = j;
+  while(interestName[j] != '%'){
+    j++;
+  }
+  std::string yAxis = interestName.substr(destPos, j-destPos);
+  double y = atof(yAxis.c_str());
+  j+=3;
+  destPos = j;
+  while(interestName[j] != '/'){
+    j++;
+  }
+  std::string zAxis = interestName.substr(destPos,j-destPos);
+  double z = atof(zAxis.c_str());
+  NFD_LOG_DEBUG(" The coordinate is (" << x << "," << y << "," << z << ")");
+   
+  ndn::optional<ns3::Vector> dest = ns3::Vector3D(x,y,z);
+  auto self = getSelfPosition();
+  NFD_LOG_DEBUG("the type is : " << typeid(dest).name() << "  " << typeid(self).name());
+  //std::cout << typeid(p).name() << std::endl;
+  //auto self = extractPositionFromTag(interest);
+  double distSrcDest = CalculateDistance(*src,*dest);
+  double distCurSrc = CalculateDistance(*src,*self);
+  NFD_LOG_DEBUG("the limit distance is: " << distSrcDest << "   " <<distCurSrc);
+
+  if(distCurSrc > distSrcDest+limitX){
+      return true;
+  }
+  //NFD_LOG_DEBUG("the psotion is " << ns3::Vector(std::get<0>(self), std::get<1>(self), std::get<2>(self)));
+  //NFD_LOG_DEBUG(" self is " << self);
   return false;
 }
 
