@@ -37,7 +37,7 @@ int main (int argc, char *argv[])
 
   //Set the frequency
   uint32_t ulEarfcn = 18100;
-  uint16_t ulBandwidth = 50;
+  uint16_t ulBandwidth = 75;
 
   // Set error models
   Config::SetDefault ("ns3::LteSpectrumPhy::SlCtrlErrorModelEnabled", BooleanValue (true));
@@ -100,53 +100,21 @@ int main (int argc, char *argv[])
 
   //Create nodes (UEs)
   NodeContainer ueNodes;
-  ueNodes.Create (7);
+  ueNodes.Create (6);
   NS_LOG_INFO ("UE 1 node id = [" << ueNodes.Get (0)->GetId () << "]");
   NS_LOG_INFO ("UE 2 node id = [" << ueNodes.Get (1)->GetId () << "]");
   NS_LOG_INFO ("UE 3 node id = [" << ueNodes.Get (2)->GetId () << "]");
-/*
-  //Position of the nodes
-  Ptr<ListPositionAllocator> positionAllocUe1 = CreateObject<ListPositionAllocator> ();
-  positionAllocUe1->Add (Vector (0.0, 0.0, 0.0));
-  Ptr<ListPositionAllocator> positionAllocUe2 = CreateObject<ListPositionAllocator> ();
-  positionAllocUe1->Add (Vector (400.0, 0.0, 0.0));
-  Ptr<ListPositionAllocator> positionAllocUe3 = CreateObject<ListPositionAllocator> ();
-  positionAllocUe3->Add (Vector (500.0, 0.0, 0.0));
-  Ptr<ListPositionAllocator> positionAllocUe4 = CreateObject<ListPositionAllocator> ();
-  positionAllocUe4->Add (Vector (distance, 0.0, 0.0)); // add "v2vscene --distance = value" in commandline 
-  
-
-  MobilityHelper mobilityUe1;
-  mobilityUe1.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-  mobilityUe1.SetPositionAllocator (positionAllocUe1);
-  mobilityUe1.Install (ueNodes.Get (0));
-
-  MobilityHelper mobilityUe2;
-  mobilityUe2.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-  mobilityUe2.SetPositionAllocator (positionAllocUe1);
-  mobilityUe2.Install (ueNodes.Get (1));
-
-  MobilityHelper mobilityUe3;
-  mobilityUe3.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-  mobilityUe3.SetPositionAllocator (positionAllocUe1);
-  mobilityUe3.Install (ueNodes.Get (2));
-
-  MobilityHelper mobilityUe4;
-  mobilityUe4.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-  mobilityUe4.SetPositionAllocator (positionAllocUe1);
-  mobilityUe4.Install (ueNodes.Get (3));
-*/
 
   MobilityHelper mobility;
   Ptr<ListPositionAllocator> initialAlloc = CreateObject<ListPositionAllocator> ();
   initialAlloc->Add(Vector(0.0,0.0,0.0));
-  initialAlloc->Add(Vector(100.0,0.0,0.0));
-  initialAlloc->Add(Vector(200.0,0.0,0.0));
-  initialAlloc->Add(Vector(300.0,0.0,0.0));
-  initialAlloc->Add(Vector(400,0.0,0.0));
-  initialAlloc->Add(Vector(750.0,0.0,0.0));
+  //initialAlloc->Add(Vector(100.0,0.0,0.0));
   //initialAlloc->Add(Vector(200.0,0.0,0.0));
-  initialAlloc->Add(Vector(600.0,0.0,0.0));
+  initialAlloc->Add(Vector(-200.0,50.0,0.0));
+  initialAlloc->Add(Vector(200,50.0,0.0));
+  initialAlloc->Add(Vector(500.0,-50.0,0.0));
+  initialAlloc->Add(Vector(700.0,0.0,0.0));
+  initialAlloc->Add(Vector(850.0,300.0,0.0));
   mobility.SetPositionAllocator(initialAlloc);
   mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
   mobility.Install(ueNodes.Get (0));
@@ -155,7 +123,7 @@ int main (int argc, char *argv[])
   mobility.Install(ueNodes.Get (3));
   mobility.Install(ueNodes.Get (4));
   mobility.Install(ueNodes.Get (5));
-  mobility.Install(ueNodes.Get (6));
+  //mobility.Install(ueNodes.Get (6));
 
 
 
@@ -224,20 +192,22 @@ int main (int argc, char *argv[])
 
   //Set Sidelink bearers
   proseHelper->ActivateSidelinkBearer (slBearersActivationTime, ueDevs, tft);
-  
+
   ///*** End of application configuration ***///
   ::ns3::ndn::StackHelper helper;
   helper.SetDefaultRoutes(true);
   helper.InstallAll();
-  
+
   //* Choosing forwarding strategy *//
   ns3::ndn::StrategyChoiceHelper::InstallAll("/", "/localhost/nfd/strategy/directed-geocast");
+
+ //Will add cost231Propagationloss model loss here for and packet loss
 
   // Consumer
   ::ns3::ndn::AppHelper consumerHelper("ns3::ndn::ConsumerCbr");
   // Consumer will request /prefix/0, /prefix/1, ...
   //consumerHelper.SetPrefix("/v2safety/8thStreet/parking");
-  consumerHelper.SetPrefix("/v2safety/8thStreet/src:0,0,0/dest:600,0,0/100");
+  consumerHelper.SetPrefix("/v2safety/8thStreet/0,0,0/700,0,0/100");
   consumerHelper.SetAttribute("Frequency", StringValue("0.5")); // 10 interests a second
   consumerHelper.Install(ueNodes.Get(0));                        // first node
 
@@ -246,10 +216,10 @@ int main (int argc, char *argv[])
   // Producer will reply to all requests starting with /prefix
   producerHelper.SetPrefix("/v2safety/8thStreet");
   producerHelper.SetAttribute("PayloadSize", StringValue("1024"));
-  producerHelper.Install(ueNodes.Get(6));
+  producerHelper.Install(ueNodes.Get(4));
 
-  ns3::ndn::L3RateTracer::InstallAll("trace.txt", Seconds(1));
-  Simulator::Stop (Seconds(20));
+  //ns3::ndn::L3RateTracer::InstallAll("trace.txt", Seconds(1));
+  Simulator::Stop (Seconds(4));
 
   Simulator::Run ();
   Simulator::Destroy ();
