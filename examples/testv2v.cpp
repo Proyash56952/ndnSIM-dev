@@ -37,9 +37,11 @@ int main (int argc, char *argv[])
   Time simTime = Seconds (6);
   bool enableNsLogs = false;
   bool useIPv6 = false;
-  double count = atoi(argv[1]);
+  double count = atof(argv[1]);
+  double distance = atof(argv[2]);
   CommandLine cmd;
   cmd.AddValue("count", "count the iteration number",count);
+  cmd.AddValue("distance","distance for the 2nd node is",distance);
   cmd.AddValue ("simTime", "Total duration of the simulation", simTime);
   cmd.AddValue ("enableNsLogs", "Enable ns-3 logging (debug builds)", enableNsLogs);
 
@@ -123,7 +125,7 @@ int main (int argc, char *argv[])
   MobilityHelper mobility;
   Ptr<ListPositionAllocator> initialAlloc = CreateObject<ListPositionAllocator> ();
   initialAlloc->Add(Vector(0.0,0.0,0.0));
-  initialAlloc->Add(Vector(200.0,0.0,0.0));
+  initialAlloc->Add(Vector(distance,0.0,0.0));
   mobility.SetPositionAllocator(initialAlloc);
   mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
   mobility.Install(ueNodes.Get(0));
@@ -205,7 +207,7 @@ int main (int argc, char *argv[])
   ::ns3::ndn::AppHelper consumerHelper("ns3::ndn::ConsumerCbr");
   // Consumer will request /prefix/0, /prefix/1, ...
   //consumerHelper.SetPrefix("/v2safety/8thStreet/parking");
-  consumerHelper.SetPrefix("/v2safety/8thStreet/100/src:0,0,0/dest:600,0,0/limit:100");
+  consumerHelper.SetPrefix("/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100");
   //consumerHelper.SetAttribute("Batches", StringValue("3s 4"));
   //consumerHelper.SetAttribute("Batches", StringValue("1s 1 2s 5 10s 2"));
   consumerHelper.SetAttribute("Frequency", StringValue("1")); // 2 interests a second
@@ -225,7 +227,7 @@ int main (int argc, char *argv[])
   l3->TraceConnectWithoutContext("InInterests", MakeCallback(&p2));
 
   Simulator::Stop (Seconds(3));
-  ns3::ndn::AppDelayTracer::InstallAll("app-delays-trace.txt");
+  //ns3::ndn::AppDelayTracer::InstallAll("app-delays-trace.txt");
   //ns3::ndn::L3RateTracer::InstallAll("trace.txt", Seconds(1));
   Simulator::Run ();
   Simulator::Destroy ();
