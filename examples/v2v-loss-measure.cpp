@@ -1,3 +1,20 @@
+/*  This script is for scenario for analysing packets in D2D;
+	      The scenario will simulate situations for traffic information distrtibution 
+        in LTE D2D out of coverage scenario. We simulate there will be 4 nodes 2 which is a consumer 
+        and a producer and others are forwarders;	
+	      The producer is at a distance from the consumer which can be put as input by user;
+	      The rate-trace-"distance".txt will show the packet rate at each distance at different nodes;
+        The text files will be stored at ndnSIM/examples/loss folder you will have to create 
+        'loss' folder;
+        To run the simulation type ./waf --run="v2v-loss-measure --distance='value'"
+        To see the debug and how the directed-geocast-strategy is working at consumer and producer
+        NS_LOG=ndn.Consumer:ndn.Producer:ndn-cxx.nfd.DirectedGeocastStrategy 
+                                  ./waf --run="v2v-loss-measure --distance='value'";
+	
+	
+	      # Alex Afansyev, Tarannum Islam
+ */
+
 #include "ns3/lte-module.h"
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
@@ -231,8 +248,7 @@ int main (int argc, char *argv[])
   std::cout<<"Tracer Files are at "<<prefix<<"\n"; // create a loss folder in the ndnSIM/examples folder 
   sprintf (filename, "rate-trace-%f.txt",distance);
   ns3::ndn::L3RateTracer::InstallAll(prefix + filename , Seconds(1)); //seconds() means time intereval between data collection not duration
-  //sprintf (filename, "packet-trace-%f.txt",distance);
-  //L2RateTracer::InstallAll(prefix + filename, Seconds(0.5));
+  //TO DO add total data output at node 1.
   
   
   Simulator::Run ();
