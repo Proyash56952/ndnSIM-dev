@@ -101,21 +101,28 @@ int main (int argc, char *argv[])
 
   //Create nodes (UEs)
   NodeContainer ueNodes;
-  ueNodes.Create (6);
+  ueNodes.Create (9);
   NS_LOG_INFO ("UE 1 node id = [" << ueNodes.Get (0)->GetId () << "]");
   NS_LOG_INFO ("UE 2 node id = [" << ueNodes.Get (1)->GetId () << "]");
   NS_LOG_INFO ("UE 3 node id = [" << ueNodes.Get (2)->GetId () << "]");
 
   MobilityHelper mobility;
   Ptr<ListPositionAllocator> initialAlloc = CreateObject<ListPositionAllocator> ();
+  //this node will generate the interest
   initialAlloc->Add(Vector(0.0,0.0,0.0));
-  //initialAlloc->Add(Vector(100.0,0.0,0.0));
-  //initialAlloc->Add(Vector(200.0,0.0,0.0));
-  initialAlloc->Add(Vector(-200.0,50.0,0.0));
-  initialAlloc->Add(Vector(200,50.0,0.0));
-  initialAlloc->Add(Vector(500.0,-50.0,0.0));
-  initialAlloc->Add(Vector(700.0,0.0,0.0));
-  initialAlloc->Add(Vector(850.0,300.0,0.0));
+  //these nodes will receive the interest in 1st hop
+  initialAlloc->Add(Vector(50.0,-100.0,0.0));
+  initialAlloc->Add(Vector(100.0,0.0,0.0));
+  initialAlloc->Add(Vector(300.0,150.0,0.0));
+  //these nodes will receive the interest in first hop and drop it as they are in opposite direction from the destination
+  initialAlloc->Add(Vector(-50.0,0.0,0.0));
+  initialAlloc->Add(Vector(-50,150.0,0.0));
+  initialAlloc->Add(Vector(-25.0,-100.0,0.0));
+  //this is the producer node
+  initialAlloc->Add(Vector(650.0,200.0,0.0));
+  //this node will drop the interest since it is far away from the destination
+  initialAlloc->Add(Vector(850.0,250.0,0.0));
+
   mobility.SetPositionAllocator(initialAlloc);
   mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
   mobility.Install(ueNodes.Get (0));
@@ -124,7 +131,10 @@ int main (int argc, char *argv[])
   mobility.Install(ueNodes.Get (3));
   mobility.Install(ueNodes.Get (4));
   mobility.Install(ueNodes.Get (5));
-  //mobility.Install(ueNodes.Get (6));
+  mobility.Install(ueNodes.Get (6));
+  mobility.Install(ueNodes.Get (7));
+  mobility.Install(ueNodes.Get (8));
+
 
 
 
@@ -209,7 +219,7 @@ int main (int argc, char *argv[])
   // Consumer will request /prefix/0, /prefix/1, ...
   //consumerHelper.SetPrefix("/v2safety/8thStreet/parking");
   consumerHelper.SetPrefix("/v2safety/8thStreet/0,0,0/700,0,0/100");
-  consumerHelper.SetAttribute("Frequency", StringValue("0.5")); // 10 interests a second
+  consumerHelper.SetAttribute("Frequency", StringValue("1")); // 10 interests a second
   consumerHelper.Install(ueNodes.Get(0));                        // first node
 
   // Producer
@@ -217,7 +227,7 @@ int main (int argc, char *argv[])
   // Producer will reply to all requests starting with /prefix
   producerHelper.SetPrefix("/v2safety/8thStreet");
   producerHelper.SetAttribute("PayloadSize", StringValue("1024"));
-  producerHelper.Install(ueNodes.Get(4));
+  producerHelper.Install(ueNodes.Get(7));
 
   //ns3::ndn::L3RateTracer::InstallAll("trace.txt", Seconds(1));
   Simulator::Stop (Seconds(4));

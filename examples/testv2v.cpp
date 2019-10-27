@@ -118,7 +118,7 @@ int main (int argc, char *argv[])
 
   //Create nodes (UEs)
   NodeContainer ueNodes;
-  ueNodes.Create (2);
+  ueNodes.Create (3);
   NS_LOG_INFO ("UE 1 node id = [" << ueNodes.Get (0)->GetId () << "]");
   NS_LOG_INFO ("UE 2 node id = [" << ueNodes.Get (1)->GetId () << "]");
 
@@ -126,10 +126,12 @@ int main (int argc, char *argv[])
   Ptr<ListPositionAllocator> initialAlloc = CreateObject<ListPositionAllocator> ();
   initialAlloc->Add(Vector(0.0,0.0,0.0));
   initialAlloc->Add(Vector(distance,0.0,0.0));
+  initialAlloc->Add(Vector(300.0,0.0,0.0));
   mobility.SetPositionAllocator(initialAlloc);
   mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
   mobility.Install(ueNodes.Get(0));
   mobility.Install(ueNodes.Get(1));
+  mobility.Install(ueNodes.Get(2));
 
   //Install LTE UE devices to the nodes
   NetDeviceContainer ueDevs = lteHelper->InstallUeDevice (ueNodes);
@@ -207,8 +209,7 @@ int main (int argc, char *argv[])
   ::ns3::ndn::AppHelper consumerHelper("ns3::ndn::ConsumerCbr");
   // Consumer will request /prefix/0, /prefix/1, ...
   //consumerHelper.SetPrefix("/v2safety/8thStreet/parking");
-  consumerHelper.SetPrefix("/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100/v2safety/8thStreet_107thAve/east_crosswalk/0,0,0/600,0,0/100");
-  //consumerHelper.SetAttribute("Batches", StringValue("3s 4"));
+  consumerHelper.SetPrefix("/v2safety/intersectionId:52/laneId:14/0,0,0/600,0,0/100");
   //consumerHelper.SetAttribute("Batches", StringValue("1s 1 2s 5 10s 2"));
   consumerHelper.SetAttribute("Frequency", StringValue("1")); // 2 interests a second
   consumerHelper.Install(ueNodes.Get(0)).Start(Seconds(count));                        // first node
@@ -216,15 +217,27 @@ int main (int argc, char *argv[])
   // Producer
   ::ns3::ndn::AppHelper producerHelper("ns3::ndn::Producer");
   // Producer will reply to all requests starting with /prefix
-  producerHelper.SetPrefix("/v2safety/8thStreet");
+  producerHelper.SetPrefix("/v2safety/intersectionId:52/laneId:14");
   producerHelper.SetAttribute("PayloadSize", StringValue("1024"));
-  //producerHelper.Install(ueNodes.Get(1));
+  producerHelper.Install(ueNodes.Get(1));
   
   auto l3 = ueNodes.Get(0)->GetObject<ns3::ndn::L3Protocol>();
   l3->TraceConnectWithoutContext("OutInterests", MakeCallback(&p1));
 
   l3 = ueNodes.Get(1)->GetObject<ns3::ndn::L3Protocol>();
   l3->TraceConnectWithoutContext("InInterests", MakeCallback(&p2));
+  
+  l3 = ueNodes.Get(1)->GetObject<ns3::ndn::L3Protocol>();
+  l3->TraceConnectWithoutContext("OutInterests", MakeCallback(&p1));
+  
+  l3 = ueNodes.Get(0)->GetObject<ns3::ndn::L3Protocol>();
+  l3->TraceConnectWithoutContext("InInterests", MakeCallback(&p2));
+  
+  //l3 = ueNodes.Get(0)->GetObject<ns3::ndn::L3Protocol>();
+  //l3->TraceConnectWithoutContext("InInterests", MakeCallback(&p2));
+
+
+
 
   Simulator::Stop (Seconds(3));
   //ns3::ndn::AppDelayTracer::InstallAll("app-delays-trace.txt");
