@@ -11,6 +11,8 @@
 #include <cmath>
 #include "ns3/ndnSIM-module.h"
 
+#include "ns3/ndnSIM/model/directed-geocast-strategy.hpp"
+
 using namespace ns3;
 
 
@@ -101,7 +103,7 @@ int main (int argc, char *argv[])
 
   //Create nodes (UEs)
   NodeContainer ueNodes;
-  ueNodes.Create (4);
+  ueNodes.Create (5);
   NS_LOG_INFO ("UE 1 node id = [" << ueNodes.Get (0)->GetId () << "]");
   NS_LOG_INFO ("UE 2 node id = [" << ueNodes.Get (1)->GetId () << "]");
   NS_LOG_INFO ("UE 3 node id = [" << ueNodes.Get (2)->GetId () << "]");
@@ -111,20 +113,31 @@ int main (int argc, char *argv[])
   //this node will generate the interest
   initialAlloc->Add(Vector(0.0,0.0,0.0));
   //these nodes will receive the interest in 1st hop
-  initialAlloc->Add(Vector(300.0,0.0,0.0));
-  //these nodes will receive the interest in first hop and drop it as they are in opposite direction from the destination
   initialAlloc->Add(Vector(-100.0,0.0,0.0));
+  //these nodes will receive the interest in first hop and drop it as they are in opposite direction from the destination
+  initialAlloc->Add(Vector(-300.0,0.0,0.0));
   //this is the producer node
-  initialAlloc->Add(Vector(700.0,0.0,0.0));
-
+  initialAlloc->Add(Vector(-500.0,0.0,0.0));
+  initialAlloc->Add(Vector(300.0,0.0,0.0));
   mobility.SetPositionAllocator(initialAlloc);
-  mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+  mobility.SetMobilityModel ("ns3::ConstantVelocityMobilityModel");
   mobility.Install(ueNodes.Get (0));
   mobility.Install(ueNodes.Get (1));
   mobility.Install(ueNodes.Get (2));
   mobility.Install(ueNodes.Get (3));
+  mobility.Install(ueNodes.Get (4));
+  //mobility.SetVelocity(<1,2,0>);
+  ueNodes.Get (0)->GetObject<ConstantVelocityMobilityModel> ()->SetVelocity (Vector (15, 0, 0));
+   //Config::SetDefault ("ns3::ConstantVelocityMobilityModel::SetVelocity", Vector <1,2,3>);
+  ueNodes.Get (1)->GetObject<ConstantVelocityMobilityModel> ()->SetVelocity (Vector (12, 0, 0));
+  ueNodes.Get (2)->GetObject<ConstantVelocityMobilityModel> ()->SetVelocity (Vector (10, 0, 0));
+  ueNodes.Get (3)->GetObject<ConstantVelocityMobilityModel> ()->SetVelocity (Vector (0, 0, 0));
 
-
+  ueNodes.Get (4)->GetObject<ConstantVelocityMobilityModel> ()->SetVelocity (Vector (15, 0, 0));
+   //Config::SetDefault ("ns3::ConstantVelocityMobilityModel::SetVelocity", Vector <1,2,3>);
+   //Config::SetDefault ("ns3::ConstantVelocityMobilityModel::SetVelocity", Vector <1,2,3>);
+   //Config::SetDefault ("ns3::ConstantVelocityMobilityModel::SetVelocity", Vector <1,2,3>);
+   //Config::SetDefault ("ns3::ConstantVelocityMobilityModel::SetVelocity", Vector <1,2,3>);
 
 
   //Install LTE UE devices to the nodes
@@ -204,24 +217,24 @@ int main (int argc, char *argv[])
   //consumerHelper.SetPrefix("/v2safety/8thStreet/parking");
   consumerHelper.SetPrefix("/v2safety/8thStreet/0,0,0/700,0,0/100");
   consumerHelper.SetAttribute("Frequency", StringValue("1")); // 10 interests a second
-  consumerHelper.Install(ueNodes.Get(0));                        // first node
+  consumerHelper.Install(ueNodes.Get(0)).Start(Seconds(2));                        // first node
 
   // Producer
   ::ns3::ndn::AppHelper producerHelper("ns3::ndn::Producer");
   // Producer will reply to all requests starting with /prefix
   producerHelper.SetPrefix("/v2safety/8thStreet");
   producerHelper.SetAttribute("PayloadSize", StringValue("1024"));
-  producerHelper.Install(ueNodes.Get(3));
+  //producerHelper.Install(ueNodes.Get(3));
 
   //ns3::ndn::L3RateTracer::InstallAll("trace.txt", Seconds(1));
   Simulator::Stop (Seconds(4));
 
-  std::ofstream of("file.csv");
-  of << "Node,Time,Name,Action" << std::endl;
-  nfd::fw::DirectedGeocastStrategy::onAction.connect([&of] (const Name& name, int type) {
+  std::ofstream of("wrongdirectionfile.csv");
+  of << "Node,Time,Name,Action,x coordinate, y coordinate" << std::endl;
+  nfd::fw::DirectedGeocastStrategy::onAction.connect([&of] (const ::ndn::Name& name, int type, double x, double y) {
       auto context = Simulator::GetContext();
-      auto time = Simulator::GetNow().ToDouble(Time::S);
-      of << context << "," << time << "," << name << "," << type << std::endl;
+      auto time = Simulator::Now().ToDouble(Time::S);
+      of << context << "," << time << "," << name.get(-1).toSequenceNumber() << "," << type << ","<< x << "," << y <<std::endl;
     });
 
   Simulator::Run ();
