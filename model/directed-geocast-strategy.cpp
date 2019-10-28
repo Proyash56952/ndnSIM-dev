@@ -231,42 +231,22 @@ DirectedGeocastStrategy::calculateDelay(const Interest& interest)
     NFD_LOG_DEBUG("self or from position is missing");
     return 0_s;
   }
- 
-
-  // TODO
-  //double distance = abs(self->GetLength() - from->GetLength());
-  double distance = CalculateDistance(*self,*from);
-  NFD_LOG_DEBUG("the distance is " << distance);
-  double minTime = 0.01;
   double maxDist = 600;
-  double maxTime = 0.1;
+  double distance = CalculateDistance(*self,*from);
   if (distance < maxDist) {
-    //auto waitTime = time::duration_cast<time::nanoseconds>(time::duration<double>{(minTime * (maxDist-distance)/maxDist)});
-    //double randomNumber = static_cast <double> (rand()) / (static_cast <double> (RAND_MAX));
     ns3::RngSeedManager::SetSeed (3);
     ns3::SeedManager::SetRun (7);
-    double min = minTime;
-    double max = maxTime;
+    double min = 0.01;
+    double max = 0.1;
 
     ns3::Ptr<ns3::UniformRandomVariable> x = ns3::CreateObject<ns3::UniformRandomVariable> ();
     x->SetAttribute ("Min", ns3::DoubleValue(min));
     x->SetAttribute ("Max", ns3::DoubleValue(max));
     auto RandomNo = x->GetValue ();
-    //float randomNumber = 0.003;
-    NFD_LOG_DEBUG("the random number is " << RandomNo);
 
-    auto waitTime = time::duration_cast<time::nanoseconds>(time::duration < double >{((maxTime * (maxDist - distance) / maxDist) +
-                                                                        	     minTime + RandomNo)});
-    // auto waitTime = ((maxTime * (maxDist-distance)/maxDist) + minTime);
-    NFD_LOG_DEBUG("distance to last hop is " << distance << " meter");
-    //NFD_LOG_DEBUG("distance to last hop is "<<distance<<" meter");
-    NFD_LOG_DEBUG("self is at: " << self->GetLength() << " meter");
-    NFD_LOG_DEBUG("from is at: " << from->GetLength() << " meter");
-    NFD_LOG_DEBUG("self and from are within max limit hence delay is: " << waitTime);
-    //return waitTime;
     return time::duration_cast<time::nanoseconds>(time::duration < double >{RandomNo});
-  } 
-  else {
+  }
+ else {
     NFD_LOG_DEBUG("Minimum Delay added is: 10ms ");
     return 10_ms;
   }
@@ -275,7 +255,6 @@ DirectedGeocastStrategy::calculateDelay(const Interest& interest)
 bool
 DirectedGeocastStrategy::shouldCancelTransmission(const pit::Entry& oldPitEntry, const Interest& newInterest)
 {
-  NFD_LOG_DEBUG("Entered into Should cancel tranmission ");
   auto self = getSelfPosition();
   auto oldFrom = extractPositionFromTag(oldPitEntry.getInterest());
   auto newFrom = extractPositionFromTag(newInterest);
@@ -285,25 +264,15 @@ DirectedGeocastStrategy::shouldCancelTransmission(const pit::Entry& oldPitEntry,
     return false;
   }
 
-  // TODO
-  NFD_LOG_DEBUG("self, oldform and newform are " << self->GetLength() << " " << oldFrom->GetLength() << " " << newFrom->GetLength());
   //distance calculation
-  //double distanceToLasthop = (self->GetLength() - newFrom->GetLength());
   double distanceToLasthop = CalculateDistance(*self,*newFrom);
-  NFD_LOG_DEBUG("distance to last hop is " << distanceToLasthop);
   double distanceToOldhop = CalculateDistance(*self,*oldFrom);
-  //double distanceToOldhop = (self->GetLength() - oldFrom->GetLength());
-  NFD_LOG_DEBUG("distance to old hop is " << distanceToOldhop);
   double distanceBetweenLasthops = CalculateDistance(*newFrom,*oldFrom);
-  //double distanceBetweenLasthops = (newFrom->GetLength() - oldFrom->GetLength());
-  NFD_LOG_DEBUG("distance between last hops is " << distanceBetweenLasthops);
 
   //Angle calculation
   double angleRad = acos((pow(distanceToOldhop, 2) + pow(distanceBetweenLasthops, 2) - pow(distanceToLasthop, 2)) /
                     (2 * distanceToOldhop * distanceBetweenLasthops));
   double angleDeg = angleRad * 180 / 3.141592;
-  // double Angle_Deg = 91.00;
-  NFD_LOG_DEBUG("angle is " << angleDeg);
 
   // Projection Calculation
   double cosineAngleAtSelf = (pow(distanceToOldhop, 2) - pow(distanceToLasthop, 2) + pow(distanceBetweenLasthops, 2)) /
@@ -346,11 +315,11 @@ DirectedGeocastStrategy::parsingCoordinate(std::string s)
   return result;
   
 }
+
 bool
 DirectedGeocastStrategy::shouldLimitTransmission(const Interest& interest)
 {
   auto name = interest.getName();
-  //auto dst = std::string(name.get(-2).value(), name.get(-2).value_size());
   std::string limitStr = name.get(-2).toUri();
   std::string dest = name.get(-3).toUri();
   std::string src = name.get(-4).toUri();
@@ -365,19 +334,13 @@ DirectedGeocastStrategy::shouldLimitTransmission(const Interest& interest)
                     (2 * distCurSrc * distSrcDest);
   double angle = (acos(cosineAngle)*180)/3.141592;
   double projection = distCurSrc * cosineAngle;
-  NFD_LOG_DEBUG("the angle and distances are: "<< angle <<" " << distSrcDest << " " <<distCurSrc << " " <<distCurDest << " " <<projection);
+
   if(angle > 90){
     return true;
   }
   else if(projection > distSrcDest+limit){
     return true;
   }
-
-
-  //if(distCurSrc > distSrcDest+limit){
-    //return true;	      
-  //}
-  //double distCurDest = CalculateDistance(*destination, *self);
 
  return false;
 }
