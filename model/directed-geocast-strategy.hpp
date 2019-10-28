@@ -21,6 +21,7 @@
 #define NDNSIM_MODEL_DIRECTED_GEOCAST_STRATEGY_HPP
 
 #include "daemon/fw/strategy.hpp"
+#include "ndn-cxx/util/signal.hpp"
 
 #include "ns3/vector.h"
 
@@ -47,6 +48,14 @@ public:
   void
   afterReceiveLoopedInterest(const FaceEndpoint& ingress, const Interest& interest,
                              pit::Entry& pitEntry) override;
+
+  enum {
+    Sent = 0,
+    Received = 1,
+    ReceivedDup = 2,
+    Canceled = 3,
+  };
+  static ndn::util::Signal<DirectedGeocastStrategy, Name, int> onAction;
 
 private:
   static ndn::optional<ns3::Vector>
