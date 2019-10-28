@@ -50,7 +50,7 @@
 namespace nfd {
 namespace fw {
 
-ndn::util::Signal<DirectedGeocastStrategy, Name, int> DirectedGeocastStrategy::onAction;
+ndn::util::Signal<DirectedGeocastStrategy, Name, int, double, double> DirectedGeocastStrategy::onAction;
 
 NFD_REGISTER_STRATEGY(DirectedGeocastStrategy);
 
@@ -81,7 +81,15 @@ void
 DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const Interest& interest,
                                               const shared_ptr<pit::Entry>& pitEntry)
 {
-  this->onAction(interest.getName(), Received);
+  double posx =0.0;
+  double posy =0.0;
+  ndn::optional<ns3::Vector> pos = getSelfPosition();
+  if(pos){
+    posx = pos->x;
+    posy = pos->y;
+  }
+  //std::cout << x;
+  this->onAction(interest.getName(), Received, posx, posy);
 
   NFD_LOG_DEBUG("ReceivedInterest: ");
   const fib::Entry& fibEntry = this->lookupFib(*pitEntry);
@@ -91,7 +99,6 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
 
   for (const auto& nexthop : nexthops) {
     Face& outFace = nexthop.getFace();
-
     if ((outFace.getId() == ingress.face.getId() && outFace.getLinkType() != ndn::nfd::LINK_TYPE_AD_HOC) ||
         wouldViolateScope(ingress.face, interest, outFace)) {
       continue;
@@ -100,7 +107,8 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
     if (outFace.getLinkType() != ndn::nfd::LINK_TYPE_AD_HOC) {
       // for non-ad hoc links, send interest as usual
       this->sendInterest(pitEntry, FaceEndpoint(outFace, 0), interest);
-      this->onAction(interest.getName(), Sent);
+      this->onAction(interest.getName(), Sent, posx, posy);
+      
       NFD_LOG_DEBUG(interest << " from=" << ingress << " pitEntry-to=" << outFace.getId());
     }
     //NFD_LOG_DEBUG("the link type is " << outFace.getLinkType());
@@ -131,7 +139,7 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
       NFD_LOG_DEBUG("Delaying by " << delay);
       if (delay > 0_s) {
         scheduler::ScopedEventId event = getScheduler().schedule(delay, [this, pitEntryWeakPtr,
-                                                                         faceId, interest] {
+                                                                       faceId, interest] {
             auto pitEntry = pitEntryWeakPtr.lock();
             auto outFace = getFaceTable().get(faceId);
             if (pitEntry == nullptr || outFace == nullptr) {
@@ -140,8 +148,16 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
             }
 
             this->sendInterest(pitEntry, FaceEndpoint(*outFace, 0), interest);
-            this->onAction(interest.getName(), Sent);
-            NFD_LOG_DEBUG("delayed " << interest << " pitEntry-to=" << faceId);
+            double posx =0.0;
+            double posy =0.0;
+            ndn::optional<ns3::Vector> pos = getSelfPosition();
+            if(pos){
+              posx = pos->x;
+              posy = pos->y;
+            }
+  //std::cout << x;
+            this->onAction(interest.getName(), Sent, posx, posy);
+	    NFD_LOG_DEBUG("delayed " << interest << " pitEntry-to=" << faceId);
           });
 
         // save `event` into pitEntry
@@ -149,7 +165,18 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
       }
       else {
         this->sendInterest(pitEntry, FaceEndpoint(outFace, 0), interest);
-        this->onAction(interest.getName(), Sent);
+        double posx =0.0;
+        double posy =0.0;
+        ndn::optional<ns3::Vector> pos = getSelfPosition();
+        if(pos){
+          posx = pos->x;
+          posy = pos->y;
+        }
+  //std::cout << x;
+        this->onAction(interest.getName(), Sent, posx, posy);
+
+
+        //this->onAction(interest.getName(), Sent, posx, posy);
         NFD_LOG_DEBUG("Could not determine to delay interest");
         NFD_LOG_DEBUG(interest << " from=" << ingress << " pitEntry-to=" << outFace.getId());
       }
@@ -175,7 +202,14 @@ void
 DirectedGeocastStrategy::afterReceiveLoopedInterest(const FaceEndpoint& ingress, const Interest& interest,
                                                     pit::Entry& pitEntry)
 {
-  this->onAction(interest.getName(), ReceivedDup);
+  double posx1 = 0.0;
+  double posy1 = 0.0;
+  ndn::optional<ns3::Vector> pos = getSelfPosition();
+  if(pos){
+  posx1 = pos->x;
+  posy1 = pos->y;
+  }
+  this->onAction(interest.getName(), ReceivedDup,posx1,posy1);
   // determine if interest needs to be cancelled or not
 
   PitInfo* pi = pitEntry.getStrategyInfo<PitInfo>();
@@ -192,6 +226,7 @@ DirectedGeocastStrategy::afterReceiveLoopedInterest(const FaceEndpoint& ingress,
 
   if (shouldCancelTransmission(pitEntry, interest)) {
     item->second.cancel();
+    this->onAction(interest.getName(), Canceled, posx1, posy1);
 
     // don't do anything to the PIT entry (let it expire as usual)
     NFD_LOG_DEBUG("Canceling transmission of " << interest << " via=" << ingress.face.getId());

@@ -55,7 +55,7 @@ public:
     ReceivedDup = 2,
     Canceled = 3,
   };
-  static ndn::util::Signal<DirectedGeocastStrategy, Name, int> onAction;
+  static ndn::util::Signal<DirectedGeocastStrategy, Name, int, double, double > onAction;
 
 private:
   static ndn::optional<ns3::Vector>
