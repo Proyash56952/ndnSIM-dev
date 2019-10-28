@@ -50,6 +50,8 @@
 namespace nfd {
 namespace fw {
 
+ndn::util::Signal<DirectedGeocastStrategy, Name, int> DirectedGeocastStrategy::onAction;
+
 NFD_REGISTER_STRATEGY(DirectedGeocastStrategy);
 
 NFD_LOG_INIT(DirectedGeocastStrategy);
@@ -79,6 +81,8 @@ void
 DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const Interest& interest,
                                               const shared_ptr<pit::Entry>& pitEntry)
 {
+  this->onAction(interest.getName(), Received);
+
   NFD_LOG_DEBUG("ReceivedInterest: ");
   const fib::Entry& fibEntry = this->lookupFib(*pitEntry);
   const fib::NextHopList& nexthops = fibEntry.getNextHops();
@@ -96,6 +100,7 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
     if (outFace.getLinkType() != ndn::nfd::LINK_TYPE_AD_HOC) {
       // for non-ad hoc links, send interest as usual
       this->sendInterest(pitEntry, FaceEndpoint(outFace, 0), interest);
+      this->onAction(interest.getName(), Sent);
       NFD_LOG_DEBUG(interest << " from=" << ingress << " pitEntry-to=" << outFace.getId());
     }
     //NFD_LOG_DEBUG("the link type is " << outFace.getLinkType());
@@ -135,6 +140,7 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
             }
 
             this->sendInterest(pitEntry, FaceEndpoint(*outFace, 0), interest);
+            this->onAction(interest.getName(), Sent);
             NFD_LOG_DEBUG("delayed " << interest << " pitEntry-to=" << faceId);
           });
 
@@ -143,6 +149,7 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
       }
       else {
         this->sendInterest(pitEntry, FaceEndpoint(outFace, 0), interest);
+        this->onAction(interest.getName(), Sent);
         NFD_LOG_DEBUG("Could not determine to delay interest");
         NFD_LOG_DEBUG(interest << " from=" << ingress << " pitEntry-to=" << outFace.getId());
       }
@@ -168,6 +175,7 @@ void
 DirectedGeocastStrategy::afterReceiveLoopedInterest(const FaceEndpoint& ingress, const Interest& interest,
                                                     pit::Entry& pitEntry)
 {
+  this->onAction(interest.getName(), ReceivedDup);
   // determine if interest needs to be cancelled or not
 
   PitInfo* pi = pitEntry.getStrategyInfo<PitInfo>();

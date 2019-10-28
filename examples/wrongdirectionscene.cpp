@@ -216,6 +216,14 @@ int main (int argc, char *argv[])
   //ns3::ndn::L3RateTracer::InstallAll("trace.txt", Seconds(1));
   Simulator::Stop (Seconds(4));
 
+  std::ofstream of("file.csv");
+  of << "Node,Time,Name,Action" << std::endl;
+  nfd::fw::DirectedGeocastStrategy::onAction.connect([&of] (const Name& name, int type) {
+      auto context = Simulator::GetContext();
+      auto time = Simulator::GetNow().ToDouble(Time::S);
+      of << context << "," << time << "," << name << "," << type << std::endl;
+    });
+
   Simulator::Run ();
   Simulator::Destroy ();
   return 0;
