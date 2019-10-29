@@ -39,8 +39,6 @@
 #include "math.h"
 #include "ns3/vector.h"
 #include <chrono>
-#include "ns3/random-variable-stream.h"
-#include "ns3/rng-seed-manager.h"
 #include "ns3/double.h"
 #include <ctime>
 #include <cstdlib>
@@ -61,13 +59,20 @@ DirectedGeocastStrategy::DirectedGeocastStrategy(Forwarder& forwarder, const Nam
 {
   ParsedInstanceName parsed = parseInstanceName(name);
   if (!parsed.parameters.empty()) {
-    NDN_THROW(std::invalid_argument("DirectedGeocastStrategy does not accept parameters"));
+    // NDN_THROW(std::invalid_argument("DirectedGeocastStrategy does not accept parameters"));
+    m_minTime = boost::lexical_cast<double>(parsed.parameters[0]);
+    m_maxTime = boost::lexical_cast<double>(parsed.parameters[1]);
   }
-  if (parsed.version && *parsed.version != getStrategyName()[-1].toVersion()) {
-    NDN_THROW(std::invalid_argument(
-      "DirectedGeocastStrategy does not support version " + to_string(*parsed.version)));
-  }
+
+  // if (parsed.version && *parsed.version != getStrategyName()[-1].toVersion()) {
+  //   NDN_THROW(std::invalid_argument(
+  //     "DirectedGeocastStrategy does not support version " + to_string(*parsed.version)));
+  // }
   this->setInstanceName(makeInstanceName(name, getStrategyName()));
+
+  m_randVar = ns3::CreateObject<ns3::UniformRandomVariable>();
+  m_randVar->SetAttribute ("Min", ns3::DoubleValue(m_minTime));
+  m_randVar->SetAttribute ("Max", ns3::DoubleValue(m_maxTime));
 }
 
 const Name&
@@ -121,6 +126,7 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
       PitInfo* pi = pitEntry->insertStrategyInfo<PitInfo>().first;
       if (pi->queue.find(faceId) != pi->queue.end()) {
         NFD_LOG_DEBUG(interest << " already scheduled pitEntry-to=" << outFace.getId());
+        std::cerr << "Impossible point" << std::endl;
         continue;
       }
 
@@ -130,6 +136,7 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
       //NFD_LOG_DEBUG("The result of limit tranmission is " << limitTransmission);
       if(shouldLimitTransmission(interest)){
         NFD_LOG_DEBUG("limiting the transmission of " << interest);
+        std::cerr << "limiting transmission point" << std::endl;
         continue;
       }
 
@@ -185,17 +192,17 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
     ++nEligibleNextHops;
   }
 
-  if (nEligibleNextHops == 0) {
-    NFD_LOG_DEBUG(interest << " from=" << ingress << " noNextHop");
+  // if (nEligibleNextHops == 0) {
+  //   NFD_LOG_DEBUG(interest << " from=" << ingress << " noNextHop");
 
-    // don't support NACKs (for now or ever)
+  //   // don't support NACKs (for now or ever)
 
-    // lp::NackHeader nackHeader;
-    // nackHeader.setReason(lp::NackReason::NO_ROUTE);
-    // this->sendNack(pitEntry, ingress, nackHeader);
+  //   // lp::NackHeader nackHeader;
+  //   // nackHeader.setReason(lp::NackReason::NO_ROUTE);
+  //   // this->sendNack(pitEntry, ingress, nackHeader);
 
-    this->rejectPendingInterest(pitEntry);
-  }
+  //   this->rejectPendingInterest(pitEntry);
+  // }
 }
 
 void
@@ -230,6 +237,7 @@ DirectedGeocastStrategy::afterReceiveLoopedInterest(const FaceEndpoint& ingress,
 
     // don't do anything to the PIT entry (let it expire as usual)
     NFD_LOG_DEBUG("Canceling transmission of " << interest << " via=" << ingress.face.getId());
+    pi->queue.erase(item);
   }
 }
 
@@ -277,17 +285,9 @@ DirectedGeocastStrategy::calculateDelay(const Interest& interest)
   double maxDist = 600;
   double distance = CalculateDistance(*self,*from);
   if (distance < maxDist) {
-    ns3::RngSeedManager::SetSeed (3);
-    ns3::SeedManager::SetRun (7);
-    double min = 0.01;
-    double max = 0.1;
+    auto RandomNo = m_randVar->GetValue ();
 
-    ns3::Ptr<ns3::UniformRandomVariable> x = ns3::CreateObject<ns3::UniformRandomVariable> ();
-    x->SetAttribute ("Min", ns3::DoubleValue(min));
-    x->SetAttribute ("Max", ns3::DoubleValue(max));
-    auto RandomNo = x->GetValue ();
-
-    return time::duration_cast<time::nanoseconds>(time::duration < double >{RandomNo});
+    return time::duration_cast<time::nanoseconds>(time::duration<double>{RandomNo});
   }
  else {
     NFD_LOG_DEBUG("Minimum Delay added is: 10ms ");

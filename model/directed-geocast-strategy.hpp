@@ -24,6 +24,7 @@
 #include "ndn-cxx/util/signal.hpp"
 
 #include "ns3/vector.h"
+#include "ns3/random-variable-stream.h"
 
 namespace nfd {
 namespace fw {
@@ -68,7 +69,7 @@ private:
   /**
    * if returns 0_s, then either own position or geo tag in interest is missing
    */
-  static time::nanoseconds
+  time::nanoseconds
   calculateDelay(const Interest& interest);
 
   /**
@@ -97,6 +98,10 @@ private: // StrategyInfo
   public:
     std::map<FaceId, scheduler::ScopedEventId> queue;
   };
+
+  ns3::Ptr<ns3::UniformRandomVariable> m_randVar;
+  double m_minTime = 0.02;
+  double m_maxTime = 0.1;
 };
 
 } // namespace fw
