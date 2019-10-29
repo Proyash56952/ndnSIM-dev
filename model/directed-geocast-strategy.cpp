@@ -324,11 +324,11 @@ DirectedGeocastStrategy::shouldCancelTransmission(const pit::Entry& oldPitEntry,
   double projection = abs(distanceBetweenLasthops * cosineAngleAtSelf);
   NFD_LOG_DEBUG("projection is " << projection);
 
-  if (angleDeg >= 90) {
+  /*if (angleDeg >= 90) {
     NFD_LOG_DEBUG("Interest need not to be cancelled");
     return false;
-   }
-  else if (projection > distanceToOldhop) {
+   }*/
+  if (projection > distanceToOldhop) {
     NFD_LOG_DEBUG("Interest need to be cancelled");
     return true;
    }
