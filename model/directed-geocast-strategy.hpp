@@ -55,7 +55,7 @@ public:
     ReceivedDup = 2,
     Canceled = 3,
   };
-  static ndn::util::Signal<DirectedGeocastStrategy, Name, int, double, double > onAction;
+  static ndn::util::Signal<DirectedGeocastStrategy, Name, int, double, double> onAction;
 
 private:
   static ndn::optional<ns3::Vector>
@@ -63,7 +63,7 @@ private:
 
   static ndn::optional<ns3::Vector>
   extractPositionFromTag(const Interest& interest);
-  
+
 
   /**
    * if returns 0_s, then either own position or geo tag in interest is missing
@@ -76,10 +76,10 @@ private:
    */
   static bool
   shouldCancelTransmission(const pit::Entry& oldPitEntry, const Interest& newInterest);
-  
+
   static ndn::optional<ns3::Vector>
   parsingCoordinate(std::string s);
-  
+
   static bool
   shouldLimitTransmission(const Interest& interest);
 private: // StrategyInfo
