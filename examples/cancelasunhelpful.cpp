@@ -19,6 +19,8 @@ NS_LOG_COMPONENT_DEFINE ("LteSlOutOfCovrg");
 
 int main (int argc, char *argv[])
 {
+  Ptr<UniformRandomVariable> uv = CreateObject<UniformRandomVariable> ();
+  std::cout << uv->GetValue () << std::endl;
   Time simTime = Seconds (6);
   bool enableNsLogs = false;
   bool useIPv6 = false;
@@ -124,7 +126,7 @@ int main (int argc, char *argv[])
   mobility.Install(ueNodes.Get (0));
   mobility.Install(ueNodes.Get (1));
   mobility.Install(ueNodes.Get (2));
-  mobility.Install(ueNodes.Get (3));*/
+  mobility.Install(ueNodes.Get (3));
   double inc = 600/nodeNumber;
   double xposition = inc;
   for( int i = 1; i< nodeNumber; i++ ){
@@ -137,13 +139,42 @@ int main (int argc, char *argv[])
      initialAlloc->Add(Vector(xposition,-50.0,0.0));
     }
     xposition = xposition + inc;
+  }*/
+
+  int full = 1;
+  int check[400];
+  for(int i=0;i<400;i++){
+    check[i] = 0;
   }
+
+  while(full < nodeNumber){
+    Ptr<UniformRandomVariable> uvr = CreateObject<UniformRandomVariable> ();
+    double uv = uvr->GetValue();
+    double xCoordinate,yCoordinate;
+    std::cout << uv<< std::endl;
+    uv =ceil(uv*100);
+    uv = uv/100*200;
+    int no = (int) uv;
+    if(check[no] == 0){
+      full++;
+      std::cout<< no << std::endl;
+      xCoordinate = (no%50)*10;
+      yCoordinate = (no/50)*4;
+      initialAlloc->Add(Vector(xCoordinate,yCoordinate,0.0));
+    }
+
+  }
+
   mobility.SetPositionAllocator(initialAlloc);
   mobility.SetMobilityModel ("ns3::ConstantVelocityMobilityModel");
+  //ueNodes.Get (0)->GetObject<ConstantVelocityMobilityModel> ()->SetVelocity (Vector (10, 0, 0));
   for(int i= 0;i<nodeNumber; i++){
     mobility.Install(ueNodes.Get (i));
     if(i%2 == 0 ){
       ueNodes.Get (i)->GetObject<ConstantVelocityMobilityModel> ()->SetVelocity (Vector (10, 0, 0));
+    }
+    else if(i%3 == 0){
+      ueNodes.Get (i)->GetObject<ConstantVelocityMobilityModel> ()->SetVelocity (Vector (5, 0, 0));
     }
   }
   //mobility.Install(ueNodes.Get (0));
@@ -238,12 +269,22 @@ int main (int argc, char *argv[])
 
   //ns3::ndn::L3RateTracer::InstallAll("trace.txt", Seconds(1));
   Simulator::Stop (Seconds(4));
-  std::ofstream of(std::to_string(nodeNumber)+"cancelasunhelpful.csv");
+  int no = (int) nodeNumber;
+  std::ofstream of(std::to_string(no)+"cancelasunhelpful.csv");
   of << "Node,Time,Name,Action,x coordinate, y coordinate" << std::endl;
   nfd::fw::DirectedGeocastStrategy::onAction.connect([&of] (const ::ndn::Name& name, int type, double x, double y) {
       auto context = Simulator::GetContext();
       auto time = Simulator::Now().ToDouble(Time::S);
-      of << context << "," << time << "," << name.get(-1).toSequenceNumber() << "," << type << ","<< x << "," << y <<std::endl;
+      std::string action;
+      if(type == 0)
+      	action = "sent";
+      else if( type == 1)
+        action = "received";
+      else if (type == 2)
+        action = "duplicate received";
+      else
+        action = "canceled";
+      of << context << "," << time << "," << name.get(-1).toSequenceNumber() << "," << action << ","<< x << "," << y <<std::endl;
     });
 
   Simulator::Run ();
