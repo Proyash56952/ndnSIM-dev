@@ -315,7 +315,7 @@ DirectedGeocastStrategy::shouldCancelTransmission(const pit::Entry& oldPitEntry,
   //Angle calculation
   double angleRad = acos((pow(distanceToOldhop, 2) + pow(distanceBetweenLasthops, 2) - pow(distanceToLasthop, 2)) /
                     (2 * distanceToOldhop * distanceBetweenLasthops));
-  double angleDeg = angleRad * 180 / 3.141592;
+  // double angleDeg = angleRad * 180 / 3.141592;
 
   // Projection Calculation
   double cosineAngleAtSelf = (pow(distanceToOldhop, 2) - pow(distanceToLasthop, 2) + pow(distanceBetweenLasthops, 2)) /
@@ -328,7 +328,7 @@ DirectedGeocastStrategy::shouldCancelTransmission(const pit::Entry& oldPitEntry,
     NFD_LOG_DEBUG("Interest need not to be cancelled");
     return false;
    }*/
-  if (projection < distanceToOldhop) {
+  if (projection > distanceToOldhop) {
     NFD_LOG_DEBUG("Interest need to be cancelled");
     return true;
    }
@@ -362,6 +362,12 @@ DirectedGeocastStrategy::parsingCoordinate(std::string s)
 bool
 DirectedGeocastStrategy::shouldLimitTransmission(const Interest& interest)
 {
+  auto newFrom = extractPositionFromTag(interest);
+  if (!newFrom) {
+    // originator
+    return false;
+  }
+
   auto name = interest.getName();
   std::string limitStr = name.get(-2).toUri();
   std::string dest = name.get(-3).toUri();
@@ -370,18 +376,43 @@ DirectedGeocastStrategy::shouldLimitTransmission(const Interest& interest)
   ndn::optional<ns3::Vector> destination = parsingCoordinate(dest);
   ndn::optional<ns3::Vector> source = parsingCoordinate(src);
   auto self = getSelfPosition();
-  double distSrcDest = CalculateDistance(*source,*destination);
-  double distCurSrc = CalculateDistance(*source,*self);
+
+  if (!self || !destination || !source) {
+    NFD_LOG_DEBUG("self, oldFrom, or newFrom position is missing");
+    return false;
+  }
+
+  double distSrcDest = CalculateDistance(*source, *destination);
+  double distCurSrc = CalculateDistance(*source, *self);
   double distCurDest = CalculateDistance(*destination, *self);
   double cosineAngle = (pow(distCurSrc, 2) - pow(distCurDest, 2) + pow(distSrcDest, 2)) /
                     (2 * distCurSrc * distSrcDest);
   double angle = (acos(cosineAngle)*180)/3.141592;
   double projection = distCurSrc * cosineAngle;
 
-  if(angle > 90){
+  if (distCurSrc < 5 || distCurDest < 5) {
     return true;
   }
-  else if(projection > distSrcDest+limit){
+
+  // if (abs(distCurSrc + distCurDest - distSrcDest) < 5) {
+
+  // }
+
+  if (ns3::Simulator::GetContext() == 82) {
+    std::cerr << "angle: " << angle << std::endl;
+    std::cerr << *self << ", " << *destination << ", " << *source << std::endl;
+    std::cerr << "srcdest=" << distSrcDest <<
+      ", cursrc=" << distCurSrc << ", curdst=" << distCurDest << ", angle=" << cosineAngle << std::endl;
+  }
+
+  if (isnan(angle) || angle < 1 || angle > 89) {
+    // std::cerr << "angle: " << angle << std::endl;
+    // std::cerr << *self << ", " << *destination << ", " << *source << std::endl;
+    // std::cerr << "srcdest=" << distSrcDest <<
+    //   ", cursrc=" << distCurSrc << ", curdst=" << distCurDest << ", angle=" << cosineAngle << std::endl;
+    return true;
+  }
+  else if (projection > distSrcDest+limit){
     return true;
   }
 
