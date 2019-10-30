@@ -328,7 +328,7 @@ DirectedGeocastStrategy::shouldCancelTransmission(const pit::Entry& oldPitEntry,
     NFD_LOG_DEBUG("Interest need not to be cancelled");
     return false;
    }*/
-  if (projection > distanceToOldhop) {
+  if (projection < distanceToOldhop) {
     NFD_LOG_DEBUG("Interest need to be cancelled");
     return true;
    }
