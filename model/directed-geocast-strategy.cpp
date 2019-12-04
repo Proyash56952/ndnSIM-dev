@@ -112,7 +112,7 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
     if (outFace.getLinkType() != ndn::nfd::LINK_TYPE_AD_HOC) {
       // for non-ad hoc links, send interest as usual
       this->sendInterest(pitEntry, FaceEndpoint(outFace, 0), interest);
-      this->onAction(interest.getName(), Sent, posx, posy);
+      this->onAction(interest.getName(), Sent, posX, posY);
 
       NFD_LOG_DEBUG(interest << " from=" << ingress << " pitEntry-to=" << outFace.getId());
     }
@@ -175,7 +175,7 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
           posY = pos->y;
         }
         //std::cout << x;
-        this->onAction(interest.getName(), Sent, posx, posy);
+        this->onAction(interest.getName(), Sent, posX, posY);
 
 
         //this->onAction(interest.getName(), Sent, posx, posy);
