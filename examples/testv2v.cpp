@@ -11,6 +11,8 @@
 #include <cmath>
 #include "ns3/ndnSIM-module.h"
 
+#include "ns3/cost231-propagation-loss-model.h"
+
 using namespace ns3;
 
 
@@ -37,11 +39,13 @@ int main (int argc, char *argv[])
   Time simTime = Seconds (6);
   bool enableNsLogs = false;
   bool useIPv6 = false;
-  double count = atof(argv[1]);
-  double distance = atof(argv[2]);
+  double count = 2.0;
+  double distance = 100.0;
+  int node = 3;
   CommandLine cmd;
   cmd.AddValue("count", "count the iteration number",count);
   cmd.AddValue("distance","distance for the 2nd node is",distance);
+  cmd.AddValue("node","node no is",node);
   cmd.AddValue ("simTime", "Total duration of the simulation", simTime);
   cmd.AddValue ("enableNsLogs", "Enable ns-3 logging (debug builds)", enableNsLogs);
 
@@ -99,6 +103,12 @@ int main (int argc, char *argv[])
 
   //Set pathloss model
   lteHelper->SetAttribute ("PathlossModel", StringValue ("ns3::Cost231PropagationLossModel"));
+  //lteHelper->SetPathlossModelAttribute ("Lambda", DoubleValue(5000000.0));
+  //lteHelper->SetPathlossModelAttribute ("Frequency", DoubleValue(50.0));
+  //lteHelper->SetPathlossModelAttribute ("MinDistance", DoubleValue(1000.0));
+  lteHelper->SetPathlossModelAttribute ("BSAntennaHeight", DoubleValue(1.5));
+  lteHelper->SetPathlossModelAttribute ("SSAntennaHeight", DoubleValue(1.5));
+  //ns3::Cost231PropagationLossModel::SetLambda(50.0)
   // channel model initialization
   lteHelper->Initialize ();
 
@@ -118,7 +128,7 @@ int main (int argc, char *argv[])
 
   //Create nodes (UEs)
   NodeContainer ueNodes;
-  ueNodes.Create (3);
+  ueNodes.Create (node);
   NS_LOG_INFO ("UE 1 node id = [" << ueNodes.Get (0)->GetId () << "]");
   NS_LOG_INFO ("UE 2 node id = [" << ueNodes.Get (1)->GetId () << "]");
 
@@ -126,12 +136,19 @@ int main (int argc, char *argv[])
   Ptr<ListPositionAllocator> initialAlloc = CreateObject<ListPositionAllocator> ();
   initialAlloc->Add(Vector(0.0,0.0,0.0));
   initialAlloc->Add(Vector(distance,0.0,0.0));
-  initialAlloc->Add(Vector(300.0,0.0,0.0));
+  
+  for(int i=2;i<node;i++){
+    initialAlloc->Add(Vector(0.0,2*i,0.0));
+  }
+  //initialAlloc->Add(Vector(0.0,25.0,0.0));
   mobility.SetPositionAllocator(initialAlloc);
   mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-  mobility.Install(ueNodes.Get(0));
-  mobility.Install(ueNodes.Get(1));
-  mobility.Install(ueNodes.Get(2));
+  for(int j=0;j<node;j++){
+    mobility.Install(ueNodes.Get(j));
+  }
+  //mobility.Install(ueNodes.Get(0));
+  //mobility.Install(ueNodes.Get(1));
+  //mobility.Install(ueNodes.Get(2));
 
   //Install LTE UE devices to the nodes
   NetDeviceContainer ueDevs = lteHelper->InstallUeDevice (ueNodes);
@@ -155,6 +172,8 @@ int main (int argc, char *argv[])
   pfactory.SetControlPrbNum (22);
   pfactory.SetControlPrbStart (0);
   pfactory.SetControlPrbEnd (49);
+  //pfactory.SetControlTxP0(10);
+  //pfactory.SetControlTxAlpha("al09");
 
   //Data
   pfactory.SetDataBitmap (0xFFFFFFFFFF);
@@ -162,6 +181,8 @@ int main (int argc, char *argv[])
   pfactory.SetDataPrbNum (25);
   pfactory.SetDataPrbStart (0);
   pfactory.SetDataPrbEnd (49);
+  //bool s = pfactory.GetHaveTxParameters();
+  //NS_LOG_DEBUG(s);
 
   preconfiguration.preconfigComm.pools[0] = pfactory.CreatePool ();
 
@@ -209,11 +230,13 @@ int main (int argc, char *argv[])
   ::ns3::ndn::AppHelper consumerHelper("ns3::ndn::ConsumerCbr");
   // Consumer will request /prefix/0, /prefix/1, ...
   //consumerHelper.SetPrefix("/v2safety/8thStreet/parking");
-  consumerHelper.SetPrefix("/v2safety/intersectionId:52/laneId:14/0,0,0/600,0,0/100");
+  consumerHelper.SetPrefix("/v2safety/intersectionId:52/laneId:14/0,0,0/100,25,0/100");
   //consumerHelper.SetAttribute("Batches", StringValue("1s 1 2s 5 10s 2"));
   consumerHelper.SetAttribute("Frequency", StringValue("1")); // 2 interests a second
-  consumerHelper.Install(ueNodes.Get(0)).Start(Seconds(count));                        // first node
-
+  consumerHelper.Install(ueNodes.Get(0)).Start(Seconds(count)); 
+  for(int i=2;i<node;i++){
+    consumerHelper.Install(ueNodes.Get(i)).Start(Seconds(count));                        // first node
+  }
   // Producer
   ::ns3::ndn::AppHelper producerHelper("ns3::ndn::Producer");
   // Producer will reply to all requests starting with /prefix
