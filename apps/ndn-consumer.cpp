@@ -37,10 +37,16 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/ref.hpp>
 
+#include "ns3/ndnSIM-module.h"
+
+#include <iomanip>
+
 NS_LOG_COMPONENT_DEFINE("ndn.Consumer");
 
 namespace ns3 {
 namespace ndn {
+
+//ndn<Consumer> Consumer::dataR;
 
 NS_OBJECT_ENSURE_REGISTERED(Consumer);
 
@@ -160,7 +166,7 @@ Consumer::SendPacket()
 {
   if (!m_active)
     return;
-
+  std::cout << std::setprecision(5) << std::fixed;
   NS_LOG_FUNCTION_NOARGS();
 
   uint32_t seq = std::numeric_limits<uint32_t>::max(); // invalid
@@ -196,7 +202,8 @@ Consumer::SendPacket()
 
   // NS_LOG_INFO ("Requesting Interest: \n" << *interest);
   NS_LOG_INFO("> Interest for " << seq);
-
+  double time = Simulator::Now().ToDouble(Time::S);
+  std::cout<< time << " Interest for " << seq << std::endl;
   WillSendOutInterest(seq);
 
   m_transmittedInterests(interest, this, m_face);
@@ -216,15 +223,17 @@ Consumer::OnData(shared_ptr<const Data> data)
     return;
 
   App::OnData(data); // tracing inside
-
+  //this->dataR();
   NS_LOG_FUNCTION(this << data);
+  
+  double time = Simulator::Now().ToDouble(Time::S);
 
   // NS_LOG_INFO ("Received content object: " << boost::cref(*data));
 
   // This could be a problem......
   uint32_t seq = data->getName().at(-1).toSequenceNumber();
   NS_LOG_INFO("< DATA for " << seq);
-
+  std::cout<< time << " Data for " << seq << std::endl;
   int hopCount = 0;
   auto hopCountTag = data->getTag<lp::HopCountTag>();
   if (hopCountTag != nullptr) { // e.g., packet came from local node's cache

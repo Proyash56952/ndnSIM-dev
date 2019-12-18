@@ -132,7 +132,7 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
 
       if(shouldLimitTransmission(interest)) {
         NFD_LOG_DEBUG("limiting the transmission of " << interest);
-        std::cerr << "limiting transmission point" << std::endl;
+        //std::cerr << "limiting transmission point" << std::endl;
         continue;
       }
 
@@ -399,14 +399,16 @@ DirectedGeocastStrategy::shouldLimitTransmission(const Interest& interest)
       ", cursrc=" << distCurSrc << ", curdst=" << distCurDest << ", angle=" << cosineAngle << std::endl;
   }
 
-  if (isnan(angle) || angle < 1 || angle > 89) {
+  if (isnan(angle) || angle < 0.1 || angle > 89.9) {
     // std::cerr << "angle: " << angle << std::endl;
     // std::cerr << *self << ", " << *destination << ", " << *source << std::endl;
     // std::cerr << "srcdest=" << distSrcDest <<
     //   ", cursrc=" << distCurSrc << ", curdst=" << distCurDest << ", angle=" << cosineAngle << std::endl;
+    NFD_LOG_DEBUG("limiting for angle " << angle);
     return true;
   }
   else if (projection > distSrcDest+limit) {
+    NFD_LOG_DEBUG("limiting for distance");
     return true;
   }
 
