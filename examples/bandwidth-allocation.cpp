@@ -161,7 +161,7 @@ int main (int argc, char *argv[])
     }
 
   //Set the UEs power in dBm
-  Config::SetDefault ("ns3::LteUePhy::TxPower", DoubleValue (23.0));
+  //Config::SetDefault ("ns3::LteUePhy::TxPower", DoubleValue (23.0));
 
   //Sidelink bearers activation time
   Time slBearersActivationTime = Seconds (2.0);
@@ -306,7 +306,7 @@ int main (int argc, char *argv[])
     }
 
   ///*** Configure applications ***///
-  
+    
   std::string dataRate = std::to_string(rate)+"kb/s";
   std::cout << dataRate;
   //Set Application in the UEs
@@ -318,7 +318,7 @@ int main (int argc, char *argv[])
   //(2.9 (App Start Time) + (1600 (Pkt size in bits) / 16000 (Data rate)) = 3.0 sec
   //clientApps.Start (slBearersActivationTime + Seconds (0.9));
   //clientApps.Stop (simTime - slBearersActivationTime + Seconds (1.0));
-  clientApps.Start (Seconds(1.0));
+  clientApps.Start (Seconds(2.0));
   clientApps.Stop(Seconds(5.0));
 
   ApplicationContainer serverApps;

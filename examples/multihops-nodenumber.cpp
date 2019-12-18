@@ -21,11 +21,11 @@ int main (int argc, char *argv[])
 {
   Ptr<UniformRandomVariable> uv = CreateObject<UniformRandomVariable> ();
   //std::cout << uv->GetValue () << std::endl;
-  Time simTime = Seconds (10);
+  Time simTime = Seconds (15);
   bool enableNsLogs = false;
   bool useIPv6 = false;
   //double distance=atoi(argv[1]);
-  int nodeNumber = 20;
+  int nodeNumber = 50;
   double distance = 400;
   double tMin = 0.02;
   double tMax = 0.1;
@@ -120,9 +120,12 @@ int main (int argc, char *argv[])
   //NS_LOG_INFO ("UE 3 node id = [" << ueNodes.Get (2)->GetId () << "]");
 
   MobilityHelper mobility;
+  std::ofstream pos("results/node-position.csv");
+  pos << "X,Y" <<std::endl;
   Ptr<ListPositionAllocator> initialAlloc = CreateObject<ListPositionAllocator> ();
   //this node will generate the interest
-  initialAlloc->Add(Vector(0.0,0.0,0.0));
+  initialAlloc->Add(Vector(0.0,10.0,0.0));
+  pos << 0.0 << "," << 10.0 << std::endl;
   //these nodes will receive the interest in 1st hop
   /*initialAlloc->Add(Vector(200.0,0.0,0.0));
   //these nodes will receive the interest in first hop and drop it as they are in opposite direction from the destination
@@ -178,7 +181,7 @@ int main (int argc, char *argv[])
   Ptr<UniformRandomVariable> y = CreateObject<UniformRandomVariable>();
 
   x->SetAttribute ("Min", ns3::DoubleValue(0));
-  x->SetAttribute ("Max", ns3::DoubleValue(distance/10)); //scaled to 10
+  x->SetAttribute ("Max", ns3::DoubleValue(distance/5)); //scaled to 10
 
   y->SetAttribute ("Min", ns3::DoubleValue(0));
   y->SetAttribute ("Max", ns3::DoubleValue(4));
@@ -207,14 +210,16 @@ int main (int argc, char *argv[])
     //   std::cout<< no << std::endl;
     //   xCoordinate = (no%100)*40;
     //   yCoordinate = (no/100)*4;
-    auto v = Vector(xCoordinate*10, static_cast<int>(yCoordinate) * 5.0, 0.0);
+    //auto v = Vector(xCoordinate*10, static_cast<int>(yCoordinate) * 5.0, 0.0);
+    auto v = Vector(xCoordinate*10, yCoordinate*5.0, 0.0);
     initialAlloc->Add(v);
     std::cout << v << std::endl;
+    pos << xCoordinate*10 << "," << yCoordinate*5 << std::endl;
     full++;
     // }
   }
-  initialAlloc->Add(Vector(distance,0.0,0.0));
-
+  initialAlloc->Add(Vector(distance,10.0,0.0));
+  pos << distance << "," << 10.0 <<std::endl;
   mobility.SetPositionAllocator(initialAlloc);
   mobility.SetMobilityModel ("ns3::ConstantVelocityMobilityModel");
   //mobility.Install(ueNodes.Get (0));
@@ -317,6 +322,7 @@ int main (int argc, char *argv[])
   consumerHelper.SetPrefix("/v2safety/8thStreet/0,0,0/"+std::to_string(distance)+",0,0/100");
   consumerHelper.SetAttribute("Batches", StringValue("2s 1 3s 1 4s 1 5s 1 6s 1")); // 10 interests a second
   consumerHelper.SetAttribute("RetxTimer", StringValue("1000s"));
+  consumerHelper.SetAttribute("LifeTime", StringValue("15s"));
   consumerHelper.Install(ueNodes.Get(0));
 
   // Producer
@@ -330,7 +336,7 @@ int main (int argc, char *argv[])
   // Simulator::Stop(Seconds(2.9)); // expect 1 distinct request
   Simulator::Stop(Seconds(12.99)); // expect 10 distinct requests
   int no = (int) distance;
-    std::ofstream of("results/multihop.csv");
+    std::ofstream of("results/data-time-vs-node-number.csv");
                     //+ std::to_string(no) +
                    //"-tmin=" + std::to_string(tMin) +
                    //"-tmax=" + std::to_string(tMax) +
@@ -356,3 +362,4 @@ int main (int argc, char *argv[])
   return 0;
 
 }
+
