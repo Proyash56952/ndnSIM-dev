@@ -161,7 +161,7 @@ int main (int argc, char *argv[])
     }
 
   //Set the UEs power in dBm
-  Config::SetDefault ("ns3::LteUePhy::TxPower", DoubleValue (23.0));
+  //Config::SetDefault ("ns3::LteUePhy::TxPower", DoubleValue (23.0));
 
   //Sidelink bearers activation time
   Time slBearersActivationTime = Seconds (2.0);
