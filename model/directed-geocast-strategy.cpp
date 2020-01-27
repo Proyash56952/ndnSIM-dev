@@ -399,7 +399,7 @@ DirectedGeocastStrategy::shouldLimitTransmission(const Interest& interest)
       ", cursrc=" << distCurSrc << ", curdst=" << distCurDest << ", angle=" << cosineAngle << std::endl;
   }
 
-  if (isnan(angle) || angle < 0.1 || angle > 89.9) {
+  if (isnan(angle) || angle < 0 || angle > 90) {
     // std::cerr << "angle: " << angle << std::endl;
     // std::cerr << *self << ", " << *destination << ", " << *source << std::endl;
     // std::cerr << "srcdest=" << distSrcDest <<
