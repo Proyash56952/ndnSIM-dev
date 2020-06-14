@@ -86,6 +86,7 @@ void
 DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const Interest& interest,
                                               const shared_ptr<pit::Entry>& pitEntry)
 {
+  //std::cout<<"Received by "<<ns3::Simulator::GetContext()<<std::endl;
   double posX =0.0;
   double posY =0.0;
   ndn::optional<ns3::Vector> pos = getSelfPosition();
@@ -97,6 +98,7 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
   this->onAction(interest.getName(), Received, posX, posY);
 
   NFD_LOG_DEBUG("ReceivedInterest: ");
+  
   const fib::Entry& fibEntry = this->lookupFib(*pitEntry);
   const fib::NextHopList& nexthops = fibEntry.getNextHops();
 
@@ -320,7 +322,7 @@ DirectedGeocastStrategy::shouldCancelTransmission(const pit::Entry& oldPitEntry,
   double projection = abs(distanceBetweenLasthops * cosineAngleAtSelf);
   NFD_LOG_DEBUG("projection is " << projection);
 
-  /*if (angleDeg >= 90) {
+  /*(if (angleDeg >= 90) {
     NFD_LOG_DEBUG("Interest need not to be cancelled");
     return false;
    }*/

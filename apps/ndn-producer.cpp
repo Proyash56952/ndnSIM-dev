@@ -94,7 +94,7 @@ void
 Producer::OnInterest(shared_ptr<const Interest> interest)
 {
   App::OnInterest(interest); // tracing inside
-
+  std::cout  << "Receieved_by_Producer "<< std::endl;
   NS_LOG_FUNCTION(this << interest);
 
   if (!m_active)
