@@ -15,26 +15,40 @@
 using namespace ns3;
 
 
-NS_LOG_COMPONENT_DEFINE ("LteSlOutOfCovrg");
+NS_LOG_COMPONENT_DEFINE ("TxPower");
+
+void
+PuschTxPowerNofitication (uint16_t cellId, uint16_t rnti, double txPower)
+{
+   // NS_LOG_FUNCTION (this);
+    NS_LOG_DEBUG ("PuschTxPower : CellId: " << cellId << " RNTI: " << rnti << " PuschTxPower: " << txPower);
+    std::cout << "PuschTxPower" <<txPower <<std::endl;
+    std::cout <<"hello";
+}
 
 int main (int argc, char *argv[])
 {
   Ptr<UniformRandomVariable> uv = CreateObject<UniformRandomVariable> ();
+  Ptr <LteUePowerControl> lteUePower = CreateObject<LteUePowerControl> ();
   //std::cout << uv->GetValue () << std::endl;
   Time simTime = Seconds (15);
   bool enableNsLogs = false;
   bool useIPv6 = false;
   //double distance=atoi(argv[1]);
-  int nodeNumber = 50;
-  double distance = 400;
+  int nodeNumber = 40;
+  double distance = 300;
   double tMin = 0.02;
   double tMax = 0.2;
+  double pscch = 23.0;
+  double pssch = 23.0;
 
   CommandLine cmd;
   cmd.AddValue("simTime", "Total duration of the simulation", simTime);
   cmd.AddValue("enableNsLogs", "Enable ns-3 logging (debug builds)", enableNsLogs);
   cmd.AddValue("distance", "The total nodes will be", distance);
   cmd.AddValue("nodeNumber", "The total nodes will be", nodeNumber);
+  cmd.AddValue("pscch", "The pscch will be",pscch);
+  cmd.AddValue("pssch", "The pssch will be",pssch);
 
   cmd.AddValue("tmin", "", tMin);
   cmd.AddValue("tmax", "", tMax);
@@ -72,13 +86,14 @@ int main (int argc, char *argv[])
     }
 
   //Set the UEs power in dBm
-  Config::SetDefault ("ns3::LteUePhy::TxPower", DoubleValue (23.0));
-  Config::SetDefault ("ns3::LteUePowerControl::Pcmax", DoubleValue (23.0));
-  Config::SetDefault ("ns3::LteUePowerControl::PscchTxPower", DoubleValue (23.0));
-  Config::SetDefault ("ns3::LteUePowerControl::PsschTxPower", DoubleValue (0.0));
-
+ // Config::SetDefault ("ns3::LteUePhy::TxPower", DoubleValue (23.0));
+  //Config::SetDefault ("ns3::LteUePowerControl::Pcmax", DoubleValue (23.0));
+  Config::SetDefault ("ns3::LteUePowerControl::PscchTxPower", DoubleValue(pscch));
+  Config::SetDefault ("ns3::LteUePowerControl::PsschTxPower", DoubleValue(pssch));
   //Sidelink bearers activation time
   Time slBearersActivationTime = Seconds (2.0);
+
+
 
   //Create the helpers
   Ptr<LteHelper> lteHelper = CreateObject<LteHelper> ();
@@ -184,7 +199,7 @@ int main (int argc, char *argv[])
   Ptr<UniformRandomVariable> y = CreateObject<UniformRandomVariable>();
 
   x->SetAttribute ("Min", ns3::DoubleValue(0));
-  x->SetAttribute ("Max", ns3::DoubleValue(distance/5)); //scaled to 10
+  x->SetAttribute ("Max", ns3::DoubleValue(distance/10)); //scaled to 10
 
   y->SetAttribute ("Min", ns3::DoubleValue(0));
   y->SetAttribute ("Max", ns3::DoubleValue(4));
@@ -230,7 +245,7 @@ int main (int argc, char *argv[])
   //ueNodes.Get (0)->GetObject<ConstantVelocityMobilityModel> ()->SetVelocity (Vector (10, 0, 0));
   for(int i= 0;i<nodeNumber-1; i++){
     mobility.Install(ueNodes.Get (i));
-    if(i%2 == 0 ){
+    if(i%2 == 1 ){
       ueNodes.Get (i)->GetObject<ConstantVelocityMobilityModel> ()->SetVelocity (Vector (1, 0, 0));
     }
     else if(i%3 == 0){
@@ -307,6 +322,8 @@ int main (int argc, char *argv[])
   helper.SetDefaultRoutes(true);
   helper.InstallAll();
 
+
+
   //* Choosing forwarding strategy *//
   ns3::ndn::StrategyChoiceHelper::InstallAll("/", "/localhost/nfd/strategy/directed-geocast/%FD%01/" +
                                              std::to_string(tMin) + "/" + std::to_string(tMax));
@@ -323,9 +340,9 @@ int main (int argc, char *argv[])
 
   ::ns3::ndn::AppHelper consumerHelper("ns3::ndn::ConsumerBatches");
   consumerHelper.SetPrefix("/v2safety/8thStreet/0,0,0/"+std::to_string(distance)+",0,0/100");
-  consumerHelper.SetAttribute("Batches", StringValue("2s 1 3s 1 4s 1 5s 1 6s 1")); // 10 interests a second
+  consumerHelper.SetAttribute("Batches", StringValue("3s 1")); // 10 interests a second
   consumerHelper.SetAttribute("RetxTimer", StringValue("1000s"));
-  consumerHelper.SetAttribute("LifeTime", StringValue("15s"));
+  //consumerHelper.SetAttribute("LifeTime", StringValue("15s"));
   consumerHelper.Install(ueNodes.Get(0));
 
   // Producer
@@ -339,11 +356,10 @@ int main (int argc, char *argv[])
   // Simulator::Stop(Seconds(2.9)); // expect 1 distinct request
   Simulator::Stop(Seconds(12.99)); // expect 10 distinct requests
   int no = (int) distance;
-    std::ofstream of("results/data-time-vs-node-number.csv");
-                    //+ std::to_string(no) +
-                   //"-tmin=" + std::to_string(tMin) +
-                   //"-tmax=" + std::to_string(tMax) +
-                  // "-1hop.csv");
+    std::ofstream of("results/new-"+ std::to_string(no) +
+                   "-tmin=" + std::to_string(tMin) +
+                   "-tmax=" + std::to_string(tMax) +
+                   "-cancelasunhelpful.csv");
   of << "Node,Time,Name,Action,X,Y" << std::endl;
   nfd::fw::DirectedGeocastStrategy::onAction.connect([&of] (const ::ndn::Name& name, int type, double x, double y) {
       auto context = Simulator::GetContext();
@@ -359,10 +375,15 @@ int main (int argc, char *argv[])
         action = "Suppressed";
       of << context << "," << time << "," << name.get(-1).toSequenceNumber() << "," << action << ","<< x << "," << y <<std::endl;
     });
-
+  //lteUePower->TraceConnectWithoutContext ("ReportPuschTxPower",
+                                        // MakeCallback (&PuschTxPowerNofitication));
+    //lteUePower->m_reportPuschTxPower = {0,1,2.0};
+  L2RateTracer::InstallAll ("drop-trace.txt", Seconds (0.5));
   Simulator::Run ();
   Simulator::Destroy ();
   return 0;
 
 }
+
+
 

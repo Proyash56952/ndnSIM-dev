@@ -92,7 +92,7 @@ int main (int argc, char *argv[])
   lteHelper->SetAttribute ("UseSidelink", BooleanValue (true));
 
   //Set pathloss model
-  lteHelper->SetAttribute ("PathlossModel", StringValue ("ns3::Cost231PropagationLossModel"));
+  lteHelper->SetAttribute ("PathlossModel", StringValue ("ns3::WinnerB1Model"));
   lteHelper->SetPathlossModelAttribute ("BSAntennaHeight", DoubleValue(1.5));
   lteHelper->SetPathlossModelAttribute ("SSAntennaHeight", DoubleValue(1.5));
   // channel model initialization

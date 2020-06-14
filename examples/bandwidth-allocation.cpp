@@ -161,8 +161,9 @@ int main (int argc, char *argv[])
     }
 
   //Set the UEs power in dBm
-  //Config::SetDefault ("ns3::LteUePhy::TxPower", DoubleValue (23.0));
-
+  Config::SetDefault ("ns3::LteUePhy::TxPower", DoubleValue (23.0));
+  Config::SetDefault ("ns3::LteUePowerControl::Pcmax", DoubleValue (2.0));
+  Config::SetDefault ("ns3::LteUePowerControl::PscchTxPower", DoubleValue (2.0));
   //Sidelink bearers activation time
   Time slBearersActivationTime = Seconds (2.0);
 
@@ -203,12 +204,12 @@ int main (int argc, char *argv[])
 
   //Create nodes (UEs)
   NodeContainer ueNodes;
-  ueNodes.Create (2);
+  ueNodes.Create (11);
   NS_LOG_INFO ("UE 1 node id = [" << ueNodes.Get (0)->GetId () << "]");
   NS_LOG_INFO ("UE 2 node id = [" << ueNodes.Get (1)->GetId () << "]");
 
   //Position of the nodes
-  Ptr<ListPositionAllocator> positionAllocUe1 = CreateObject<ListPositionAllocator> ();
+  /*Ptr<ListPositionAllocator> positionAllocUe1 = CreateObject<ListPositionAllocator> ();
   positionAllocUe1->Add (Vector (0.0, 0.0, 1.5));
   Ptr<ListPositionAllocator> positionAllocUe2 = CreateObject<ListPositionAllocator> ();
   positionAllocUe2->Add (Vector (100.0, 0.0, 1.5));
@@ -223,8 +224,24 @@ int main (int argc, char *argv[])
   MobilityHelper mobilityUe2;
   mobilityUe2.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
   mobilityUe2.SetPositionAllocator (positionAllocUe2);
-  mobilityUe2.Install (ueNodes.Get (1));
-
+  mobilityUe2.Install (ueNodes.Get (1));*/
+    MobilityHelper mobility;
+  Ptr<ListPositionAllocator> initialAlloc = CreateObject<ListPositionAllocator> ();
+    //MobilityHelper mobility;
+  //this node will generate the interest
+  initialAlloc->Add(Vector(0.0,0.0,0.0));
+  int nodeNumber= 11;
+    int i =1;
+    while(i <nodeNumber-1){
+        initialAlloc->Add(Vector(0.0,i,0.0));
+        i++;
+    }
+  initialAlloc->Add(Vector(100,5.0,0.0));
+    mobility.SetPositionAllocator(initialAlloc);
+    mobility.SetMobilityModel ("ns3::ConstantVelocityMobilityModel");
+    for(int j=0;j<nodeNumber;j++){
+        mobility.Install(ueNodes.Get(j));
+    }
   //Install LTE UE devices to the nodes
   NetDeviceContainer ueDevs = lteHelper->InstallUeDevice (ueNodes);
 
@@ -312,18 +329,19 @@ int main (int argc, char *argv[])
   //Set Application in the UEs
   OnOffHelper sidelinkClient ("ns3::UdpSocketFactory", remoteAddress);
   sidelinkClient.SetConstantRate (DataRate (dataRate), 512);
-
-  ApplicationContainer clientApps = sidelinkClient.Install (ueNodes.Get (0));
+    //for(int k =0; k< nodeNumber-1;k++){
+        ApplicationContainer clientApps = sidelinkClient.Install (ueNodes.Get (0));
   //onoff application will send the first packet at :
   //(2.9 (App Start Time) + (1600 (Pkt size in bits) / 16000 (Data rate)) = 3.0 sec
   //clientApps.Start (slBearersActivationTime + Seconds (0.9));
   //clientApps.Stop (simTime - slBearersActivationTime + Seconds (1.0));
   clientApps.Start (Seconds(2.0));
   clientApps.Stop(Seconds(5.0));
+  //  }
 
   ApplicationContainer serverApps;
   PacketSinkHelper sidelinkSink ("ns3::UdpSocketFactory", localAddress);
-  serverApps = sidelinkSink.Install (ueNodes.Get (1));
+  serverApps = sidelinkSink.Install (ueNodes.Get (nodeNumber-1));
   serverApps.Start (Seconds (1.0));
 
   //Set Sidelink bearers
