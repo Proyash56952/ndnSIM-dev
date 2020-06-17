@@ -139,7 +139,7 @@ namespace ns3 {
 
 template <typename T>
 void 
-CustomMobilityHelper::Install (T begin, T end) const
+CustomHelper::Install (T begin, T end) const
 {
   class MyObjectStore : public ObjectStore
   {
@@ -149,8 +149,10 @@ public:
         m_end (end)
     {}
     virtual Ptr<Object> Get (uint32_t i) const {
+        std::cout<< i << std::endl;
       T iterator = m_begin;
       iterator += i;
+        std::cout << *iterator <<std::endl;
       if (iterator >= m_end)
         {
           return 0;

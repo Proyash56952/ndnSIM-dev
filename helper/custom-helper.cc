@@ -1,13 +1,14 @@
 #include <fstream>
 #include <sstream>
 #include <map>
+#include <cmath>
 #include "ns3/log.h"
 #include "ns3/unused.h"
 #include "ns3/simulator.h"
 #include "ns3/node-list.h"
 #include "ns3/node.h"
 #include "ns3/constant-velocity-mobility-model.h"
-#include "ns2-mobility-helper.h"
+#include "custom-helper.h"
 
 namespace ns3{
 NS_LOG_COMPONENT_DEFINE ("CustomHelper");
@@ -31,7 +32,45 @@ struct ParseResult
   std::vector<bool> has_dval; //!< points if a tokens has a double value
   std::vector<std::string> svals;  //!< string value for each token
 };
+
+/**
+ * Parses a line of ns2 mobility
+ */
+static ParseResult ParseNs2Line (const std::string& str);
+
+/** 
+ * Put out blank spaces at the start and end of a line
+ */
+static std::string TrimNs2Line (const std::string& str);
+
+/**
+ * Checks if a string represents a number or it has others characters than digits an point.
+ */
+/**
+ * Checks if a string represents a number or it has others characters than digits an point.
+ */
+static bool IsNumber (const std::string& s);
   
+template<class T>
+static bool IsVal (const std::string& str, T& ret);
+
+/**
+ * Checks if the value between brackets is a correct nodeId number
+ */ 
+static bool HasNodeIdNumber (std::string str);
+/** 
+ * Gets nodeId number in string format from the string like $node_(4)
+ */
+static std::string GetNodeIdFromToken (std::string str);
+
+/**  
+ * Get node id number in string format
+ */
+static std::string GetNodeIdString (ParseResult pr);
+
+void Sim(Ptr<ConstantVelocityMobilityModel> model, double at,
+    double xFinalPosition, double yFinalPosition, double speed, double angle);
+
 CustomHelper::CustomHelper (std::string filename)
   : m_filename (filename)
 {
@@ -47,24 +86,28 @@ CustomHelper::GetMobilityModel (std::string idString, const ObjectStore &store) 
   uint32_t id (0);
   iss >> id;
   Ptr<Object> object = store.Get (id);
-  std::cout<< "mobility id " << id << std::endl;
+  std::cout<< "mobility id: " << id << std::endl;
   if (object == 0)
     {
       return 0;
     }
   Ptr<ConstantVelocityMobilityModel> model = object->GetObject<ConstantVelocityMobilityModel> ();
+  std::cout<< model <<std::endl;
   if (model == 0)
     {
+      std::cout << "GetMobilityModel" <<std::endl;
       model = CreateObject<ConstantVelocityMobilityModel> ();
       object->AggregateObject (model);
     }
+    std::cout<< model <<std::endl;
   return model;
 }
 
+
 void
 CustomHelper::ConfigNodesMovements (const ObjectStore &store) const{
-
-  file.open (m_filename.c_str (), std::ios::in);
+  //file.open (m_filename.c_str (), std::ios::in);
+  std::ifstream file (m_filename.c_str (), std::ios::in);
   if (file.is_open ())
     {
        while (!file.eof () )
@@ -82,7 +125,7 @@ CustomHelper::ConfigNodesMovements (const ObjectStore &store) const{
 	   ParseResult pr = ParseNs2Line (line); // Parse line and obtain tokens
 
           // Check if the line corresponds with one of the three types of line
-          if (pr.tokens.size () != 4 && pr.tokens.size () != 7 && pr.tokens.size () != 8)
+          if (pr.tokens.size () != 5 && pr.tokens.size () != 8 && pr.tokens.size () != 9)
             {
               NS_LOG_ERROR ("Line has not correct number of parameters (corrupted file?): " << line << "\n");
               continue;
@@ -99,7 +142,7 @@ CustomHelper::ConfigNodesMovements (const ObjectStore &store) const{
               continue;
             }
 
-	  Simulator(model,pr.dvals[2],pr.dvals[5],pr.dvals[6],pr.dvals[7];
+          Sim(model,pr.dvals[2],pr.dvals[5],pr.dvals[6],pr.dvals[7],pr.dvals[8]);
 	  
   
          }
@@ -147,10 +190,10 @@ ParseNs2Line (const std::string& str)
       ret.tokens.push_back (x);
       int ii (0);
       double d (0);
-      if (HasNodeIdNumber (x))
-        {
+   if (HasNodeIdNumber (x))
+         {
           x = GetNodeIdFromToken (x);
-        }
+	     }
       ret.has_ival.push_back (IsVal<int> (x, ii));
       ret.ivals.push_back (ii);
       ret.has_dval.push_back (IsVal<double> (x, d));
@@ -163,20 +206,19 @@ ParseNs2Line (const std::string& str)
 
   // if it is a scheduled set _[XYZ] or a setdest I need to remove the last "
   // and re-calculate values
-  if ( (tokensLength == 7 || tokensLength == 8)
+  if ( (tokensLength == 8 || tokensLength == 9)
        && (ret.tokens[tokensLength - 1][lasTokenLength - 1] == '"') )
     {
-      std::cout << "impossible point" <<std::endl;
       // removes " from the last position
       ret.tokens[tokensLength - 1] = ret.tokens[tokensLength - 1].substr (0,lasTokenLength - 1);
 
       std::string x;
       x = ret.tokens[tokensLength - 1];
 
-      if (HasNodeIdNumber (x))
-        {
+        if (HasNodeIdNumber (x))
+         {
           x = GetNodeIdFromToken (x);
-        }
+	  }
 
       // Re calculate values
       int ii (0);
@@ -188,8 +230,8 @@ ParseNs2Line (const std::string& str)
       ret.svals[tokensLength - 1] = x;
 
     }
-  else if ( (tokensLength == 9 && ret.tokens[tokensLength - 1] == "\"")
-            || (tokensLength == 8 && ret.tokens[tokensLength - 1] == "\""))
+  else if ( (tokensLength == 10 && ret.tokens[tokensLength - 1] == "\"")
+            || (tokensLength == 9 && ret.tokens[tokensLength - 1] == "\""))
     {
       // if the line has the " character in this way: $ns_ at 1 "$node_(0) setdest 2 2 1  "
       // or in this: $ns_ at 4 "$node_(0) set X_ 2  " we need to ignore this last token
@@ -227,6 +269,37 @@ TrimNs2Line (const std::string& s)
   return ret;
 }
 
+bool
+HasNodeIdNumber (std::string str)
+{
+
+  // find brackets
+  std::string::size_type startNodeId = str.find_first_of ("("); // index of left bracket
+  std::string::size_type endNodeId   = str.find_first_of (")"); // index of right bracket
+
+  // Get de nodeId in a string and in a int value
+  std::string nodeId;     // node id
+
+  // if no brackets, continue!
+  if (startNodeId == std::string::npos || endNodeId == std::string::npos)
+    {
+      return false;
+    }
+
+  nodeId = str.substr (startNodeId + 1, endNodeId - (startNodeId + 1)); // set node id
+
+  //   is number              is integer                                       is not negative
+  if (IsNumber (nodeId) && (nodeId.find_first_of (".") == std::string::npos) && (nodeId[0] != '-'))
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+}
+
+
 template<class T>
 bool IsVal (const std::string& str, T& ret)
 {
@@ -247,22 +320,32 @@ bool IsVal (const std::string& str, T& ret)
     }
 }
 
+bool
+IsNumber (const std::string& s)
+{
+  char *endp;
+  double v = strtod (s.c_str (), &endp); // declared with warn_unused_result
+  NS_UNUSED (v); // suppress "set but not used" compiler warning
+  return endp == s.c_str () + s.size ();
+}
+
+
 std::string
 GetNodeIdFromToken (std::string str)
 {
-  if (HasNodeIdNumber (str))
+   if (HasNodeIdNumber (str))
     {
       // find brackets
-        std::cout<<str<<std::endl;
+      std::cout<<str<<std::endl;
       std::string::size_type startNodeId = str.find_first_of ("(");     // index of left bracket
       std::string::size_type endNodeId   = str.find_first_of (")");     // index of right bracket
 
       return str.substr (startNodeId + 1, endNodeId - (startNodeId + 1)); // set node id
-    }
-  else
-    {
-      return "";
-    }
+        }
+     else
+         {
+       return "";
+        }
 }
 
 std::string
@@ -270,13 +353,13 @@ GetNodeIdString (ParseResult pr)
 {
   switch (pr.tokens.size ())
     {
-    case 4:   // line like $node_(0) set X_ 11
+    case 5:   // line like $node_(0) set X_ 11
       return pr.svals[0];
       break;
-    case 7:   // line like $ns_ at 4 "$node_(0) set X_ 28"
+    case 8:   // line like $ns_ at 4 "$node_(0) set X_ 28"
       return pr.svals[3];
       break;
-    case 8:   // line like $ns_ at 1 "$node_(0) setdest 2 3 4"
+    case 9:   // line like $ns_ at 1 "$node_(0) setdest 2 3 4"
       return pr.svals[3];
       break;
     default:
@@ -285,21 +368,23 @@ GetNodeIdString (ParseResult pr)
 }
 
  
-void Simulator(Ptr<ConstantVelocityMobilityModel> model, double at,
-	       double xFinalPosition, double yFinalPosition, double speed)
+void Sim(Ptr<ConstantVelocityMobilityModel> model, double at,
+	 double xFinalPosition, double yFinalPosition, double speed, double angle)
 {
   Vector position;
   position.x = xFinalPosition;
   position.y = yFinalPosition;
   position.z = 0.0;
 
-  double xSpeed = speed*0.75;
-  double ySpeed = speed*0.25;
+  double xSpeed = speed*cos(angle);
+  double ySpeed = speed*sin(angle);
   double zSpeed = 0.0;
-
+  std::cout<<"position: "<<position<<" and speed: "<<xSpeed<<" "<<ySpeed<<std::endl;
+  std::cout<<angle<<std::endl;
   Simulator::Schedule (Seconds (at), &ConstantVelocityMobilityModel::SetVelocity, model, Vector (xSpeed, ySpeed, zSpeed));
   Simulator::Schedule (Seconds (at), &ConstantVelocityMobilityModel::SetPosition, model,position);
 }
+
 
 void
 CustomHelper::Install (void) const
