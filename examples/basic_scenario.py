@@ -17,12 +17,9 @@ import traci.constants as tc
 import time
 import re
 
-#sumoCmd = ["sumo", "-c", "sumo/intersection/intersection.sumocfg", "--start"]
-#traci.start(sumoCmd)
-#traci.close()
-
+#This function is being called on each second. It will run sumo scenario, extract data for a particular second and writes those into a trace file. Then using our customized helper, we install mobility to the nodes according to the trace file.
 def runSumo(nodes,t):
-    print("hola")
+    #print("hola")
     if 'SUMO_HOME' in os.environ:
         tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
         sys.path.append(tools)
@@ -44,15 +41,13 @@ def runSumo(nodes,t):
         f.write('$ns_ at '+str(t)+' "$node_('+str(i)+') setdest '+str(x)+' '+str(y)+' '+str(speed)+' '+str(angle)+'"\n')
     traci.close()
     f.close()
-    #print("Starting SUMO")
-    #print(t)
 
     ns2 = ns.mobility.CustomHelper("ns2-traceFile"+str(t)+".tcl")
     ns2.Install()
-        
+    
     
 cmd = ns.core.CommandLine()
-cmd.nodeNum = 3
+cmd.nodeNum = 4
 cmd.traceFile = "intersecMobility.tcl"
 cmd.duration = 10
 cmd.logFile = "default.log"
@@ -89,15 +84,13 @@ wifiDevices = wifi.Install(wifiPhy, mac, wifiNodes)
     # 
     #  Add the IPv4 protocol stack to the nodes in our container
     # 
-#print ("Enabling OLSR routing on all backbone nodes")
+
 internet = ns.internet.InternetStackHelper()
 internet.Install(wifiNodes);
-    # re-initialize for non-olsr routing.
-    # internet.Reset()
-    # 
-    #  Assign IPv4 addresses to the device drivers(actually to the associated
-    #  IPv4 interfaces) we just created.
-    # 
+
+#  Assign IPv4 addresses to the device drivers(actually to the associated
+#  IPv4 interfaces) we just created.
+
 ipAddrs = ns.internet.Ipv4AddressHelper()
 ipAddrs.SetBase(ns.network.Ipv4Address("192.168.0.0"), ns.network.Ipv4Mask("255.255.255.0"))
 ipAddrs.Assign(wifiDevices)
@@ -116,8 +109,12 @@ ipAddrs.Assign(wifiDevices)
                               # "Pause", ns.core.StringValue ("ns3::ConstantRandomVariable[Constant=0.2]"))
 #mobility.Install(wifiNodes)
 
-ns2 = ns.mobility.CustomHelper(traceFile)
-ns2.Install()
+#ns2 = ns.mobility.CustomHelper(traceFile)
+#ns2.Install()
+
+#In this loop, we call an event runSumo() for each second. runSumo will use tracy to simulate a sumo scenario, and extract output for a particular second and write those into a trace file. Finally, using our customized mobility helper, mobility will be installed in nodes.
+for i in range(0,20):
+    ns.core.Simulator.Schedule(ns.core.Seconds(i), runSumo, wifiNodes,i)
 
 ndnHelper = ndn.StackHelper()
 ndnHelper.SetDefaultRoutes(True)
@@ -135,9 +132,6 @@ producerHelper = ndn.AppHelper("ns3::ndn::Producer")
 producerHelper.SetPrefix("/v2safety/8thStreet")
 producerHelper.SetAttribute("PayloadSize", StringValue("50"))
 producerHelper.Install(wifiNodes.Get(nodeNum-1))
-
-for i in range(1,12):
-    ns.core.Simulator.Schedule(ns.core.Seconds(i), runSumo, wifiNodes,i)
 
 Simulator.Stop(Seconds(20.0))
 Simulator.Run()
