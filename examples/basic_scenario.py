@@ -27,7 +27,7 @@ def runSumo(nodes,t):
         sys.exit("please declare environment variable 'SUMO_HOME'")
 
     f = open("ns2-traceFile"+str(t)+".tcl","w+")
-    sumoCmd = ["sumo", "-c", "sumo/intersection/intersection.sumocfg", "--start"]
+    sumoCmd = ["sumo", "-c", "src/ndnSIM/sumo/intersection/intersection.sumocfg", "--start"]
     traci.start(sumoCmd)
     traci.simulationStep(t)
     vehicles=traci.vehicle.getIDList();
