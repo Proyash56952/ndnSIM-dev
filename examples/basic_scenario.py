@@ -39,17 +39,20 @@ def runSumo(nodes,t):
         angle = traci.vehicle.getAngle(vehicles[i])
 
         f.write('$ns_ at '+str(t)+' "$node_('+str(i)+') setdest '+str(x)+' '+str(y)+' '+str(speed)+' '+str(angle)+'"\n')
-    traci.close()
+    
     f.close()
 
     ns2 = ns.mobility.CustomHelper("ns2-traceFile"+str(t)+".tcl")
     ns2.Install()
     
+    traci.simulation.saveState("fileName.txt")
+    traci.close()
+    
     
 cmd = ns.core.CommandLine()
 cmd.nodeNum = 4
 cmd.traceFile = "intersecMobility.tcl"
-cmd.duration = 10
+cmd.duration = 20
 cmd.logFile = "default.log"
 cmd.tmin = 0.02
 cmd.tmax = 0.2
@@ -113,7 +116,7 @@ ipAddrs.Assign(wifiDevices)
 #ns2.Install()
 
 #In this loop, we call an event runSumo() for each second. runSumo will use tracy to simulate a sumo scenario, and extract output for a particular second and write those into a trace file. Finally, using our customized mobility helper, mobility will be installed in nodes.
-for i in range(0,20):
+for i in range(0,int(duration)):
     ns.core.Simulator.Schedule(ns.core.Seconds(i), runSumo, wifiNodes,i)
 
 ndnHelper = ndn.StackHelper()
@@ -133,5 +136,5 @@ producerHelper.SetPrefix("/v2safety/8thStreet")
 producerHelper.SetAttribute("PayloadSize", StringValue("50"))
 producerHelper.Install(wifiNodes.Get(nodeNum-1))
 
-Simulator.Stop(Seconds(20.0))
+Simulator.Stop(Seconds(duration))
 Simulator.Run()
