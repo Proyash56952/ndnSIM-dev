@@ -141,6 +141,7 @@ template <typename T>
 void 
 CustomHelper::Install (T begin, T end) const
 {
+  //std::cout<< *begin << " " <<*end <<std::endl;
   class MyObjectStore : public ObjectStore
   {
 public:
@@ -149,12 +150,13 @@ public:
         m_end (end)
     {}
     virtual Ptr<Object> Get (uint32_t i) const {
-        std::cout<< i << std::endl;
+      std::cout<< i << std::endl;
       T iterator = m_begin;
       iterator += i;
-        std::cout << *iterator <<std::endl;
+      std::cout << *iterator <<std::endl;
       if (iterator >= m_end)
         {
+          //std::cout <<"Hola" <<std::endl;
           return 0;
         }
       return *iterator;
@@ -163,6 +165,7 @@ private:
     T m_begin;
     T m_end;
   };
+  std::cout << "configSetMovements" <<std::endl;
   ConfigNodesMovements (MyObjectStore (begin, end));
 }
 

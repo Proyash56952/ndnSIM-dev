@@ -92,14 +92,14 @@ CustomHelper::GetMobilityModel (std::string idString, const ObjectStore &store) 
       return 0;
     }
   Ptr<ConstantVelocityMobilityModel> model = object->GetObject<ConstantVelocityMobilityModel> ();
-  std::cout<< model <<std::endl;
+  //std::cout<< model <<std::endl;
   if (model == 0)
     {
       std::cout << "GetMobilityModel" <<std::endl;
       model = CreateObject<ConstantVelocityMobilityModel> ();
       object->AggregateObject (model);
     }
-    std::cout<< model <<std::endl;
+    //std::cout<< model <<std::endl;
   return model;
 }
 
@@ -133,6 +133,7 @@ CustomHelper::ConfigNodesMovements (const ObjectStore &store) const{
 
           // Get the node Id
           nodeId  = GetNodeIdString (pr);
+	  std::cout<<"hi"<<nodeId<<std::endl;
 	  Ptr<ConstantVelocityMobilityModel> model = GetMobilityModel (nodeId,store);
 
           // if model not exists, continue
@@ -336,7 +337,7 @@ GetNodeIdFromToken (std::string str)
    if (HasNodeIdNumber (str))
     {
       // find brackets
-      std::cout<<str<<std::endl;
+      // std::cout<<str<<std::endl;
       std::string::size_type startNodeId = str.find_first_of ("(");     // index of left bracket
       std::string::size_type endNodeId   = str.find_first_of (")");     // index of right bracket
 
@@ -375,20 +376,27 @@ void Sim(Ptr<ConstantVelocityMobilityModel> model, double at,
   position.x = xFinalPosition;
   position.y = yFinalPosition;
   position.z = 0.0;
-
-  double xSpeed = speed*cos(angle);
-  double ySpeed = speed*sin(angle);
+  model->SetPosition(position);
+  std::cout<<"speed: "<<speed<<" an :" <<cos(angle)<<std::endl;
+  double xSpeed = speed*cos(angle*3.14159/180);
+  double ySpeed = speed*sin(angle*3.14159/180);
   double zSpeed = 0.0;
-  std::cout<<"position: "<<position<<" and speed: "<<xSpeed<<" "<<ySpeed<<std::endl;
-  std::cout<<angle<<std::endl;
-  Simulator::Schedule (Seconds (at), &ConstantVelocityMobilityModel::SetVelocity, model, Vector (xSpeed, ySpeed, zSpeed));
-  Simulator::Schedule (Seconds (at), &ConstantVelocityMobilityModel::SetPosition, model,position);
+  Vector vSpeed;
+  vSpeed.x = xSpeed;
+  vSpeed.y = ySpeed;
+  vSpeed.z = zSpeed;
+  model->SetVelocity(vSpeed);
+  std::cout<<"position: "<<position<<" and speed(x,y): "<<xSpeed<<" "<<ySpeed<<" angle: "<<angle<<std::endl;
+  //std::cout<<"blah blah blah: "<<Seconds (at)<<std::endl;
+  //Simulator::Schedule (Seconds (at), &ConstantVelocityMobilityModel::SetVelocity, model, Vector (xSpeed, ySpeed, zSpeed));
+  //Simulator::Schedule (Seconds (at), &ConstantVelocityMobilityModel::SetPosition, model,position);
 }
 
 
 void
 CustomHelper::Install (void) const
 {
+  std::cout<< "come into cc install " << *NodeList::Begin() << std::endl;
   Install (NodeList::Begin (), NodeList::End ());
 }
   
