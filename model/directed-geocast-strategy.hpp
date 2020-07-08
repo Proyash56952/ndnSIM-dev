@@ -24,6 +24,7 @@
 #include "ndn-cxx/util/signal.hpp"
 
 #include "ns3/vector.h"
+#include "ns3/random-variable-stream.h"
 
 namespace nfd {
 namespace fw {
@@ -55,7 +56,7 @@ public:
     ReceivedDup = 2,
     Canceled = 3,
   };
-  static ndn::util::Signal<DirectedGeocastStrategy, Name, int> onAction;
+  static ndn::util::Signal<DirectedGeocastStrategy, Name, int, double, double> onAction;
 
 private:
   static ndn::optional<ns3::Vector>
@@ -63,12 +64,12 @@ private:
 
   static ndn::optional<ns3::Vector>
   extractPositionFromTag(const Interest& interest);
-  
+
 
   /**
    * if returns 0_s, then either own position or geo tag in interest is missing
    */
-  static time::nanoseconds
+  time::nanoseconds
   calculateDelay(const Interest& interest);
 
   /**
@@ -76,10 +77,10 @@ private:
    */
   static bool
   shouldCancelTransmission(const pit::Entry& oldPitEntry, const Interest& newInterest);
-  
+
   static ndn::optional<ns3::Vector>
   parsingCoordinate(std::string s);
-  
+
   static bool
   shouldLimitTransmission(const Interest& interest);
 private: // StrategyInfo
@@ -97,6 +98,10 @@ private: // StrategyInfo
   public:
     std::map<FaceId, scheduler::ScopedEventId> queue;
   };
+
+  ns3::Ptr<ns3::UniformRandomVariable> m_randVar;
+  double m_minTime = 0.02;
+  double m_maxTime = 0.1;
 };
 
 } // namespace fw

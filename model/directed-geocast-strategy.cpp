@@ -39,8 +39,6 @@
 #include "math.h"
 #include "ns3/vector.h"
 #include <chrono>
-#include "ns3/random-variable-stream.h"
-#include "ns3/rng-seed-manager.h"
 #include "ns3/double.h"
 #include <ctime>
 #include <cstdlib>
@@ -50,7 +48,7 @@
 namespace nfd {
 namespace fw {
 
-ndn::util::Signal<DirectedGeocastStrategy, Name, int> DirectedGeocastStrategy::onAction;
+ndn::util::Signal<DirectedGeocastStrategy, Name, int, double, double> DirectedGeocastStrategy::onAction;
 
 NFD_REGISTER_STRATEGY(DirectedGeocastStrategy);
 
@@ -61,13 +59,20 @@ DirectedGeocastStrategy::DirectedGeocastStrategy(Forwarder& forwarder, const Nam
 {
   ParsedInstanceName parsed = parseInstanceName(name);
   if (!parsed.parameters.empty()) {
-    NDN_THROW(std::invalid_argument("DirectedGeocastStrategy does not accept parameters"));
+    // NDN_THROW(std::invalid_argument("DirectedGeocastStrategy does not accept parameters"));
+    m_minTime = boost::lexical_cast<double>(parsed.parameters[0]);
+    m_maxTime = boost::lexical_cast<double>(parsed.parameters[1]);
   }
-  if (parsed.version && *parsed.version != getStrategyName()[-1].toVersion()) {
-    NDN_THROW(std::invalid_argument(
-      "DirectedGeocastStrategy does not support version " + to_string(*parsed.version)));
-  }
+
+  // if (parsed.version && *parsed.version != getStrategyName()[-1].toVersion()) {
+  //   NDN_THROW(std::invalid_argument(
+  //     "DirectedGeocastStrategy does not support version " + to_string(*parsed.version)));
+  // }
   this->setInstanceName(makeInstanceName(name, getStrategyName()));
+
+  m_randVar = ns3::CreateObject<ns3::UniformRandomVariable>();
+  m_randVar->SetAttribute ("Min", ns3::DoubleValue(m_minTime));
+  m_randVar->SetAttribute ("Max", ns3::DoubleValue(m_maxTime));
 }
 
 const Name&
@@ -81,7 +86,15 @@ void
 DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const Interest& interest,
                                               const shared_ptr<pit::Entry>& pitEntry)
 {
-  this->onAction(interest.getName(), Received);
+  double posx =0.0;
+  double posy =0.0;
+  ndn::optional<ns3::Vector> pos = getSelfPosition();
+  if(pos){
+    posx = pos->x;
+    posy = pos->y;
+  }
+  //std::cout << x;
+  this->onAction(interest.getName(), Received, posx, posy);
 
   NFD_LOG_DEBUG("ReceivedInterest: ");
   const fib::Entry& fibEntry = this->lookupFib(*pitEntry);
@@ -91,7 +104,6 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
 
   for (const auto& nexthop : nexthops) {
     Face& outFace = nexthop.getFace();
-
     if ((outFace.getId() == ingress.face.getId() && outFace.getLinkType() != ndn::nfd::LINK_TYPE_AD_HOC) ||
         wouldViolateScope(ingress.face, interest, outFace)) {
       continue;
@@ -100,7 +112,8 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
     if (outFace.getLinkType() != ndn::nfd::LINK_TYPE_AD_HOC) {
       // for non-ad hoc links, send interest as usual
       this->sendInterest(pitEntry, FaceEndpoint(outFace, 0), interest);
-      this->onAction(interest.getName(), Sent);
+      this->onAction(interest.getName(), Sent, posx, posy);
+
       NFD_LOG_DEBUG(interest << " from=" << ingress << " pitEntry-to=" << outFace.getId());
     }
     //NFD_LOG_DEBUG("the link type is " << outFace.getLinkType());
@@ -113,6 +126,7 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
       PitInfo* pi = pitEntry->insertStrategyInfo<PitInfo>().first;
       if (pi->queue.find(faceId) != pi->queue.end()) {
         NFD_LOG_DEBUG(interest << " already scheduled pitEntry-to=" << outFace.getId());
+        std::cerr << "Impossible point" << std::endl;
         continue;
       }
 
@@ -122,7 +136,8 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
       //NFD_LOG_DEBUG("The result of limit tranmission is " << limitTransmission);
       if(shouldLimitTransmission(interest)){
         NFD_LOG_DEBUG("limiting the transmission of " << interest);
-	continue;
+        std::cerr << "limiting transmission point" << std::endl;
+        continue;
       }
 
 
@@ -131,7 +146,7 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
       NFD_LOG_DEBUG("Delaying by " << delay);
       if (delay > 0_s) {
         scheduler::ScopedEventId event = getScheduler().schedule(delay, [this, pitEntryWeakPtr,
-                                                                         faceId, interest] {
+                                                                       faceId, interest] {
             auto pitEntry = pitEntryWeakPtr.lock();
             auto outFace = getFaceTable().get(faceId);
             if (pitEntry == nullptr || outFace == nullptr) {
@@ -140,7 +155,15 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
             }
 
             this->sendInterest(pitEntry, FaceEndpoint(*outFace, 0), interest);
-            this->onAction(interest.getName(), Sent);
+            double posx =0.0;
+            double posy =0.0;
+            ndn::optional<ns3::Vector> pos = getSelfPosition();
+            if(pos){
+              posx = pos->x;
+              posy = pos->y;
+            }
+            //std::cout << x;
+            this->onAction(interest.getName(), Sent, posx, posy);
             NFD_LOG_DEBUG("delayed " << interest << " pitEntry-to=" << faceId);
           });
 
@@ -149,7 +172,18 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
       }
       else {
         this->sendInterest(pitEntry, FaceEndpoint(outFace, 0), interest);
-        this->onAction(interest.getName(), Sent);
+        double posx =0.0;
+        double posy =0.0;
+        ndn::optional<ns3::Vector> pos = getSelfPosition();
+        if(pos){
+          posx = pos->x;
+          posy = pos->y;
+        }
+        //std::cout << x;
+        this->onAction(interest.getName(), Sent, posx, posy);
+
+
+        //this->onAction(interest.getName(), Sent, posx, posy);
         NFD_LOG_DEBUG("Could not determine to delay interest");
         NFD_LOG_DEBUG(interest << " from=" << ingress << " pitEntry-to=" << outFace.getId());
       }
@@ -158,24 +192,31 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
     ++nEligibleNextHops;
   }
 
-  if (nEligibleNextHops == 0) {
-    NFD_LOG_DEBUG(interest << " from=" << ingress << " noNextHop");
+  // if (nEligibleNextHops == 0) {
+  //   NFD_LOG_DEBUG(interest << " from=" << ingress << " noNextHop");
 
-    // don't support NACKs (for now or ever)
+  //   // don't support NACKs (for now or ever)
 
-    // lp::NackHeader nackHeader;
-    // nackHeader.setReason(lp::NackReason::NO_ROUTE);
-    // this->sendNack(pitEntry, ingress, nackHeader);
+  //   // lp::NackHeader nackHeader;
+  //   // nackHeader.setReason(lp::NackReason::NO_ROUTE);
+  //   // this->sendNack(pitEntry, ingress, nackHeader);
 
-    this->rejectPendingInterest(pitEntry);
-  }
+  //   this->rejectPendingInterest(pitEntry);
+  // }
 }
 
 void
 DirectedGeocastStrategy::afterReceiveLoopedInterest(const FaceEndpoint& ingress, const Interest& interest,
                                                     pit::Entry& pitEntry)
 {
-  this->onAction(interest.getName(), ReceivedDup);
+  double posx1 = 0.0;
+  double posy1 = 0.0;
+  ndn::optional<ns3::Vector> pos = getSelfPosition();
+  if(pos){
+    posx1 = pos->x;
+    posy1 = pos->y;
+  }
+  this->onAction(interest.getName(), ReceivedDup, posx1, posy1);
   // determine if interest needs to be cancelled or not
 
   PitInfo* pi = pitEntry.getStrategyInfo<PitInfo>();
@@ -192,9 +233,11 @@ DirectedGeocastStrategy::afterReceiveLoopedInterest(const FaceEndpoint& ingress,
 
   if (shouldCancelTransmission(pitEntry, interest)) {
     item->second.cancel();
+    this->onAction(interest.getName(), Canceled, posx1, posy1);
 
     // don't do anything to the PIT entry (let it expire as usual)
     NFD_LOG_DEBUG("Canceling transmission of " << interest << " via=" << ingress.face.getId());
+    pi->queue.erase(item);
   }
 }
 
@@ -234,7 +277,7 @@ DirectedGeocastStrategy::calculateDelay(const Interest& interest)
   auto self = getSelfPosition();
   auto from = extractPositionFromTag(interest);
   NFD_LOG_DEBUG("the interest is " << interest);
-  
+
   if (!self || !from) {
     NFD_LOG_DEBUG("self or from position is missing");
     return 0_s;
@@ -242,17 +285,9 @@ DirectedGeocastStrategy::calculateDelay(const Interest& interest)
   double maxDist = 600;
   double distance = CalculateDistance(*self,*from);
   if (distance < maxDist) {
-    ns3::RngSeedManager::SetSeed (3);
-    ns3::SeedManager::SetRun (7);
-    double min = 0.01;
-    double max = 0.1;
+    auto RandomNo = m_randVar->GetValue ();
 
-    ns3::Ptr<ns3::UniformRandomVariable> x = ns3::CreateObject<ns3::UniformRandomVariable> ();
-    x->SetAttribute ("Min", ns3::DoubleValue(min));
-    x->SetAttribute ("Max", ns3::DoubleValue(max));
-    auto RandomNo = x->GetValue ();
-
-    return time::duration_cast<time::nanoseconds>(time::duration < double >{RandomNo});
+    return time::duration_cast<time::nanoseconds>(time::duration<double>{RandomNo});
   }
  else {
     NFD_LOG_DEBUG("Minimum Delay added is: 10ms ");
@@ -288,7 +323,7 @@ DirectedGeocastStrategy::shouldCancelTransmission(const pit::Entry& oldPitEntry,
   NFD_LOG_DEBUG("cosine-angle is " << cosineAngleAtSelf);
   double projection = abs(distanceBetweenLasthops * cosineAngleAtSelf);
   NFD_LOG_DEBUG("projection is " << projection);
-            
+
   if (angleDeg >= 90) {
     NFD_LOG_DEBUG("Interest need not to be cancelled");
     return false;
@@ -310,18 +345,18 @@ DirectedGeocastStrategy::parsingCoordinate(std::string s)
   auto start = 0U;
   auto end = s.find(delim);
   while (end != std::string::npos){
-    std::string temp = s.substr(start, end-start);    
-//std::cout << s.substr(start, end - start) << std::endl;
+    std::string temp = s.substr(start, end-start);
+    //std::cout << s.substr(start, end - start) << std::endl;
     start = end + delim.length();
     end = s.find(delim, start);
     content[i] = atof(temp.c_str());
     i++;
   }
   content[i] = atof(s.substr(start,end).c_str());
- 
+
   ndn::optional<ns3::Vector> result = ns3::Vector3D(content[0],content[1],content[2]);
   return result;
-  
+
 }
 
 bool
@@ -355,4 +390,3 @@ DirectedGeocastStrategy::shouldLimitTransmission(const Interest& interest)
 
 } // namespace fw
 } // namespace nfd
-
