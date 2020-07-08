@@ -111,7 +111,7 @@ LteUeNetDeviceTransport::doClose()
 }
 
 void
-LteUeNetDeviceTransport::doSend(Packet&& packet)
+LteUeNetDeviceTransport::doSend(const Block& packet, const nfd::EndpointId&)
 {
   NS_LOG_FUNCTION(this << "Sending packet from netDevice with URI"
                   << this->getLocalUri());
@@ -138,9 +138,7 @@ LteUeNetDeviceTransport::receiveFromSocket(Ptr<Socket> socket)
     BlockHeader header;
     packet->RemoveHeader(header);
 
-    auto nfdPacket = Packet(std::move(header.getBlock()));
-
-    this->receive(std::move(nfdPacket));
+    this->receive(std::move(header.getBlock()));
   }
 }
 
