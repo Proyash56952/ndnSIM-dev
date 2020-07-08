@@ -42,7 +42,7 @@ def runSumo0(nodes,t):
     
     f.close()
 
-    ns2 = ns.mobility.CustomHelper("ns2-traceFile"+str(t)+".tcl")
+    ns2 = ns.ndnSIM.CustomHelper("ns2-traceFile"+str(t)+".tcl")
     ns2.Install()
     
     traci.simulation.saveState("fileName.txt")
@@ -77,7 +77,7 @@ def runSumo(nodes,t):
 
     f.close()
 
-    ns2 = ns.mobility.CustomHelper("ns2-traceFile"+str(t)+".tcl")
+    ns2 = ns.ndnSIM.CustomHelper("ns2-traceFile"+str(t)+".tcl")
     ns2.Install()
 
     traci.simulation.saveState("state_"+str(t)+".xml")
@@ -147,7 +147,7 @@ ipAddrs.Assign(wifiDevices)
                               # "Pause", ns.core.StringValue ("ns3::ConstantRandomVariable[Constant=0.2]"))
 #mobility.Install(wifiNodes)
 
-#ns2 = ns.mobility.CustomHelper(traceFile)
+#ns2 = ns.ndnSIM.CustomHelper(traceFile)
 #ns2.Install()
 
 #In this loop, we call an event runSumo() for each second. runSumo will use tracy to simulate a sumo scenario, and extract output for a particular second and write those into a trace file. Finally, using our customized mobility helper, mobility will be installed in nodes.

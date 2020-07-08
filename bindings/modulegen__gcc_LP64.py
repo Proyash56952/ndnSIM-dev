@@ -28,6 +28,8 @@ def register_types(module):
     module.add_class('Node', import_from_module='ns.network', parent=module['ns3::Object'])
     module.add_class('ApplicationContainer', import_from_module='ns.network')
 
+    module.add_class('CustomHelper')
+
     def reg_ndn(module):
         module.add_class('StackHelper')
         module.add_class('FibHelper')
@@ -151,6 +153,11 @@ def register_methods(root_module):
         cls.add_method('CalculateRoutes', 'void', [])
         cls.add_method('CalculateAllPossibleRoutes', 'void', [])
     reg_GlobalRoutingHelper(root_module['ns3::ndn::GlobalRoutingHelper'])
+
+    def reg_CustomHelper(cls):
+        cls.add_constructor([param('std::string', 'filename')])
+        cls.add_method('Install', 'void', [])
+    reg_CustomHelper(root_module['ns3::CustomHelper'])
 
     def reg_Name(root_module, cls):
         cls.add_output_stream_operator()
