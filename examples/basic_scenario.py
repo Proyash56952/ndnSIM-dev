@@ -18,7 +18,7 @@ import time
 import re
 
 #This function is being called on each second. It will run sumo scenario, extract data for a particular second and writes those into a trace file. Then using our customized helper, we install mobility to the nodes according to the trace file.
-def runSumo(nodes,t):
+def runSumo0(nodes,t):
     #print("hola")
     if 'SUMO_HOME' in os.environ:
         tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
@@ -46,6 +46,41 @@ def runSumo(nodes,t):
     ns2.Install()
     
     traci.simulation.saveState("fileName.txt")
+    traci.close()
+
+def runSumo(nodes,t):
+    #print("hola")
+    if 'SUMO_HOME' in os.environ:
+        tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
+        sys.path.append(tools)
+    else:
+        sys.exit("please declare environment variable 'SUMO_HOME'")
+
+    f = open("ns2-traceFile"+str(t)+".tcl","w+")
+    #sumoCmd = ["sumo", "-c", "src/ndnSIM/sumo/intersection/intersection.sumocfg", "--load-state", "fileName.xml", "--begin", "2"]
+    #traci.start(sumoCmd)
+    if(t > 0):
+        sumoCmd = ["sumo", "-c", "src/ndnSIM/sumo/intersection/intersection.sumocfg", "--load-state", "state_"+str(t-1)+".xml", "--begin", str(t-1)]
+    else:
+        sumoCmd = ["sumo", "-c", "src/ndnSIM/sumo/intersection/intersection.sumocfg"]
+    traci.start(sumoCmd)
+    traci.simulationStep(t)
+    vehicles=traci.vehicle.getIDList();
+    for i in range(0,len(vehicles)):
+        speed = round(traci.vehicle.getSpeed(vehicles[i]))
+        pos = traci.vehicle.getPosition(vehicles[i])
+        x = round(pos[0],1)
+        y = round(pos[1],1)
+        angle = traci.vehicle.getAngle(vehicles[i])
+
+        f.write('$ns_ at '+str(t)+' "$node_('+str(i)+') setdest '+str(x)+' '+str(y)+' '+str(speed)+' '+str(angle)+'"\n')
+
+    f.close()
+
+    ns2 = ns.mobility.CustomHelper("ns2-traceFile"+str(t)+".tcl")
+    ns2.Install()
+
+    traci.simulation.saveState("state_"+str(t)+".xml")
     traci.close()
     
     
