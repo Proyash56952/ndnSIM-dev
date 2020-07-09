@@ -24,7 +24,6 @@ Config.SetDefault("ns3::LteSpectrumPhy::DropRbOnCollisionEnabled", BooleanValue(
 # Set the UEs power in dBm
 Config.SetDefault ("ns3::LteUePhy::TxPower", DoubleValue(23.0))
 
-
 cmd = CommandLine()
 
 cmd.traceFile = "intersecMobility.tcl"
@@ -33,6 +32,7 @@ cmd.duration = Seconds(20)
 cmd.logFile = "default.log"
 cmd.tmin = 0.02
 cmd.tmax = 0.2
+cmd.vis = False
 
 cmd.AddValue("traceFile", "Name of the Trace File")
 cmd.AddValue("duration", "Total simulation time")
@@ -40,8 +40,12 @@ cmd.AddValue("logFile", "Name of the log File")
 cmd.AddValue("tmin", "minimum time")
 cmd.AddValue("tmax", "maximum time")
 cmd.AddValue("sumo_granularity", "Granularity of SUMO")
+cmd.AddValue("vis", "enable visualizer")
 
 cmd.Parse(sys.argv)
+
+if cmd.vis:
+    GlobalValue.Bind("SimulatorImplementationType", StringValue("ns3::VisualSimulatorImpl"))
 
 # Sidelink bearers activation time
 slBearersActivationTime = Seconds(2.0)
@@ -103,8 +107,6 @@ pfactory.SetDataPrbEnd(49)
 # preconfiguration.preconfigComm.nbPools = 1
 addLteSlPool(preconfiguration, pfactory.CreatePool())
 
-print(preconfiguration.preconfigComm.nbPools)
-
 ueSidelinkConfiguration.SetSlPreconfiguration(preconfiguration)
 
 internet = InternetStackHelper()
@@ -151,18 +153,34 @@ def addNode(name):
     # Choosing forwarding strategy
     ndn.StrategyChoiceHelper.Install(node, "/", "/localhost/nfd/strategy/directed-geocast/%FD%01/" +str(cmd.tmin) + "/" + str(cmd.tmax))
 
-    return node, ueDev.Get(0), ueIpIface.GetAddress(0, 0)
+    class Tuple:
+        def __init__(self, node, dev, ip):
+            self.node = node
+            self.dev = dev
+            self.ip = ip
+    return Tuple(node, ueDev.Get(0), ueIpIface.GetAddress(0, 0))
 
 c1 = addNode("car1")
 c2 = addNode("car2")
 c3 = addNode("car3")
 
 def printNode(node):
-    print("Node", node[0].GetId(), "(" + Names.FindName(node[0]) + ")", node[1], str(node[2]))
+    print("Node", node.node.GetId(), "(" + Names.FindName(node.node) + ")", node.dev, str(node.ip))
 
 printNode(c1)
 printNode(c2)
 printNode(c3)
+
+
+app1 = ndn.AppHelper("ndn::v2v::Consumer")
+apps = app1.Install(c1.node)
+apps.Start(Seconds(10.2))
+apps.Stop(Seconds(20.1))
+
+app2 = ndn.AppHelper("ndn::v2v::Producer")
+apps = app2.Install(c3.node)
+apps.Start(Seconds(5.1))
+
 
 # #In this loop, we call an event runSumo() for each second. runSumo will use tracy to simulate a sumo scenario, and extract output for a particular second and write those into a trace file. Finally, using our customized mobility helper, mobility will be installed in nodes.
 # for i in range(0,int(duration)):

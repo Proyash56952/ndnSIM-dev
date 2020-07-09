@@ -154,7 +154,7 @@ def build(bld):
         bld.env['MODULES_NOT_BUILT'].append('ndnSIM')
         return
 
-    module_dirs = ['apps', 'helper', 'model', 'utils', 'bindings']
+    module_dirs = ['apps', 'helper', 'model', 'utils', 'bindings', 'scenarios']
     module.source = bld.path.ant_glob(['%s/**/*.cpp' % dir for dir in module_dirs],
                                       excl=[
                                           'model/ip-faces/*']) + ndnCxxSrc + nfdSrc
