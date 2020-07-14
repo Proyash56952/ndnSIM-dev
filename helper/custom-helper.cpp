@@ -45,7 +45,7 @@ struct ParseResult
  */
 static ParseResult ParseNs2Line (const std::string& str);
 
-/** 
+/**
  * Put out blank spaces at the start and end of a line
  */
 static std::string TrimNs2Line (const std::string& str);
@@ -58,20 +58,20 @@ static std::vector <std::string> getNodeNames();
  * Checks if a string represents a number or it has others characters than digits an point.
  */
 static bool IsNumber (const std::string& s);
-  
+
 template<class T>
 static bool IsVal (const std::string& str, T& ret);
 
 /**
  * Checks if the value between brackets is a correct nodeId number
- */ 
+ */
 static bool HasNodeIdNumber (std::string str);
-/** 
+/**
  * Gets nodeId number in string format from the string like $node_(4)
  */
 static std::string GetNodeIdFromToken (std::string str);
 
-/**  
+/**
  * Get node id number in string format
  */
 static std::string GetNodeIdString (ParseResult pr);
@@ -79,14 +79,14 @@ static std::string GetNodeIdString (ParseResult pr);
 //static std::vector getNodeIDs();
 
 void Sim(Ptr<ConstantVelocityMobilityModel> model, double at,
-    double xFinalPosition, double yFinalPosition, double speed, double angle);
+         double xFinalPosition, double yFinalPosition, double speed, double angle);
 
 CustomHelper::CustomHelper (std::string filename)
   : m_filename (filename)
 {
   std::ifstream file (m_filename.c_str (), std::ios::in);
   if (!(file.is_open ())) NS_FATAL_ERROR("Could not open trace file " << m_filename.c_str() << " for reading, aborting here \n");
-    
+
   nodeCount = 0;
   //std::cout<< "constructor: " << nodeCount <<std::endl;
 }
@@ -101,8 +101,8 @@ CustomHelper::GetMobilityModel (std::string idString, const ObjectStore &store) 
   //abc = (uint32_t) nodeCount;
   Ptr<Object> object = store.Get (nodeCount);
   //std::cout<< "mobility id: " << id << std::endl;
-  
- // std::cout<< "nodeCount: "<<nodeCount <<std::endl;
+
+  // std::cout<< "nodeCount: "<<nodeCount <<std::endl;
   nodeCount = nodeCount+1;
   if (object == 0)
     {
@@ -116,7 +116,7 @@ CustomHelper::GetMobilityModel (std::string idString, const ObjectStore &store) 
       model = CreateObject<ConstantVelocityMobilityModel> ();
       object->AggregateObject (model);
     }
-    //std::cout<< model <<std::endl;
+  //std::cout<< model <<std::endl;
   return model;
 }
 
@@ -127,19 +127,19 @@ CustomHelper::ConfigNodesMovements (const ObjectStore &store) const{
   std::ifstream file (m_filename.c_str (), std::ios::in);
   if (file.is_open ())
     {
-       while (!file.eof () )
-	 {
-           std::string nodeId;
-           std::string line;
+      while (!file.eof () )
+        {
+          std::string nodeId;
+          std::string line;
 
-           getline (file, line);
+          getline (file, line);
 
-           // ignore empty lines
-           if (line.empty ())
-             {
-               continue;
-             }
-	   ParseResult pr = ParseNs2Line (line); // Parse line and obtain tokens
+          // ignore empty lines
+          if (line.empty ())
+            {
+              continue;
+            }
+          ParseResult pr = ParseNs2Line (line); // Parse line and obtain tokens
 
           // Check if the line corresponds with one of the three types of line
           if (pr.tokens.size () != 5 && pr.tokens.size () != 8 && pr.tokens.size () != 9)
@@ -152,7 +152,7 @@ CustomHelper::ConfigNodesMovements (const ObjectStore &store) const{
           nodeId  = GetNodeIdString (pr);
           //std::cout<<"the node ID is: "<<nodeId<<std::endl;
           nodeNames.push_back(nodeId);
-	      Ptr<ConstantVelocityMobilityModel> model = GetMobilityModel (nodeId,store);
+          Ptr<ConstantVelocityMobilityModel> model = GetMobilityModel (nodeId,store);
 
           // if model not exists, continue
           if (model == 0)
@@ -162,9 +162,9 @@ CustomHelper::ConfigNodesMovements (const ObjectStore &store) const{
             }
 
           Sim(model,pr.dvals[2],pr.dvals[5],pr.dvals[6],pr.dvals[7],pr.dvals[8]);
-	  
-  
-         }
+
+
+        }
     }
 
 }
@@ -191,10 +191,10 @@ ParseNs2Line (const std::string& str)
 
   // If line hasn't a correct node Id
   /* if (!HasNodeIdNumber (line))
-    {
-      NS_LOG_WARN ("Line has no node Id: " << line);
-      return ret;
-      }*/
+     {
+     NS_LOG_WARN ("Line has no node Id: " << line);
+     return ret;
+     }*/
 
   s.str (line);
 
@@ -209,10 +209,10 @@ ParseNs2Line (const std::string& str)
       ret.tokens.push_back (x);
       int ii (0);
       double d (0);
-   if (HasNodeIdNumber (x))
-         {
+      if (HasNodeIdNumber (x))
+        {
           x = GetNodeIdFromToken (x);
-	     }
+        }
       ret.has_ival.push_back (IsVal<int> (x, ii));
       ret.ivals.push_back (ii);
       ret.has_dval.push_back (IsVal<double> (x, d));
@@ -234,10 +234,10 @@ ParseNs2Line (const std::string& str)
       std::string x;
       x = ret.tokens[tokensLength - 1];
 
-        if (HasNodeIdNumber (x))
-         {
+      if (HasNodeIdNumber (x))
+        {
           x = GetNodeIdFromToken (x);
-	  }
+        }
 
       // Re calculate values
       int ii (0);
@@ -352,7 +352,7 @@ IsNumber (const std::string& s)
 std::string
 GetNodeIdFromToken (std::string str)
 {
-   if (HasNodeIdNumber (str))
+  if (HasNodeIdNumber (str))
     {
       // find brackets
       // std::cout<<str<<std::endl;
@@ -360,11 +360,11 @@ GetNodeIdFromToken (std::string str)
       std::string::size_type endNodeId   = str.find_first_of (")");     // index of right bracket
 
       return str.substr (startNodeId + 1, endNodeId - (startNodeId + 1)); // set node id
-        }
-     else
-         {
-       return "";
-        }
+    }
+  else
+    {
+      return "";
+    }
 }
 
 std::string
@@ -386,9 +386,9 @@ GetNodeIdString (ParseResult pr)
     }
 }
 
- 
+
 void Sim(Ptr<ConstantVelocityMobilityModel> model, double at,
-	 double xFinalPosition, double yFinalPosition, double speed, double angle)
+         double xFinalPosition, double yFinalPosition, double speed, double angle)
 {
   Vector position;
   position.x = xFinalPosition;
@@ -413,9 +413,9 @@ void Sim(Ptr<ConstantVelocityMobilityModel> model, double at,
 std::vector<std::string>
 getNodeNames()
 {
-    std::cout<<"getNodeNames()"<<std::endl;
-    //getNodeNames(nodeNames);
-    return nodeNames;
+  std::cout<<"getNodeNames()"<<std::endl;
+  //getNodeNames(nodeNames);
+  return nodeNames;
 }
 
 void
@@ -424,5 +424,5 @@ CustomHelper::Install (void) const
   //std::cout<< "come into cc install " << *NodeList::Begin() << std::endl;
   Install (NodeList::Begin (), NodeList::End ());
 }
-  
+
 }
