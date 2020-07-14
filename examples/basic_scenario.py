@@ -12,6 +12,12 @@ from ns.ndnSIM import *
 
 import sys, os
 
+if 'SUMO_HOME' in os.environ:
+    tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
+    sys.path.append(tools)
+else:
+    sys.exit("please declare environment variable 'SUMO_HOME'")
+
 import traci
 import traci.constants as tc
 import time
@@ -73,7 +79,7 @@ def runSumo(nodes,t):
         y = round(pos[1],1)
         angle = traci.vehicle.getAngle(vehicles[i])
 
-        f.write('$ns_ at '+str(t)+' "$node_('+str(i)+') setdest '+str(x)+' '+str(y)+' '+str(speed)+' '+str(angle)+'"\n')
+        f.write('$ns_ at '+str(t)+' "$node_('+str(vehicles[i])+') setdest '+str(x)+' '+str(y)+' '+str(speed)+' '+str(angle)+'"\n')
 
     f.close()
 
@@ -87,7 +93,7 @@ def runSumo(nodes,t):
 cmd = ns.core.CommandLine()
 cmd.nodeNum = 4
 cmd.traceFile = "intersecMobility.tcl"
-cmd.duration = 20
+cmd.duration = 10
 cmd.logFile = "default.log"
 cmd.tmin = 0.02
 cmd.tmax = 0.2
@@ -108,6 +114,8 @@ traceFile = cmd.traceFile
 
 wifiNodes = ns.network.NodeContainer()
 wifiNodes.Create(nodeNum)
+
+print("ID of the node is: "+str(wifiNodes.Get(1).GetId()))
 
 wifi = ns.wifi.WifiHelper()
 mac = ns.wifi.WifiMacHelper()

@@ -89,7 +89,8 @@ public:
    * file.
    */
   void Install (void) const;
-
+  static std::vector <std::string> getNodeNames();
+  //static std::vector <std::string> getNodeNames(std::vector<std::string> x);
   /**
    * \param begin an iterator which points to the start of the input
    *        object array.
@@ -116,7 +117,7 @@ public:
      * \param i index
      * \return pointer to object
      */
-    virtual Ptr<Object> Get (uint32_t i) const = 0;
+    virtual Ptr<Object> Get (int i) const = 0;
   };
   /**
    * Parses ns-2 mobility file to create ns-3 mobility events
@@ -149,11 +150,11 @@ public:
       : m_begin (begin),
         m_end (end)
     {}
-    virtual Ptr<Object> Get (uint32_t i) const {
-      std::cout<< i << std::endl;
+    virtual Ptr<Object> Get (int i) const {
+      //std::cout<< i << std::endl;
       T iterator = m_begin;
       iterator += i;
-      std::cout << *iterator <<std::endl;
+      //std::cout << *iterator <<std::endl;
       if (iterator >= m_end)
         {
           //std::cout <<"Hola" <<std::endl;
@@ -165,10 +166,15 @@ private:
     T m_begin;
     T m_end;
   };
-  std::cout << "configSetMovements" <<std::endl;
+  //std::cout << "configSetMovements" <<std::endl;
   ConfigNodesMovements (MyObjectStore (begin, end));
 }
 
+/*std::vector <std::string>
+CustomHelper::getNodeNames(std::vector<std::string> a)
+{
+  return a;
+}*/
 
 } // namespace ns3
 

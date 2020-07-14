@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <vector>
 #include <map>
 #include <cmath>
 #include "ns3/log.h"
@@ -25,6 +26,8 @@ NS_LOG_COMPONENT_DEFINE ("CustomHelper");
 #define  NS2_NODEID   "$node_("
 #define  NS2_NS_SCH   "$ns_"
 
+int nodeCount;
+std::vector <std::string> nodeNames;
 struct ParseResult
 {
   std::vector<std::string> tokens; //!< tokens from a line
@@ -34,6 +37,8 @@ struct ParseResult
   std::vector<bool> has_dval; //!< points if a tokens has a double value
   std::vector<std::string> svals;  //!< string value for each token
 };
+
+
 
 /**
  * Parses a line of ns2 mobility
@@ -45,6 +50,7 @@ static ParseResult ParseNs2Line (const std::string& str);
  */
 static std::string TrimNs2Line (const std::string& str);
 
+static std::vector <std::string> getNodeNames();
 /**
  * Checks if a string represents a number or it has others characters than digits an point.
  */
@@ -70,6 +76,8 @@ static std::string GetNodeIdFromToken (std::string str);
  */
 static std::string GetNodeIdString (ParseResult pr);
 
+//static std::vector getNodeIDs();
+
 void Sim(Ptr<ConstantVelocityMobilityModel> model, double at,
     double xFinalPosition, double yFinalPosition, double speed, double angle);
 
@@ -77,7 +85,10 @@ CustomHelper::CustomHelper (std::string filename)
   : m_filename (filename)
 {
   std::ifstream file (m_filename.c_str (), std::ios::in);
-  if (!(file.is_open ())) NS_FATAL_ERROR("Could not open trace file " << m_filename.c_str() << " for reading, aborting here \n"); 
+  if (!(file.is_open ())) NS_FATAL_ERROR("Could not open trace file " << m_filename.c_str() << " for reading, aborting here \n");
+    
+  nodeCount = 0;
+  //std::cout<< "constructor: " << nodeCount <<std::endl;
 }
 
 Ptr<ConstantVelocityMobilityModel>
@@ -87,8 +98,12 @@ CustomHelper::GetMobilityModel (std::string idString, const ObjectStore &store) 
   iss.str (idString);
   uint32_t id (0);
   iss >> id;
-  Ptr<Object> object = store.Get (id);
-  std::cout<< "mobility id: " << id << std::endl;
+  //abc = (uint32_t) nodeCount;
+  Ptr<Object> object = store.Get (nodeCount);
+  //std::cout<< "mobility id: " << id << std::endl;
+  
+ // std::cout<< "nodeCount: "<<nodeCount <<std::endl;
+  nodeCount = nodeCount+1;
   if (object == 0)
     {
       return 0;
@@ -97,7 +112,7 @@ CustomHelper::GetMobilityModel (std::string idString, const ObjectStore &store) 
   //std::cout<< model <<std::endl;
   if (model == 0)
     {
-      std::cout << "GetMobilityModel" <<std::endl;
+      //std::cout << "GetMobilityModel" <<std::endl;
       model = CreateObject<ConstantVelocityMobilityModel> ();
       object->AggregateObject (model);
     }
@@ -135,8 +150,9 @@ CustomHelper::ConfigNodesMovements (const ObjectStore &store) const{
 
           // Get the node Id
           nodeId  = GetNodeIdString (pr);
-	  std::cout<<"hi"<<nodeId<<std::endl;
-	  Ptr<ConstantVelocityMobilityModel> model = GetMobilityModel (nodeId,store);
+          //std::cout<<"the node ID is: "<<nodeId<<std::endl;
+          nodeNames.push_back(nodeId);
+	      Ptr<ConstantVelocityMobilityModel> model = GetMobilityModel (nodeId,store);
 
           // if model not exists, continue
           if (model == 0)
@@ -379,7 +395,7 @@ void Sim(Ptr<ConstantVelocityMobilityModel> model, double at,
   position.y = yFinalPosition;
   position.z = 0.0;
   model->SetPosition(position);
-  std::cout<<"speed: "<<speed<<" an :" <<cos(angle)<<std::endl;
+  //std::cout<<"speed: "<<speed<<" an :" <<cos(angle)<<std::endl;
   double xSpeed = speed*cos(angle*3.14159/180);
   double ySpeed = speed*sin(angle*3.14159/180);
   double zSpeed = 0.0;
@@ -394,11 +410,18 @@ void Sim(Ptr<ConstantVelocityMobilityModel> model, double at,
   //Simulator::Schedule (Seconds (at), &ConstantVelocityMobilityModel::SetPosition, model,position);
 }
 
+std::vector<std::string>
+getNodeNames()
+{
+    std::cout<<"getNodeNames()"<<std::endl;
+    //getNodeNames(nodeNames);
+    return nodeNames;
+}
 
 void
 CustomHelper::Install (void) const
 {
-  std::cout<< "come into cc install " << *NodeList::Begin() << std::endl;
+  //std::cout<< "come into cc install " << *NodeList::Begin() << std::endl;
   Install (NodeList::Begin (), NodeList::End ());
 }
   
