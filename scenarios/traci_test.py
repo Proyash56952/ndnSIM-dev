@@ -73,13 +73,33 @@ def prepositionNode(node, targetPos, currentSpeed, angle, targetTime):
     node.mobility.SetPosition(prevPos)
     node.mobility.SetVelocity(speed)
 
+
+
+def getTargets(vehicle):
+    pos = []
+
+    # get the lane id in which the vehicle is currently on
+    currentLaneId = g_traciStepByStep.vehicle.getLaneID(vehicle)
+    currentLane = net.getLane(currentLaneId)
+
+    x, y = sumolib.geomhelper.positionAtShapeOffset(currentLane.getShape(), currentLane.getLength())
+
+    # Position at the end of the current lane
+    pos.append(Vector(x, y, 0))
+
+    for connection in currentLane.getOutgoing():
+        nextLane = connection.getToLane()
+        x, y = sumolib.geomhelper.positionAtShapeOffset(nextLane.getShape(), 0)
+        pos.append(Vector(x, y, 0))
+
+    return pos
+
 def runSumoStep():
     Simulator.Schedule(Seconds(time_step), runSumoStep)
 
     nowTime = Simulator.Now().To(Time.S).GetDouble()
     targetTime = Simulator.Now().To(Time.S).GetDouble() + time_step
 
-    # print(Simulator.Now().To(Time.S).GetDouble() + time_step)
     g_traciStepByStep.simulationStep(Simulator.Now().To(Time.S).GetDouble() + time_step)
 
     for vehicle in g_traciStepByStep.vehicle.getIDList():
@@ -93,33 +113,14 @@ def runSumoStep():
             node.time = targetTime
             prepositionNode(node, Vector(pos[0], pos[1], 0.0), speed, angle, targetTime - nowTime)
             node.referencePos = Vector(pos[0], pos[1], 0.0)
+
+            targets = getTargets(vehicle)
+            print("          Points of interests:", [str(target) for target in targets])
         else:
             node.time = targetTime
             setSpeedToReachNextWaypoint(node, node.referencePos, Vector(pos[0], pos[1], 0.0), targetTime - nowTime, speed)
             node.referencePos = Vector(pos[0], pos[1], 0.0)
 
-        # get the lane id in which the vehicle is currently on
-        # lane = g_traciStepByStep.vehicle.getLaneID(vehicles[i])
-        #print("lane: "+lane+" "+vehicles[i])
-
-        # if(lane == "1i_3"):
-        # #get the lane object using sumolib.net
-        #     lane_ = net.getLane(lane)
-
-        #     # retrieve the list of outgoing lanes from current lane
-        #     outGoing = lane_.getOutgoing()
-
-        #     if(len(outGoing) > 0):
-        #         nextLaneId = outGoing[0].getToLane().getID() #get the next lane the vehilce will visit
-        #         #laneLength = outGoing[0].getToLane().getLength()
-        #         print("next lane will be : "+nextLaneId)
-        #         #print("length: "+str(laneLength))
-
-
-        #     x,y = sumolib.geomhelper.positionAtShapeOffset(net.getLane(nextLaneId).getShape(), 0)
-        #     print("The position will be : " +str(x)+"  " +str(y))
-
-    # f.close()
 
 
 createAllVehicles(cmd.duration.To(Time.S).GetDouble())
