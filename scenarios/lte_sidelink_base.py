@@ -47,6 +47,12 @@ cmd.Parse(sys.argv)
 if cmd.vis:
     GlobalValue.Bind("SimulatorImplementationType", StringValue("ns3::VisualSimulatorImpl"))
 
+if isinstance(cmd.duration, str):
+    cmd.duration = Seconds(float(cmd.duration))
+
+if isinstance(cmd.sumo_granularity, str):
+    cmd.sumo_granularity = Seconds(float(cmd.sumo_granularity))
+
 # Sidelink bearers activation time
 slBearersActivationTime = Seconds(2.0)
 
@@ -154,8 +160,9 @@ def addNode(name):
     ndn.StrategyChoiceHelper.Install(node, "/", "/localhost/nfd/strategy/directed-geocast/%FD%01/" +str(cmd.tmin) + "/" + str(cmd.tmax))
 
     class Tuple:
-        def __init__(self, node, dev, ip):
+        def __init__(self, node, dev, ip, name):
             self.node = node
             self.dev = dev
             self.ip = ip
-    return Tuple(node, ueDev.Get(0), ueIpIface.GetAddress(0, 0))
+            self.name = name
+    return Tuple(node, ueDev.Get(0), ueIpIface.GetAddress(0, 0), name)

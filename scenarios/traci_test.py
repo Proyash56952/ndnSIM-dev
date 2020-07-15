@@ -1,45 +1,5 @@
 from lte_sidelink_base import *
 
-# c1 = addNode("car1")
-# c2 = addNode("car2")
-# c3 = addNode("car3")
-
-# def printNode(node):
-#     print("Node", node.node.GetId(), "(" + Names.FindName(node.node) + ")", node.dev, str(node.ip))
-
-# printNode(c1)
-# printNode(c2)
-# printNode(c3)
-
-
-# app1 = ndn.AppHelper("ndn::v2v::Consumer")
-# apps = app1.Install(c1.node)
-# apps.Start(Seconds(10.2))
-# apps.Stop(Seconds(20.1))
-
-# app2 = ndn.AppHelper("ndn::v2v::Producer")
-# apps = app2.Install(c3.node)
-# apps.Start(Seconds(5.1))
-
-
-# # #In this loop, we call an event runSumo() for each second. runSumo will use tracy to simulate a sumo scenario, and extract output for a particular second and write those into a trace file. Finally, using our customized mobility helper, mobility will be installed in nodes.
-# # for i in range(0,int(duration)):
-# #     ns.core.Simulator.Schedule(ns.core.Seconds(i), runSumo, wifiNodes,i)
-
-# # consumerHelper = ndn.AppHelper("ns3::ndn::ConsumerCbr")
-# # consumerHelper.SetPrefix("/v2safety/8thStreet/0,0,0/700,0,0/100")
-# # consumerHelper.SetAttribute("Frequency", StringValue("1"))
-# # consumerHelper.Install(wifiNodes.Get(0))
-
-# # producerHelper = ndn.AppHelper("ns3::ndn::Producer")
-# # producerHelper.SetPrefix("/v2safety/8thStreet")
-# # producerHelper.SetAttribute("PayloadSize", StringValue("50"))
-# # producerHelper.Install(wifiNodes.Get(nodeNum-1))
-
-# Simulator.Stop(cmd.duration)
-# Simulator.Run()
-
-
 import traci
 import traci.constants as tc
 import time
@@ -59,7 +19,7 @@ traci.start(sumoCmd, label="step-by-step")
 g_traciStepByStep = traci.getConnection("step-by-step")
 
 g_names = {}
-posOutOfBound = Vector(-0, -0, 0)
+posOutOfBound = Vector(0, 0, -2000)
 
 
 def createAllVehicles(simTime):
@@ -70,53 +30,95 @@ def createAllVehicles(simTime):
         node.mobility = node.node.GetObject(ConstantVelocityMobilityModel.GetTypeId())
         node.mobility.SetPosition(posOutOfBound)
         node.mobility.SetVelocity(Vector(0, 0, 0))
+        node.time = -1
     g_traciDryRun.close()
 
-time_step = 0.5
-    
+time_step = 1
+
+def setSpeedToReachNextWaypoint(node, referencePos, targetPos, targetTime, referenceSpeed):
+    prevPos = node.mobility.GetPosition()
+    if prevPos.z < 0:
+        raise RuntimeError("Can only calculate waypoint speed for the initially positioned nodes")
+
+    # prevPos and referencePos need to be reasonably similar
+    error = Vector(abs(prevPos.x - referencePos.x), abs(prevPos.y - referencePos.y), 0)
+    if error.x > 0.1 or error.y > 0.1:
+        print(">> Node [%s] Position %s, expected to be at %s" % (node.name, prevPos, referencePos))
+        print(">> Node [%s] Position error: %s (now = %f seconds)" % (node.name, str(error), Simulator.Now().To(Time.S).GetDouble()))
+        raise RuntimeError("Something off with node positioning; reference and actual current position differ over 10cm")
+
+    distance = Vector(targetPos.x - prevPos.x, targetPos.y - prevPos.y, 0)
+
+    distanceActual = math.sqrt(math.pow(distance.x, 2) + pow(distance.y, 2))
+    estimatedSpeedActual = distanceActual / targetTime
+
+    estimatedSpeed = Vector(distance.x / targetTime, distance.y / targetTime, 0)
+
+    print("Node [%s] change speed to [%s] (now = %f seconds); reference speed %f, current position: %s, target position: %s" % (node.name, str(estimatedSpeed), Simulator.Now().To(Time.S).GetDouble(), referenceSpeed, str(prevPos), str(targetPos)))
+    node.mobility.SetVelocity(estimatedSpeed)
+
+def prepositionNode(node, targetPos, currentSpeed, angle, targetTime):
+    '''This one is trying to set initial position of the node in such a way so it will be
+       traveling at currentSpeed and arrives at the targetPos (basically, set position using reverse speed)'''
+
+    print("Node [%s] will arrive at [%s] in %f seconds (now = %f seconds)" % (node.name, str(targetPos), targetTime, Simulator.Now().To(Time.S).GetDouble()))
+
+    speed = Vector(currentSpeed * math.sin(angle * math.pi / 180), currentSpeed * math.cos(angle * math.pi / 180), 0.0)
+
+    # print(str(speed), currentSpeed, angle, currentSpeed* math.cos(angle * math.pi / 180), currentSpeed * math.sin(angle * math.pi / 180))
+
+    prevPos = Vector(targetPos.x + targetTime * -speed.x, targetPos.y + targetTime * -speed.y, 0)
+    print("          initially positioned at [%s] with speed [%s] (sumo speed %f)" % (str(prevPos), str(speed), currentSpeed))
+
+    node.mobility.SetPosition(prevPos)
+    node.mobility.SetVelocity(speed)
+
 def runSumoStep():
     Simulator.Schedule(Seconds(time_step), runSumoStep)
-    
+
+    nowTime = Simulator.Now().To(Time.S).GetDouble()
+    targetTime = Simulator.Now().To(Time.S).GetDouble() + time_step
+
+    # print(Simulator.Now().To(Time.S).GetDouble() + time_step)
     g_traciStepByStep.simulationStep(Simulator.Now().To(Time.S).GetDouble() + time_step)
 
     for vehicle in g_traciStepByStep.vehicle.getIDList():
-    # for vehicle in g_traciStepByStep.simulation.getLoadedIDList(): # these are only the new nodes, no re-routes
         node = g_names[vehicle]
-        
-        speedTraci = g_traciStepByStep.vehicle.getSpeed(vehicle)
-        angleTraci = g_traciStepByStep.vehicle.getAngle(vehicle)
-        posTraci = g_traciStepByStep.vehicle.getPosition(vehicle)
 
-        pos = Vector(posTraci[0], posTraci[1], 0.0)
-        speed = Vector(speedTraci * math.cos(angleTraci * math.pi / 180),
-                       speedTraci * math.sin(angleTraci * math.pi / 180), 0.0)
+        pos = g_traciStepByStep.vehicle.getPosition(vehicle)
+        speed = g_traciStepByStep.vehicle.getSpeed(vehicle)
+        angle = g_traciStepByStep.vehicle.getAngle(vehicle)
 
-        print(vehicle, "pos =", pos, " speed = (%f)" % speedTraci, speed, "angle = ", angleTraci)
+        if node.time < 0: # a new node
+            node.time = targetTime
+            prepositionNode(node, Vector(pos[0], pos[1], 0.0), speed, angle, targetTime - nowTime)
+            node.referencePos = Vector(pos[0], pos[1], 0.0)
+        else:
+            node.time = targetTime
+            setSpeedToReachNextWaypoint(node, node.referencePos, Vector(pos[0], pos[1], 0.0), targetTime - nowTime, speed)
+            node.referencePos = Vector(pos[0], pos[1], 0.0)
 
-        node.mobility.SetPosition(pos)
-        node.mobility.SetVelocity(speed)
-        
         # get the lane id in which the vehicle is currently on
         # lane = g_traciStepByStep.vehicle.getLaneID(vehicles[i])
         #print("lane: "+lane+" "+vehicles[i])
-        
+
         # if(lane == "1i_3"):
         # #get the lane object using sumolib.net
         #     lane_ = net.getLane(lane)
-            
+
         #     # retrieve the list of outgoing lanes from current lane
         #     outGoing = lane_.getOutgoing()
-            
+
         #     if(len(outGoing) > 0):
         #         nextLaneId = outGoing[0].getToLane().getID() #get the next lane the vehilce will visit
         #         #laneLength = outGoing[0].getToLane().getLength()
         #         print("next lane will be : "+nextLaneId)
         #         #print("length: "+str(laneLength))
-            
+
 
         #     x,y = sumolib.geomhelper.positionAtShapeOffset(net.getLane(nextLaneId).getShape(), 0)
         #     print("The position will be : " +str(x)+"  " +str(y))
-            
+
     # f.close()
 
 
