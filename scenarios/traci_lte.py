@@ -24,7 +24,7 @@ import time
 import re
 import sumolib
 
-net = sumolib.net.readNet('src/ndnSIM/sumo/intersection/intersection.net.xml')
+net = sumolib.net.readNet('src/ndnSIM/scenarios/sumo/intersection.net.xml')
 
 def runSumo(t):
     #print("hola")
@@ -38,16 +38,23 @@ def runSumo(t):
     #sumoCmd = ["sumo", "-c", "src/ndnSIM/sumo/intersection/intersection.sumocfg", "--load-state", "fileName.xml", "--begin", "2"]
     #traci.start(sumoCmd)
     if(t > 0):
-        sumoCmd = ["sumo", "-c", "src/ndnSIM/sumo/intersection/intersection.sumocfg", "--load-state", "state_"+str(t-1)+".xml", "--begin", str(t-1)]
+        sumoCmd = ["sumo", "-c", "src/ndnSIM/scenarios/sumo/intersection.sumocfg", "--load-state", "state_"+str(t-1)+".xml", "--begin", str(t-1)]
     else:
-        sumoCmd = ["sumo", "-c", "src/ndnSIM/sumo/intersection/intersection.sumocfg"]
+        sumoCmd = ["sumo", "-c", "src/ndnSIM/scenarios/sumo/intersection.sumocfg"]
         #d1 = addNodeToContainer("f1.0")
         #d2 = addNodeToContainer("f3.0")
         #d3 = addNodeToContainer("f4.0")
         #d4 = addNodeToContainer("f5.0")
     traci.start(sumoCmd)
     traci.simulationStep(t)
-    vehicles=traci.vehicle.getIDList();
+    vehicles=traci.vehicle.getIDList()
+    persons = traci.person.getIDList()
+    
+    for j in range(0,len(persons)):
+        perPos = traci.person.getPosition(persons[j])
+        perSpeed = traci.person.getSpeed(persons[j])
+        print("position of person" + str(persons[j]) + " is: " + str(perPos) + " and speed is: "+ str(perSpeed))
+    
     for i in range(0,len(vehicles)):
         speed = round(traci.vehicle.getSpeed(vehicles[i]))
         pos = traci.vehicle.getPosition(vehicles[i])
@@ -114,7 +121,7 @@ cmd = CommandLine()
 
 cmd.traceFile = "intersecMobility.tcl"
 cmd.sumo_granularity = Seconds(1)
-cmd.duration = Seconds(20)
+cmd.duration = Seconds(5)
 cmd.logFile = "default.log"
 cmd.tmin = 0.02
 cmd.tmax = 0.2
