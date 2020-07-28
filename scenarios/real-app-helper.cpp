@@ -4,6 +4,8 @@
 #include "ns3/application.h"
 #include "ns3/node.h"
 #include "ns3/names.h"
+#include "ns3/string.h"
+#include "ns3/boolean.h"
 
 #include "v2v-position-getter.hpp"
 
@@ -19,7 +21,20 @@ public:
   {
     static TypeId tid = TypeId(RealApp::getClassName())
       .SetParent<Application>()
-      .AddConstructor<RealAppHelper<RealApp>>();
+      .AddConstructor<RealAppHelper<RealApp>>()
+      .AddAttribute("DoesRequireAdjustment",
+                    "",
+                    BooleanValue(false),
+                    MakeBooleanAccessor(&RealAppHelper<RealApp>::DoesRequireAdjustment,
+                                        &RealAppHelper<RealApp>::Noop),
+                    MakeBooleanChecker())
+      .AddAttribute("RequestPositionStatus",
+                    "Request vehicle/pedestrian status at the specified position based on the current speed",
+                    VectorValue(Vector(0, 0, -1000)),
+                    MakeVectorAccessor(&RealAppHelper<RealApp>::Noop2,
+                                       &RealAppHelper<RealApp>::RequestPositionStatus),
+                    MakeVectorChecker())
+      ;
 
     return tid;
   }
@@ -42,6 +57,31 @@ protected:
   {
     // Stop and destroy the instance of the app
     m_instance.reset();
+  }
+
+
+private:
+  bool
+  DoesRequireAdjustment() const
+  {
+    return m_instance->doesRequireAdjustment();
+  }
+
+  void
+  RequestPositionStatus(Vector position)
+  {
+    m_instance->requestPositionStatus(::ndn::Position{position.x, position.y, position.z});
+  }
+
+  void
+  Noop(bool)
+  {
+  }
+
+  Vector
+  Noop2() const
+  {
+    return {};
   }
 
 private:

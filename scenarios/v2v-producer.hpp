@@ -30,6 +30,19 @@ public:
     // do nothing
   }
 
+  bool
+  doesRequireAdjustment()
+  {
+    BOOST_ASSERT(false);
+    return false;
+  }
+
+  void
+  requestPositionStatus(Position position)
+  {
+    BOOST_ASSERT(false);
+  }
+
 private:
   void
   respondToAnyInterest(const Interest& interest);

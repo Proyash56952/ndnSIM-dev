@@ -3,8 +3,11 @@
 #include "v2v-consumer.hpp"
 
 #include <ndn-cxx/interest.hpp>
+#include <ndn-cxx/util/logger.hpp>
 
 namespace ndn {
+
+NDN_LOG_INIT(v2v.Consumer);
 
 V2vConsumer::V2vConsumer(const std::string& id, std::shared_ptr<PositionGetter> positionGetter, KeyChain& keyChain)
   : m_id(id)
@@ -13,10 +16,6 @@ V2vConsumer::V2vConsumer(const std::string& id, std::shared_ptr<PositionGetter> 
   , m_scheduler(m_face.getIoService())
 {
   std::cerr << "[" << time::system_clock::now() << "] starting consumer" << std::endl;
-
-  // // register prefix and set interest filter on producer face
-  // m_face.setInterestFilter("/hello", std::bind(&RealApp::respond, this, _2),
-  //                          std::bind([]{}), std::bind([]{}));
 
   // m_scheduler.schedule(time::seconds(2), [this] {
   //     m_face.expressInterest(Interest("/hello/world"),
@@ -42,5 +41,31 @@ V2vConsumer::~V2vConsumer()
 {
   std::cerr << "[" << time::system_clock::now() << "] stopping consumer" << std::endl;
 }
+
+void
+V2vConsumer::requestPositionStatus(Position target)
+{
+  auto position = m_positionGetter->getPosition();
+  auto velocity = m_positionGetter->getSpeed();
+
+  // distance / velocity
+
+  auto distance = position.getDistance(target);
+  auto speed = velocity.getAbsSpeed();
+
+  if (speed < 0.1) {
+    // speed is too low, ignore adjustments even requested
+    NDN_LOG_DEBUG("Requested position status, but speed is too low for that. IGNORING");
+    return;
+  }
+
+  using SecondsDouble = boost::chrono::duration<double>;
+
+  auto time = distance / speed;
+  auto expectToBeAtTarget = time::system_clock::now() + SecondsDouble(time);
+
+  Name request("/v2v");
+}
+
 
 } // namespace ndn

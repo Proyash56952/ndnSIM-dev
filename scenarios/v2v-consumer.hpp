@@ -31,6 +31,15 @@ public:
     // do nothing
   }
 
+  bool
+  doesRequireAdjustment() const
+  {
+    return m_doesRequireAdjustment;
+  }
+
+  void
+  requestPositionStatus(Position position);
+
 private:
   void
   scheduleNext();
@@ -41,6 +50,8 @@ private:
   KeyChain& m_keyChain;
   Face m_face;
   Scheduler m_scheduler;
+
+  bool m_doesRequireAdjustment = false;
 };
 
 } // namespace ndn
