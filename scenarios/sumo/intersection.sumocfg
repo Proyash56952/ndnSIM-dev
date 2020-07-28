@@ -2,10 +2,18 @@
  <input>
   <net-file value="intersection.net.xml"/>
   <route-files value="inter.rou.xml"/>
- <!-- <additional-files value="intersection.add.xml"/> -->
+  <!-- <additional-files value="intersection.add.xml"/> -->
  </input>
  <time>
    <begin value="0"/>
    <end value="500"/>
   </time>
+  <processing>
+    <collision.check-junctions value="true"/>
+    <collision.mingap-factor value="0"/>
+    <collision.action value="teleport"/>
+    <collision.stoptime value="20"/>
+    <time-to-teleport value="20"/>
+  </processing>
+
 </configuration>

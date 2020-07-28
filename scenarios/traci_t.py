@@ -1,3 +1,12 @@
+import os,sys
+
+if 'SUMO_HOME' in os.environ:
+    tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
+    sys.path.append(tools)
+    #sys.path.append(os.path.join(os.environ.get("SUMO_HOME"), 'tools'))
+else:
+    sys.exit("please declare environment variable 'SUMO_HOME'")
+    
 from lte_sidelink_base import *
 
 import traci
@@ -20,11 +29,15 @@ g_traciStepByStep = traci.getConnection("step-by-step")
 
 g_names = {}
 p_names = {}
+vehicleList = []
+prevList = []
+nowList = []
 posOutOfBound = Vector(0, 0, -2000)
 
 
 def createAllVehicles(simTime):
     g_traciDryRun.simulationStep(simTime)
+    #vehicleList = g_traciDryRun.simulation.getLoadedIDList()
     for vehicle in g_traciDryRun.simulation.getLoadedIDList():
         node = addNode(vehicle)
         print(vehicle)
@@ -33,7 +46,8 @@ def createAllVehicles(simTime):
         node.mobility.SetPosition(posOutOfBound)
         node.mobility.SetVelocity(Vector(0, 0, 0))
         node.time = -1
-    
+        vehicleList.append(vehicle)
+    #print(vehicleList[1])
     persons = g_traciDryRun.person.getIDList()
     for person in persons:
         node = addNode(person)
@@ -67,21 +81,21 @@ def setSpeedToReachNextWaypoint(node, referencePos, targetPos, targetTime, refer
 
     estimatedSpeed = Vector(distance.x / targetTime, distance.y / targetTime, 0)
 
-    print("Node [%s] change speed to [%s] (now = %f seconds); reference speed %f, current position: %s, target position: %s" % (node.name, str(estimatedSpeed), Simulator.Now().To(Time.S).GetDouble(), referenceSpeed, str(prevPos), str(targetPos)))
+    #print("Node [%s] change speed to [%s] (now = %f seconds); reference speed %f, current position: %s, target position: %s" % (node.name, str(estimatedSpeed), Simulator.Now().To(Time.S).GetDouble(), referenceSpeed, str(prevPos), str(targetPos)))
     node.mobility.SetVelocity(estimatedSpeed)
 
 def prepositionNode(node, targetPos, currentSpeed, angle, targetTime):
     '''This one is trying to set initial position of the node in such a way so it will be
        traveling at currentSpeed and arrives at the targetPos (basically, set position using reverse speed)'''
 
-    print("Node [%s] will arrive at [%s] in %f seconds (now = %f seconds)" % (node.name, str(targetPos), targetTime, Simulator.Now().To(Time.S).GetDouble()))
+    #print("Node [%s] will arrive at [%s] in %f seconds (now = %f seconds)" % (node.name, str(targetPos), targetTime, Simulator.Now().To(Time.S).GetDouble()))
 
     speed = Vector(currentSpeed * math.sin(angle * math.pi / 180), currentSpeed * math.cos(angle * math.pi / 180), 0.0)
 
-    print(str(speed), currentSpeed, angle, currentSpeed* math.cos(angle * math.pi / 180), currentSpeed * math.sin(angle * math.pi / 180))
+    #print(str(speed), currentSpeed, angle, currentSpeed* math.cos(angle * math.pi / 180), currentSpeed * math.sin(angle * math.pi / 180))
 
     prevPos = Vector(targetPos.x + targetTime * -speed.x, targetPos.y + targetTime * -speed.y, 0)
-    print("          initially positioned at [%s] with speed [%s] (sumo speed %f)" % (str(prevPos), str(speed), currentSpeed))
+    #print("          initially positioned at [%s] with speed [%s] (sumo speed %f)" % (str(prevPos), str(speed), currentSpeed))
 
     node.mobility.SetPosition(prevPos)
     node.mobility.SetVelocity(speed)
@@ -128,12 +142,14 @@ def runSumoStep():
             node.referencePos = Vector(pos[0], pos[1], 0.0)
 
             targets = getTargets(vehicle)
-            print("          Points of interests:", [str(target) for target in targets])
+            #print("          Points of interests:", [str(target) for target in targets])
         else:
             node.time = targetTime
             setSpeedToReachNextWaypoint(node, node.referencePos, Vector(pos[0], pos[1], 0.0), targetTime - nowTime, speed)
             node.referencePos = Vector(pos[0], pos[1], 0.0)
-
+        traci.vehicle.setSpeedMode(vehicle,0)
+        traci.vehicle.setMinGap(vehicle,0)
+        
     for person in g_traciStepByStep.person.getIDList():
         node = p_names[person]
 
@@ -153,11 +169,50 @@ def runSumoStep():
             setSpeedToReachNextWaypoint(node, node.referencePos, Vector(pos[0], pos[1], 0.0), targetTime - nowTime, speed)
             node.referencePos = Vector(pos[0], pos[1], 0.0)
 
+def findPoint(x1, y1, x2,
+          y2, x, y) :
+    if (x > x1 and x < x2 and
+        y > y1 and y < y2) :
+        return True
+    else :
+        return False
 
+def diff(li1, li2):
+    return (list(set(li1) - set(li2)))
+
+passingVehicle_step = 0.5
+
+def passingVehicle():
+    Simulator.Schedule(Seconds(passingVehicle_step),passingVehicle)
+    nowTime = Simulator.Now().To(Time.S).GetDouble()
+    #print("hola "+str(nowTime))
+    
+    for vehicle in vehicleList:
+        node = g_names[vehicle]
+        position = node.mobility.GetPosition()
+        #print(position)
+        if (findPoint(485,485,515,515,position.x,position.y)):
+            #print(position)
+            nowList.append(vehicle)
+    global prevList
+    departList = diff(prevList,nowList)
+    print(nowTime)
+    #print(prevList)
+    #print(nowList)
+    #print(departList)
+    prevList = nowList[:]
+    nowList.clear()
+    #print(nowList)
+    
+    print(len(departList))
+            
+        
 
 createAllVehicles(cmd.duration.To(Time.S).GetDouble())
 
 Simulator.Schedule(Seconds(1), runSumoStep)
+
+Simulator.Schedule(Seconds(1),passingVehicle)
 
 Simulator.Stop(cmd.duration)
 Simulator.Run()
