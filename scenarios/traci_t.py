@@ -33,6 +33,7 @@ vehicleList = []
 prevList = []
 nowList = []
 posOutOfBound = Vector(0, 0, -2000)
+departedCount = 0
 
 
 def createAllVehicles(simTime):
@@ -147,8 +148,8 @@ def runSumoStep():
             node.time = targetTime
             setSpeedToReachNextWaypoint(node, node.referencePos, Vector(pos[0], pos[1], 0.0), targetTime - nowTime, speed)
             node.referencePos = Vector(pos[0], pos[1], 0.0)
-        traci.vehicle.setSpeedMode(vehicle,0)
-        traci.vehicle.setMinGap(vehicle,0)
+        g_traciStepByStep.vehicle.setSpeedMode(vehicle,0)
+        g_traciStepByStep.vehicle.setMinGap(vehicle,0)
         
     for person in g_traciStepByStep.person.getIDList():
         node = p_names[person]
@@ -180,7 +181,7 @@ def findPoint(x1, y1, x2,
 def diff(li1, li2):
     return (list(set(li1) - set(li2)))
 
-passingVehicle_step = 0.5
+passingVehicle_step = 0.1
 
 def passingVehicle():
     Simulator.Schedule(Seconds(passingVehicle_step),passingVehicle)
@@ -194,9 +195,9 @@ def passingVehicle():
         if (findPoint(485,485,515,515,position.x,position.y)):
             #print(position)
             nowList.append(vehicle)
-    global prevList
+    global prevList, departedCount
     departList = diff(prevList,nowList)
-    print(nowTime)
+    #print(nowTime)
     #print(prevList)
     #print(nowList)
     #print(departList)
@@ -204,9 +205,17 @@ def passingVehicle():
     nowList.clear()
     #print(nowList)
     
-    print(len(departList))
-            
-        
+    #print(len(departList))
+    departedCount = departedCount + len(departList)
+    #print(departedCount)
+
+# this will only be the case when a car is moving in a fixed velocity and then try to adjust a 2m space from it's original reaching point
+def actionOnInterest(vehID):
+    node = g_names[vehID]
+    g_traciStepByStep.simulationStep(Simulator.Now().To(Time.S).GetDouble())
+    oldSpeed = g_traciStepByStep.vehicle.getSpeed(vehID)
+    newSpeed = oldSpeed - 4
+    g_traciStepByStep.vehicle.slowDown(vehID,newSpeed,1)
 
 createAllVehicles(cmd.duration.To(Time.S).GetDouble())
 
