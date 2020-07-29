@@ -45,13 +45,13 @@ public:
 
 private:
   void
-  respondToAnyInterest(const Interest& interest);
+  respondIfCrashEstimate(const Interest& interest);
 
 private:
   std::string m_id;
   std::shared_ptr<PositionGetter> m_positionGetter;
   KeyChain& m_keyChain;
-  // Face m_face;
+  Face m_face;
   // Scheduler m_scheduler;
 };
 

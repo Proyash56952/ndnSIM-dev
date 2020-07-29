@@ -59,26 +59,54 @@ V2vConsumer::scheduledRequest(Position target)
   auto position = m_positionGetter->getPosition();
   auto velocity = m_positionGetter->getSpeed();
 
-  // distance / velocity
+  auto distance = target - position;
+  if (target.x * velocity.x <= 0 ||
+      target.y * velocity.y <= 0 ||
+      target.z * velocity.z <= 0) {
+    // unrechable, as going different directions
+    NDN_LOG_DEBUG("Target unreachable, going different directions. IGNORING");
+    return;
+  }
 
-  auto distance = position.getDistance(target);
-  auto speed = velocity.getAbsSpeed();
+  if ((std::abs(target.x) > 0.1 && std::abs(velocity.x) < 0.01) ||
+      (std::abs(target.y) > 0.1 && std::abs(velocity.y) < 0.01) ||
+      (std::abs(target.z) > 0.1 && std::abs(velocity.z) < 0.01)
+      ) {
+    // target unrechable
+    NDN_LOG_DEBUG("Target unreachable. IGNORING");
+    return;
+  }
 
-  if (speed < 0.1) {
+  auto maxSpeed = max(abs(velocity));
+  if (maxSpeed < 0.1) {
     // speed is too low, ignore adjustments even requested
     NDN_LOG_DEBUG("Requested position status, but speed is too low for that. IGNORING");
     return;
   }
 
-  if (distance < 20) {
+  auto maxDistance = max(abs(distance));
+  if (maxDistance < 20) {
     // distance is too low, no point of adjustments even if requested
     NDN_LOG_DEBUG("Requested position status, but target is within 20 meters. IGNORING");
     return;
   }
 
+  // distance / velocity
+
+  double dvAngle = std::abs(angle(distance, velocity));
+  if (dvAngle > 1) {
+    NDN_LOG_DEBUG("Velocity angle makes the target unreachable. INGORING");
+    return;
+  }
+
+  // rest is estimation, assuming target reachable with the current velocity
+
   using SecondsDouble = boost::chrono::duration<double>;
 
-  auto time = distance / speed;
+  auto absDistance = position.getDistance(target);
+  auto absSpeed = velocity.getAbsSpeed();
+
+  auto time = absDistance / absSpeed;
   auto expectToBeAtTarget = time::system_clock::now() +
     time::duration_cast<time::nanoseconds>(SecondsDouble(time));
 

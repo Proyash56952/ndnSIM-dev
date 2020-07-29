@@ -38,6 +38,55 @@ struct Vector
   double z;
 };
 
+inline Vector
+operator-(const Vector& lhs, const Vector& rhs)
+{
+  return Vector(lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z);
+}
+
+inline Vector
+operator+(const Vector& lhs, const Vector& rhs)
+{
+  return Vector(lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z);
+}
+
+inline Vector
+operator*(const Vector& lhs, const Vector& rhs)
+{
+  return Vector(lhs.x * rhs.x, lhs.y * rhs.y, lhs.z * rhs.z);
+}
+
+inline Vector
+abs(const Vector& v)
+{
+  return {std::abs(v.x), std::abs(v.y), std::abs(v.z)};
+}
+
+inline double
+max(const Vector& v)
+{
+  return std::max(std::max(v.x, v.y), v.z);
+}
+
+inline double
+dotProduct(const Vector& v1, const Vector& v2)
+{
+  auto v = v1 * v2;
+  return v.x + v.y + v.z;
+}
+
+inline double
+length(const Vector& v)
+{
+  return std::sqrt(std::pow(v.x, 2) + std::pow(v.y, 2) + std::pow(v.z, 2));
+}
+
+inline double
+angle(const Vector& v1, const Vector& v2)
+{
+  return acos(dotProduct(v1, v2) / (length(v1) + length(v2)));
+}
+
 NDN_CXX_DECLARE_WIRE_ENCODE_INSTANTIATIONS(Vector);
 
 struct Position : public Vector
