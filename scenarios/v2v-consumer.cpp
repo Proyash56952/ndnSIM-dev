@@ -45,6 +45,17 @@ V2vConsumer::~V2vConsumer()
 void
 V2vConsumer::requestPositionStatus(Position target)
 {
+  m_scheduler.schedule(0_s, [this, target] () { this->scheduledRequest(target); });
+}
+
+void
+V2vConsumer::scheduledRequest(Position target)
+{
+  if (m_requestInProgress) {
+    NDN_LOG_DEBUG("Already requested adjustments; ignoring the second request");
+    return;
+  }
+
   auto position = m_positionGetter->getPosition();
   auto velocity = m_positionGetter->getSpeed();
 
@@ -59,13 +70,51 @@ V2vConsumer::requestPositionStatus(Position target)
     return;
   }
 
+  if (distance < 20) {
+    // distance is too low, no point of adjustments even if requested
+    NDN_LOG_DEBUG("Requested position status, but target is within 20 meters. IGNORING");
+    return;
+  }
+
   using SecondsDouble = boost::chrono::duration<double>;
 
   auto time = distance / speed;
-  auto expectToBeAtTarget = time::system_clock::now() + SecondsDouble(time);
+  auto expectToBeAtTarget = time::system_clock::now() +
+    time::duration_cast<time::nanoseconds>(SecondsDouble(time));
 
-  Name request("/v2v");
+  Name request("/v2vSafety");
+  request
+    .append(name::Component(target.wireEncode()))
+    .append(name::Component(position.wireEncode()))
+    .append(time::toIsoString(expectToBeAtTarget))
+    .appendNumber(100);
+
+  m_requestInProgress = true;
+
+  Interest i(request);
+  i.setCanBePrefix(false);
+  i.setMustBeFresh(true);
+  i.setInterestLifetime(1_s);
+
+  m_face.expressInterest(i,
+                         [this] (const Interest&, const Data&) {
+                           // data
+                           m_requestInProgress = false;
+
+                           // if real, do validation
+
+                           this->m_doesRequireAdjustment = true;
+                         },
+                         [this, target] (const Interest&, const lp::Nack&) {
+                           // nack
+                           m_requestInProgress = false;
+                           m_scheduler.schedule(200_ms, [this, target] () { this->scheduledRequest(target); });
+                         },
+                         [this, target] (const Interest&) {
+                           // timeout
+                           m_requestInProgress = false;
+                           m_scheduler.schedule(200_ms, [this, target] () { this->scheduledRequest(target); });
+                         });
 }
-
 
 } // namespace ndn

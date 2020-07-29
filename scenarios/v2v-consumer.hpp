@@ -44,6 +44,9 @@ private:
   void
   scheduleNext();
 
+  void
+  scheduledRequest(Position target);
+
 private:
   const std::string m_id;
   std::shared_ptr<PositionGetter> m_positionGetter;
@@ -51,6 +54,7 @@ private:
   Face m_face;
   Scheduler m_scheduler;
 
+  bool m_requestInProgress = false;
   bool m_doesRequireAdjustment = false;
 };
 
