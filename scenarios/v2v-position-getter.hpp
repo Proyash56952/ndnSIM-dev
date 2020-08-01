@@ -38,6 +38,13 @@ struct Vector
   double z;
 };
 
+inline std::ostream&
+operator<<(std::ostream& os, const Vector& v)
+{
+  os << "{x=" << v.x << ", y=" << v.y << ", z=" << v.z << "}";
+  return os;
+}
+
 inline Vector
 operator-(const Vector& lhs, const Vector& rhs)
 {

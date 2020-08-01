@@ -73,7 +73,7 @@ private:
   void
   RequestPositionStatus(Vector position)
   {
-    if (!m_instance) {
+    if (!m_instance || position.z < 0) {
       return;
     }
     m_instance->requestPositionStatus(::ndn::Position{position.x, position.y, position.z});

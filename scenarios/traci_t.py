@@ -130,6 +130,7 @@ def runSumoStep():
 
     g_traciStepByStep.simulationStep(Simulator.Now().To(Time.S).GetDouble() + time_step)
 
+    print(nowTime, g_traciStepByStep.vehicle.getIDList())
     for vehicle in g_traciStepByStep.vehicle.getIDList():
         node = g_names[vehicle]
 
@@ -143,7 +144,7 @@ def runSumoStep():
             node.referencePos = Vector(pos[0], pos[1], 0.0)
 
             targets = getTargets(vehicle)
-            #print("          Points of interests:", [str(target) for target in targets])
+            print("          Points of interests:", [str(target) for target in targets])
         else:
             node.time = targetTime
             setSpeedToReachNextWaypoint(node, node.referencePos, Vector(pos[0], pos[1], 0.0), targetTime - nowTime, speed)
@@ -184,7 +185,7 @@ def diff(li1, li2):
 passingVehicle_step = 0.5
 
 def passingVehicle():
-    Simulator.Schedule(Seconds(passingVehicle_step),passingVehicle)
+    Simulator.Schedule(Seconds(passingVehicle_step), passingVehicle)
     nowTime = Simulator.Now().To(Time.S).GetDouble()
     #print("hola "+str(nowTime))
     
@@ -217,20 +218,34 @@ def actionOnInterest(vehID):
     newSpeed = oldSpeed - 4
     g_traciStepByStep.vehicle.slowDown(vehID,newSpeed,1)
 
+consumerAppHelper = ndn.AppHelper("ndn::v2v::Consumer")
 
+def test():
+    consumerNode = g_names["f2.0"]
+    print(consumerNode.node)
+    apps = consumerAppHelper.Install(consumerNode.node)
+    apps.Start(Seconds(0.1))
+    consumerNode.apps = apps.Get(0)
+
+def test2():
+    consumerNode = g_names["f2.0"]
+    consumerNode.apps.SetAttribute("RequestPositionStatus", StringValue("486.4:495.2:0"))
     
 createAllVehicles(cmd.duration.To(Time.S).GetDouble())
 
-consumerNode = g_names["f1.1"]
-print(consumerNode.node)
+# consumerNode = g_names["f1.1"]
+# print(consumerNode.node)
 
-consumerApp = ndn.AppHelper("ndn::v2v::Consumer")
-apps = consumerApp.Install(consumerNode.node)
+# consumerApp = ndn.AppHelper("ndn::v2v::Consumer")
+# apps = consumerApp.Install(consumerNode.node)
+
+test()
+Simulator.Schedule(Seconds(5.1), test2)
 
 
 Simulator.Schedule(Seconds(1), runSumoStep)
 
-Simulator.Schedule(Seconds(1),passingVehicle)
+Simulator.Schedule(Seconds(1), passingVehicle)
 
 
 Simulator.Stop(cmd.duration)

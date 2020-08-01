@@ -59,18 +59,23 @@ V2vConsumer::scheduledRequest(Position target)
   auto position = m_positionGetter->getPosition();
   auto velocity = m_positionGetter->getSpeed();
 
+
   auto distance = target - position;
-  if (target.x * velocity.x <= 0 ||
-      target.y * velocity.y <= 0 ||
-      target.z * velocity.z <= 0) {
+
+  std::cerr << "Position: " << distance << std::endl;
+  std::cerr << "Velocity: " << velocity << std::endl;
+
+  if (distance.x * velocity.x < 0 ||
+      distance.y * velocity.y < 0 ||
+      distance.z * velocity.z < 0) {
     // unrechable, as going different directions
     NDN_LOG_DEBUG("Target unreachable, going different directions. IGNORING");
     return;
   }
 
-  if ((std::abs(target.x) > 0.1 && std::abs(velocity.x) < 0.01) ||
-      (std::abs(target.y) > 0.1 && std::abs(velocity.y) < 0.01) ||
-      (std::abs(target.z) > 0.1 && std::abs(velocity.z) < 0.01)
+  if ((std::abs(distance.x) > 0.1 && std::abs(velocity.x) < 0.01) ||
+      (std::abs(distance.y) > 0.1 && std::abs(velocity.y) < 0.01) ||
+      (std::abs(distance.z) > 0.1 && std::abs(velocity.z) < 0.01)
       ) {
     // target unrechable
     NDN_LOG_DEBUG("Target unreachable. IGNORING");
