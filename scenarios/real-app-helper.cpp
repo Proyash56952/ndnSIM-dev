@@ -64,12 +64,18 @@ private:
   bool
   DoesRequireAdjustment() const
   {
+    if (!m_instance) {
+      return false;
+    }
     return m_instance->doesRequireAdjustment();
   }
 
   void
   RequestPositionStatus(Vector position)
   {
+    if (!m_instance) {
+      return;
+    }
     m_instance->requestPositionStatus(::ndn::Position{position.x, position.y, position.z});
   }
 
