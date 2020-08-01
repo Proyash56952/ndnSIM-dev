@@ -155,9 +155,8 @@ def register_methods(root_module):
     reg_GlobalRoutingHelper(root_module['ns3::ndn::GlobalRoutingHelper'])
 
     def reg_CustomHelper(cls):
-        cls.add_constructor([param('std::string', 'filename')])
-        cls.add_method('Install', 'void', [])
-        cls.add_method('getNodeNames', 'std::vector<std::string>', [])
+        cls.add_constructor([])
+        cls.add_method('Install', retval('void' ), [param('ns3::Ptr<ns3::Node>', 'node')], is_const=True)
     reg_CustomHelper(root_module['ns3::CustomHelper'])
 
     def reg_Name(root_module, cls):

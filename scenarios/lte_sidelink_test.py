@@ -12,7 +12,7 @@ printNode(c2)
 printNode(c3)
 
 
-app1 = ndn.AppHelper("ndn::v2v::Consumer")
+app1 = ndn.AppHelper("ns3::ndn::ConsumerCbr")
 apps = app1.Install(c1.node)
 apps.Start(Seconds(10.2))
 apps.Stop(Seconds(20.1))
