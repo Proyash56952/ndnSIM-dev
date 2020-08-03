@@ -59,7 +59,7 @@ def addNode(name):
     ndnHelper.Install(node)
 
     # Choosing forwarding strategy
-    # ndn.StrategyChoiceHelper.Install(node, "/", "/localhost/nfd/strategy/directed-geocast/%FD%01/" +str(cmd.tmin) + "/" + str(cmd.tmax))
+    #ndn.StrategyChoiceHelper.Install(node, "/", "/localhost/nfd/strategy/directed-geocast/%FD%01/" +str(cmd.tmin) + "/" + str(cmd.tmax))
 
     class Tuple:
         def __init__(self, node, dev, ip, name):

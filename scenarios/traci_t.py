@@ -137,7 +137,13 @@ def runSumoStep():
         pos = g_traciStepByStep.vehicle.getPosition(vehicle)
         speed = g_traciStepByStep.vehicle.getSpeed(vehicle)
         angle = g_traciStepByStep.vehicle.getAngle(vehicle)
-
+        
+        if (findDistance(pos[0],pos[1],500.0,500.0) < 300):
+            print(vehicle)
+            targets = getTargets(vehicle)
+            print("          Points of interests:", [str(target) for target in targets])
+            sendInterest(vehicle,targets)
+            
         if node.time < 0: # a new node
             node.time = targetTime
             prepositionNode(node, Vector(pos[0], pos[1], 0.0), speed, angle, targetTime - nowTime)
@@ -170,6 +176,9 @@ def runSumoStep():
             node.time = targetTime
             setSpeedToReachNextWaypoint(node, node.referencePos, Vector(pos[0], pos[1], 0.0), targetTime - nowTime, speed)
             node.referencePos = Vector(pos[0], pos[1], 0.0)
+
+def findDistance(x1, y1, x2, y2):
+    return math.sqrt(math.pow((x1-x2),2) + math.pow((y1-y2),2))
 
 def findPoint(x1, y1, x2,
           y2, x, y) :
@@ -227,6 +236,19 @@ def test():
     apps.Start(Seconds(0.1))
     consumerNode.apps = apps.Get(0)
 
+def installConsumerApp():
+    for vehicle in vehicleList:
+        consumerNode = g_names[vehicle]
+        print(consumerNode.node)
+        apps = consumerAppHelper.Install(consumerNode.node)
+        apps.Start(Seconds(0.1))
+        consumerNode.apps = apps.Get(0)
+        
+def sendInterest(vehID,targets):
+    consumerNode = g_names[vehID]
+    for target in targets:
+        consumerNode.apps.SetAttribute("RequestPositionStatus", StringValue(str(target)))
+   
 def test2():
     consumerNode = g_names["f2.0"]
     consumerNode.apps.SetAttribute("RequestPositionStatus", StringValue("486.4:495.2:0"))
@@ -239,8 +261,9 @@ createAllVehicles(cmd.duration.To(Time.S).GetDouble())
 # consumerApp = ndn.AppHelper("ndn::v2v::Consumer")
 # apps = consumerApp.Install(consumerNode.node)
 
-test()
-Simulator.Schedule(Seconds(5.1), test2)
+#test()
+installConsumerApp()
+#Simulator.Schedule(Seconds(5.1), test2)
 
 
 Simulator.Schedule(Seconds(1), runSumoStep)
