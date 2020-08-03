@@ -134,8 +134,8 @@ def runSumoStep():
             print(vehicle)
             targets = getTargets(vehicle)
             print("          Points of interests:", [str(target) for target in targets])
-            # sendInterest(vehicle,targets)
-            speedAdjustment(vehicle)
+            sendInterest(vehicle,targets)
+            # speedAdjustment(vehicle)
             
         if node.time < 0: # a new node
             node.time = targetTime
@@ -227,6 +227,7 @@ def installConsumerApp():
         consumerNode.apps = apps.Get(0)
         
 def sendInterest(vehID,targets):
+    print(vehID)
     consumerNode = g_names[vehID]
     for target in targets:
         consumerNode.apps.SetAttribute("RequestPositionStatus", StringValue(str(target)))
@@ -244,7 +245,7 @@ createAllVehicles(cmd.duration.To(Time.S).GetDouble())
 # apps = consumerApp.Install(consumerNode.node)
 
 #test()
-#installConsumerApp()
+installConsumerApp()
 #Simulator.Schedule(Seconds(5.1), test2)
 
 
