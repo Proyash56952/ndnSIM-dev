@@ -57,6 +57,7 @@ NFD_LOG_INIT(DirectedGeocastStrategy);
 DirectedGeocastStrategy::DirectedGeocastStrategy(Forwarder& forwarder, const Name& name)
   : Strategy(forwarder)
 {
+  NFD_LOG_DEBUG("Constructor ");
   ParsedInstanceName parsed = parseInstanceName(name);
   if (!parsed.parameters.empty()) {
     // NDN_THROW(std::invalid_argument("DirectedGeocastStrategy does not accept parameters"));
@@ -86,7 +87,7 @@ void
 DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const Interest& interest,
                                               const shared_ptr<pit::Entry>& pitEntry)
 {
-  //std::cout<<"Received by "<<ns3::Simulator::GetContext()<<std::endl;
+  NFD_LOG_DEBUG("Received by "<<ns3::Simulator::GetContext());
   double posX =0.0;
   double posY =0.0;
   ndn::optional<ns3::Vector> pos = getSelfPosition();
