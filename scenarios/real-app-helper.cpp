@@ -44,12 +44,9 @@ protected:
   virtual void
   StartApplication()
   {
-    auto positionGetter = std::make_shared<::ndn::Ns3PositionGetter>(GetNode());
-    std::string id = Names::FindName(GetNode());
-
-    // Create an instance of the app, and passing the dummy version of KeyChain (no real signing)
-    m_instance = ::ndn::make_unique<RealApp>(id, positionGetter, ndn::StackHelper::getKeyChain());
-    m_instance->run(); // can be omitted
+    // a bit unsafe, but ok for our case
+    Simulator::ScheduleWithContext(GetNode()->GetId(), Seconds(0),
+                                   &RealAppHelper<RealApp>::CreateInstanceWithContext, this);
   }
 
   virtual void
@@ -59,8 +56,18 @@ protected:
     m_instance.reset();
   }
 
-
 private:
+  void
+  CreateInstanceWithContext()
+  {
+    auto positionGetter = std::make_shared<::ndn::Ns3PositionGetter>(GetNode());
+    std::string id = Names::FindName(GetNode());
+
+    // Create an instance of the app, and passing the dummy version of KeyChain (no real signing)
+    m_instance = ::ndn::make_unique<RealApp>(id, positionGetter, ndn::StackHelper::getKeyChain());
+    m_instance->run(); // can be omitted
+  }
+
   bool
   DoesRequireAdjustment() const
   {
@@ -76,7 +83,8 @@ private:
     if (!m_instance || position.z < 0) {
       return;
     }
-    m_instance->requestPositionStatus(::ndn::Position{position.x, position.y, position.z});
+    Simulator::ScheduleWithContext(GetNode()->GetId(), Seconds(0),
+                                   &RealApp::requestPositionStatus, m_instance.get(), ::ndn::Position{position.x, position.y, position.z});
   }
 
   void
