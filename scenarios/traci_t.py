@@ -218,7 +218,7 @@ def test():
     apps.Start(Seconds(0.1))
     consumerNode.apps = apps.Get(0)
 
-def installConsumerApp():
+def installAllConsumerApp():
     for vehicle in vehicleList:
         consumerNode = g_names[vehicle]
         print(consumerNode.node)
@@ -245,7 +245,7 @@ createAllVehicles(cmd.duration.To(Time.S).GetDouble())
 # apps = consumerApp.Install(consumerNode.node)
 
 #test()
-installConsumerApp()
+installAllConsumerApp()
 #Simulator.Schedule(Seconds(5.1), test2)
 
 

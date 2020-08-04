@@ -30,6 +30,7 @@
 
 #include <ndn-cxx/lp/geo-tag.hpp>
 
+#include <ndn-cxx/interest.hpp>
 #include "ns3/mobility-model.h"
 #include "ns3/node-list.h"
 #include "ns3/node.h"
@@ -57,7 +58,6 @@ NFD_LOG_INIT(DirectedGeocastStrategy);
 DirectedGeocastStrategy::DirectedGeocastStrategy(Forwarder& forwarder, const Name& name)
   : Strategy(forwarder)
 {
-  NFD_LOG_DEBUG("Constructor ");
   ParsedInstanceName parsed = parseInstanceName(name);
   if (!parsed.parameters.empty()) {
     // NDN_THROW(std::invalid_argument("DirectedGeocastStrategy does not accept parameters"));
@@ -359,21 +359,27 @@ DirectedGeocastStrategy::parsingCoordinate(std::string s)
 bool
 DirectedGeocastStrategy::shouldLimitTransmission(const Interest& interest)
 {
+  NFD_LOG_DEBUG("Entered in should Limit Tranmission");
   auto newFrom = extractPositionFromTag(interest);
   if (!newFrom) {
     // originator
     return false;
   }
-
+  
   auto name = interest.getName();
+  auto target = name[-3].blockFromValue();
+  NFD_LOG_DEBUG("passed block from value line");
+    //std::cout<<wireDecode(name.get(-3).blockFromValue())<<std::endl;
   std::string limitStr = name.get(-2).toUri();
   std::string dest = name.get(-3).toUri();
   std::string src = name.get(-4).toUri();
+    
+  
   double limit = atof(limitStr.c_str());
   ndn::optional<ns3::Vector> destination = parsingCoordinate(dest);
   ndn::optional<ns3::Vector> source = parsingCoordinate(src);
   auto self = getSelfPosition();
-
+  std::cout << limit << *destination <<*source<<std::endl;
   if (!self || !destination || !source) {
     NFD_LOG_DEBUG("self, oldFrom, or newFrom position is missing");
     return false;
@@ -386,7 +392,7 @@ DirectedGeocastStrategy::shouldLimitTransmission(const Interest& interest)
                     (2 * distCurSrc * distSrcDest);
   double angle = (acos(cosineAngle)*180)/3.141592;
   double projection = distCurSrc * cosineAngle;
-
+    std::cout<< distSrcDest <<" " <<distCurSrc <<" "<<distCurDest<<std::endl;
   if (distCurSrc < 5 || distCurDest < 5) {
     return true;
   }

@@ -121,9 +121,12 @@ V2vConsumer::scheduledRequest(Position target)
     .append(name::Component(position.wireEncode()))
     .append(time::toIsoString(expectToBeAtTarget))
     .appendNumber(100);
-
+  //NFD_LOG_DEBUG("target is: "<<target <<"   "<<target.wireEncode());
+    std::cerr << "Target: " << target.wireEncode() << std::endl;
+  //NFD_LOG_DEBUG("time is: "<<expectToBeAtTarget<<"  "<<time::toIsoString(expectToBeAtTarget));
   m_requestInProgress = true;
-
+  //auto t = target.wireEncode();
+  //std::cout<< wireDecode(t);
   Interest i(request);
   i.setCanBePrefix(false);
   i.setMustBeFresh(true);
