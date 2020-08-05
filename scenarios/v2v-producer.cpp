@@ -19,7 +19,7 @@ V2vProducer::V2vProducer(const std::string& id,
   std::cerr << "[" << time::system_clock::now() << "] starting producer" << std::endl;
 
   // register prefix and set interest filter on producer face
-  m_face.setInterestFilter("/v2vsafety",
+  m_face.setInterestFilter("/v2vSafety",
                            std::bind(&V2vProducer::respondIfCrashEstimate, this, _2),
                            std::bind([]{}),
                            std::bind([]{}));
@@ -31,6 +31,7 @@ V2vProducer::V2vProducer(const std::string& id,
   //                            std::bind([] { std::cout << "Bye!.." << std::endl; }));
   //   });
 }
+
 
 void
 V2vProducer::respondIfCrashEstimate(const Interest& interest)

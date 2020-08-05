@@ -225,6 +225,15 @@ def installAllConsumerApp():
         apps = consumerAppHelper.Install(consumerNode.node)
         apps.Start(Seconds(0.1))
         consumerNode.apps = apps.Get(0)
+
+def installAllProducerApp():
+    for vehicle in vehicleList:
+        if(vehicle != "f1.0"):
+            producerNode = g_names[vehicle]
+            print(producerNode.node)
+            apps = producerAppHelper.Install(producerNode.node)
+            apps.Start(Seconds(0.5))
+            producerNode.apps = apps.Get(0)
         
 def sendInterest(vehID,targets):
     print(vehID)
@@ -237,7 +246,7 @@ def test2():
     consumerNode.apps.SetAttribute("RequestPositionStatus", StringValue("486.4:495.2:0"))
     
 createAllVehicles(cmd.duration.To(Time.S).GetDouble())
-
+producerAppHelper = ndn.AppHelper("ndn::v2v::Producer")
 # consumerNode = g_names["f1.1"]
 # print(consumerNode.node)
 
@@ -246,6 +255,8 @@ createAllVehicles(cmd.duration.To(Time.S).GetDouble())
 
 #test()
 installAllConsumerApp()
+installAllProducerApp()
+
 #Simulator.Schedule(Seconds(5.1), test2)
 
 

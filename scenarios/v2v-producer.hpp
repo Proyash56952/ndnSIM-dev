@@ -40,7 +40,7 @@ public:
   void
   requestPositionStatus(Position position)
   {
-    BOOST_ASSERT(false);
+    //BOOST_ASSERT(false);
   }
 
 private:
