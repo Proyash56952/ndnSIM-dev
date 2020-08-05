@@ -74,7 +74,7 @@ def setSpeedToReachNextWaypoint(node, referencePos, targetPos, targetTime, refer
 
     estimatedSpeed = Vector(distance.x / targetTime, distance.y / targetTime, 0)
 
-    print("Node [%s] change speed to [%s] (now = %f seconds); reference speed %f, current position: %s, target position: %s" % (node.name, str(estimatedSpeed), Simulator.Now().To(Time.S).GetDouble(), referenceSpeed, str(prevPos), str(targetPos)))
+    # print("Node [%s] change speed to [%s] (now = %f seconds); reference speed %f, current position: %s, target position: %s" % (node.name, str(estimatedSpeed), Simulator.Now().To(Time.S).GetDouble(), referenceSpeed, str(prevPos), str(targetPos)))
     node.mobility.SetVelocity(estimatedSpeed)
 
 def prepositionNode(node, targetPos, currentSpeed, angle, targetTime):
@@ -130,7 +130,7 @@ def runSumoStep():
         speed = g_traciStepByStep.vehicle.getSpeed(vehicle)
         angle = g_traciStepByStep.vehicle.getAngle(vehicle)
         
-        if (findDistance(pos[0],pos[1],500.0,500.0) < 300 and node.adjustment == False):
+        if (findDistance(pos[0],pos[1],500.0,500.0) < 300):
             print(vehicle)
             targets = getTargets(vehicle)
             print("          Points of interests:", [str(target) for target in targets])
@@ -228,12 +228,11 @@ def installAllConsumerApp():
 
 def installAllProducerApp():
     for vehicle in vehicleList:
-        if(vehicle != "f1.0"):
-            producerNode = g_names[vehicle]
-            print(producerNode.node)
-            apps = producerAppHelper.Install(producerNode.node)
-            apps.Start(Seconds(0.5))
-            producerNode.apps = apps.Get(0)
+        producerNode = g_names[vehicle]
+        print(producerNode.node)
+        proapps = producerAppHelper.Install(producerNode.node)
+        proapps.Start(Seconds(0.5))
+        producerNode.proapps = proapps.Get(0)
         
 def sendInterest(vehID,targets):
     print(vehID)
@@ -255,7 +254,7 @@ producerAppHelper = ndn.AppHelper("ndn::v2v::Producer")
 
 #test()
 installAllConsumerApp()
-#installAllProducerApp()
+installAllProducerApp()
 
 #Simulator.Schedule(Seconds(5.1), test2)
 

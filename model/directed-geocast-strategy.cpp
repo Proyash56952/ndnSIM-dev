@@ -282,7 +282,7 @@ DirectedGeocastStrategy::calculateDelay(const Interest& interest)
     return 0_s;
   }
 
-  double maxDist = 600;
+  double maxDist = 200;
   double distance = CalculateDistance(*self,*from);
     std::cout<<distance<<std::endl;
   if (distance < maxDist) {
