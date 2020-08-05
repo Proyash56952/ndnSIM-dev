@@ -3,8 +3,12 @@
 #include "v2v-producer.hpp"
 
 #include <ndn-cxx/interest.hpp>
+#include <ndn-cxx/util/logger.hpp>
+
 
 namespace ndn {
+
+NDN_LOG_INIT(v2v.Producer);
 
 V2vProducer::V2vProducer(const std::string& id,
                          std::shared_ptr<PositionGetter> positionGetter, KeyChain& keyChain)
@@ -31,12 +35,42 @@ V2vProducer::V2vProducer(const std::string& id,
 void
 V2vProducer::respondIfCrashEstimate(const Interest& interest)
 {
-  auto position = m_positionGetter->getPosition();
-  auto velocity = m_positionGetter->getSpeed();
+  try {
+    // Interest name format
+    // /v2vSafety/[targetVector]/[sourceVector]/[targetTimePointIsoString]/[LimitNumber]
 
-  // Data data(interest.getName());
-  // m_keyChain.sign(data);
-  // m_face.put(data);
+    auto position = m_positionGetter->getPosition();
+    auto velocity = m_positionGetter->getSpeed();
+
+    auto expectToBeAtTarget = time::fromIsoString(interest.getName()[-2].toUri());
+    Vector target(interest.getName()[-4].blockFromValue());
+
+    using SecondsDouble = boost::chrono::duration<double>;
+
+    auto time = time::duration_cast<SecondsDouble>(expectToBeAtTarget - time::system_clock::now()).count();
+
+    Position expectedPosition = position * time;
+
+    if (expectedPosition.getDistance(target) < 2) { // within 2 meters
+      //
+      Data data(interest.getName());
+      Block content;
+      content.push_back(makeStringBlock(1, m_id));
+      content.push_back(position.wireEncode());
+      content.push_back(velocity.wireEncode());
+
+      m_keyChain.sign(data);
+      m_face.put(data);
+    }
+    else {
+      // most likely case; not expected at the position
+      NDN_LOG_TRACE("Got Interest, but don't expect to be at the position (" << target << "m from target");
+    }
+  }
+  catch (const tlv::Error&) {
+    // should not be possible in our case, but just in case
+    NDN_LOG_DEBUG("Got interest, but cannot handle it");
+  }
 }
 
 } // namespace ndn

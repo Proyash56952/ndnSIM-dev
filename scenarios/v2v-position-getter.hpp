@@ -64,6 +64,12 @@ operator*(const Vector& lhs, const Vector& rhs)
 }
 
 inline Vector
+operator*(const Vector& lhs, double rhs)
+{
+  return Vector(lhs.x * rhs, lhs.y * rhs, lhs.z * rhs);
+}
+
+inline Vector
 abs(const Vector& v)
 {
   return {std::abs(v.x), std::abs(v.y), std::abs(v.z)};
@@ -100,6 +106,16 @@ struct Position : public Vector
 {
   using Vector::Vector;
 
+  Position(const Vector& v)
+    : Vector(v)
+  {
+  }
+
+  Position(Vector&& v)
+    : Vector(std::move(v))
+  {
+  }
+
   double
   getDistance(const Position& rhs) const
   {
@@ -117,6 +133,16 @@ operator<<(std::ostream& os, const Position& pos)
 struct Speed : public Vector
 {
   using Vector::Vector;
+
+  Speed(const Vector& v)
+    : Vector(v)
+  {
+  }
+
+  Speed(Vector&& v)
+    : Vector(std::move(v))
+  {
+  }
 
   double
   getAbsSpeed() const

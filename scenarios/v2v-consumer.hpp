@@ -50,7 +50,7 @@ private:
 private:
   const std::string m_id;
   std::shared_ptr<PositionGetter> m_positionGetter;
-  KeyChain& m_keyChain;
+  // KeyChain& m_keyChain;
   Face m_face;
   Scheduler m_scheduler;
 

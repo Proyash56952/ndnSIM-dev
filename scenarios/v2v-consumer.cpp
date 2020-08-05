@@ -12,7 +12,7 @@ NDN_LOG_INIT(v2v.Consumer);
 V2vConsumer::V2vConsumer(const std::string& id, std::shared_ptr<PositionGetter> positionGetter, KeyChain& keyChain)
   : m_id(id)
   , m_positionGetter(positionGetter)
-  , m_keyChain(keyChain)
+  // , m_keyChain(keyChain)
   , m_scheduler(m_face.getIoService())
 {
   std::cerr << "[" << time::system_clock::now() << "] starting consumer" << std::endl;
@@ -51,6 +51,9 @@ V2vConsumer::requestPositionStatus(Position target)
 void
 V2vConsumer::scheduledRequest(Position target)
 {
+  // Interest name format
+  // /v2vSafety/[targetVector]/[sourceVector]/[targetTimePointIsoString]/[LimitNumber]
+
   if (m_requestInProgress) {
     NDN_LOG_DEBUG("Already requested adjustments; ignoring the second request");
     return;
