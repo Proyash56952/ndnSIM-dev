@@ -284,6 +284,7 @@ DirectedGeocastStrategy::calculateDelay(const Interest& interest)
 
   double maxDist = 600;
   double distance = CalculateDistance(*self,*from);
+    std::cout<<distance<<std::endl;
   if (distance < maxDist) {
     auto RandomNo = m_randVar->GetValue ();
     return time::duration_cast<time::nanoseconds>(time::duration<double>{RandomNo});
@@ -325,11 +326,11 @@ DirectedGeocastStrategy::shouldCancelTransmission(const pit::Entry& oldPitEntry,
   NFD_LOG_DEBUG("projection is " << projection);
 
   /*(if (angleDeg >= 90) {
-    NFD_LOG_DEBUG("Interest need not to be cancelled");
+    NFD_LOG_DEBUG("Interest need not to be cancelled due to angle");
     return false;
    }*/
   if (projection > distanceToOldhop) {
-    NFD_LOG_DEBUG("Interest need to be cancelled");
+    NFD_LOG_DEBUG("Interest need to be cancelled due to distance");
     return true;
    }
   NFD_LOG_DEBUG("Interest need not to be cancelled");
@@ -363,8 +364,8 @@ DirectedGeocastStrategy::shouldLimitTransmission(const Interest& interest)
     ::ndn::Vector s(interest.getName()[-3]);
     ::ndn::Vector t(interest.getName()[-4]);
 
-    destination = ns3::Vector(s.x, s.y, s.z);
-    source = ns3::Vector(t.x, t.y, t.z);
+    source = ns3::Vector(s.x, s.y, s.z);
+    destination = ns3::Vector(t.x, t.y, t.z);
   }
   catch (const tlv::Error&) {
     NFD_LOG_DEBUG("Interest doesn't look like v2vsafety (could not correctly parse name components)");

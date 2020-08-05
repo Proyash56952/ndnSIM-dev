@@ -52,7 +52,8 @@ CustomHelper::CustomHelper()
 
   // Set pathloss model
   m_lteHelper->SetAttribute("PathlossModel", StringValue("ns3::Cost231PropagationLossModel"));
-
+  m_lteHelper->SetPathlossModelAttribute ("BSAntennaHeight", DoubleValue(1.5));
+  m_lteHelper->SetPathlossModelAttribute ("SSAntennaHeight", DoubleValue(1.5));
   // channel model initialization
   m_lteHelper->Initialize();
 

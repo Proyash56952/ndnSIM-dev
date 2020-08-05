@@ -255,7 +255,7 @@ producerAppHelper = ndn.AppHelper("ndn::v2v::Producer")
 
 #test()
 installAllConsumerApp()
-installAllProducerApp()
+#installAllProducerApp()
 
 #Simulator.Schedule(Seconds(5.1), test2)
 
