@@ -44,6 +44,8 @@
 #include <ctime>
 #include <cstdlib>
 
+#include "../scenarios/v2v-position-getter.hpp"
+
 #include <string>
 
 namespace nfd {
@@ -87,7 +89,6 @@ void
 DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const Interest& interest,
                                               const shared_ptr<pit::Entry>& pitEntry)
 {
-  NFD_LOG_DEBUG("Received by "<<ns3::Simulator::GetContext());
   double posX =0.0;
   double posY =0.0;
   ndn::optional<ns3::Vector> pos = getSelfPosition();
@@ -95,11 +96,11 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
     posX = pos->x;
     posY = pos->y;
   }
-  
+
   this->onAction(interest.getName(), Received, posX, posY);
 
   NFD_LOG_DEBUG("ReceivedInterest: ");
-  
+
   const fib::Entry& fibEntry = this->lookupFib(*pitEntry);
   const fib::NextHopList& nexthops = fibEntry.getNextHops();
 
@@ -119,7 +120,7 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
 
       NFD_LOG_DEBUG(interest << " from=" << ingress << " pitEntry-to=" << outFace.getId());
     }
-    
+
     else {
       std::weak_ptr<pit::Entry> pitEntryWeakPtr = pitEntry;
       auto faceId = ingress.face.getId();
@@ -307,13 +308,13 @@ DirectedGeocastStrategy::shouldCancelTransmission(const pit::Entry& oldPitEntry,
   }
 
   //distance calculation
-  double distanceToLasthop = CalculateDistance(*self,*newFrom);
-  double distanceToOldhop = CalculateDistance(*self,*oldFrom);
-  double distanceBetweenLasthops = CalculateDistance(*newFrom,*oldFrom);
+  double distanceToLasthop = CalculateDistance(*self, *newFrom);
+  double distanceToOldhop = CalculateDistance(*self, *oldFrom);
+  double distanceBetweenLasthops = CalculateDistance(*newFrom, *oldFrom);
 
   //Angle calculation
-  double angleRad = acos((pow(distanceToOldhop, 2) + pow(distanceBetweenLasthops, 2) - pow(distanceToLasthop, 2)) /
-                    (2 * distanceToOldhop * distanceBetweenLasthops));
+  // double angleRad = acos((pow(distanceToOldhop, 2) + pow(distanceBetweenLasthops, 2) - pow(distanceToLasthop, 2)) /
+  //                   (2 * distanceToOldhop * distanceBetweenLasthops));
   // double angleDeg = angleRad * 180 / 3.141592;
 
   // Projection Calculation
@@ -335,27 +336,6 @@ DirectedGeocastStrategy::shouldCancelTransmission(const pit::Entry& oldPitEntry,
   return false;
 }
 
-ndn::optional<ns3::Vector>
-DirectedGeocastStrategy::parsingCoordinate(std::string s)
-{
-  std::string delim = "%2C";
-  double content[3];
-  int i =0;
-  auto start = 0U;
-  auto end = s.find(delim);
-  while (end != std::string::npos){
-    std::string temp = s.substr(start, end-start);
-    start = end + delim.length();
-    end = s.find(delim, start);
-    content[i] = atof(temp.c_str());
-    i++;
-  }
-  content[i] = atof(s.substr(start,end).c_str());
-
-  ndn::optional<ns3::Vector> result = ns3::Vector3D(content[0],content[1],content[2]);
-  return result;
-}
-
 bool
 DirectedGeocastStrategy::shouldLimitTransmission(const Interest& interest)
 {
@@ -365,29 +345,44 @@ DirectedGeocastStrategy::shouldLimitTransmission(const Interest& interest)
     // originator
     return false;
   }
-  
-  auto name = interest.getName();
-  auto target = name[-3].blockFromValue();
-  NFD_LOG_DEBUG("passed block from value line");
-    //std::cout<<wireDecode(name.get(-3).blockFromValue())<<std::endl;
-  std::string limitStr = name.get(-2).toUri();
-  std::string dest = name.get(-3).toUri();
-  std::string src = name.get(-4).toUri();
-    
-  
-  double limit = atof(limitStr.c_str());
-  ndn::optional<ns3::Vector> destination = parsingCoordinate(dest);
-  ndn::optional<ns3::Vector> source = parsingCoordinate(src);
-  auto self = getSelfPosition();
-  std::cout << limit << *destination <<*source<<std::endl;
-  if (!self || !destination || !source) {
-    NFD_LOG_DEBUG("self, oldFrom, or newFrom position is missing");
+
+  // auto name = interest.getName();
+  // auto target = name[-3].blockFromValue();
+
+  // Interest name format
+  // /v2vSafety/[targetVector]/[sourceVector]/[targetTimePointIsoString]/[LimitNumber]
+
+  ns3::Vector destination;
+  ns3::Vector source;
+  double limit = 0;
+
+  try {
+    if (interest.getName().size() < 5) {
+      NFD_LOG_DEBUG("Interest doesn't look like v2vsafety (not enough components)");
+      return false;
+    }
+    limit = interest.getName()[-1].toNumber();
+    // strategy ignores time
+    ::ndn::Vector s(interest.getName()[-3].blockFromValue());
+    ::ndn::Vector t(interest.getName()[-4].blockFromValue());
+
+    destination = ns3::Vector(s.x, s.y, s.z);
+    source = ns3::Vector(t.x, t.y, t.z);
+  }
+  catch (const tlv::Error&) {
+    NFD_LOG_DEBUG("Interest doesn't look like v2vsafety (could not correctly parse name components)");
     return false;
   }
 
-  double distSrcDest = CalculateDistance(*source, *destination);
-  double distCurSrc = CalculateDistance(*source, *self);
-  double distCurDest = CalculateDistance(*destination, *self);
+  auto self = getSelfPosition();
+  if (!self) {
+    NFD_LOG_DEBUG("self position is missing");
+    return false;
+  }
+
+  double distSrcDest = CalculateDistance(source, destination);
+  double distCurSrc = CalculateDistance(source, *self);
+  double distCurDest = CalculateDistance(destination, *self);
   double cosineAngle = (pow(distCurSrc, 2) - pow(distCurDest, 2) + pow(distSrcDest, 2)) /
                     (2 * distCurSrc * distSrcDest);
   double angle = (acos(cosineAngle)*180)/3.141592;
@@ -397,26 +392,11 @@ DirectedGeocastStrategy::shouldLimitTransmission(const Interest& interest)
     return true;
   }
 
-  // if (abs(distCurSrc + distCurDest - distSrcDest) < 5) {
-
-  // }
-
-  if (ns3::Simulator::GetContext() == 82) {
-    std::cerr << "angle: " << angle << std::endl;
-    std::cerr << *self << ", " << *destination << ", " << *source << std::endl;
-    std::cerr << "srcdest=" << distSrcDest <<
-      ", cursrc=" << distCurSrc << ", curdst=" << distCurDest << ", angle=" << cosineAngle << std::endl;
-  }
-
   if (isnan(angle) || angle < 0 || angle > 90) {
-    // std::cerr << "angle: " << angle << std::endl;
-    // std::cerr << *self << ", " << *destination << ", " << *source << std::endl;
-    // std::cerr << "srcdest=" << distSrcDest <<
-    //   ", cursrc=" << distCurSrc << ", curdst=" << distCurDest << ", angle=" << cosineAngle << std::endl;
     NFD_LOG_DEBUG("limiting for angle " << angle);
     return true;
   }
-  else if (projection > distSrcDest+limit) {
+  else if (projection > distSrcDest + limit) {
     NFD_LOG_DEBUG("limiting for distance");
     return true;
   }

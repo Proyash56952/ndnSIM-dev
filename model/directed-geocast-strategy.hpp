@@ -78,9 +78,6 @@ private:
   static bool
   shouldCancelTransmission(const pit::Entry& oldPitEntry, const Interest& newInterest);
 
-  static ndn::optional<ns3::Vector>
-  parsingCoordinate(std::string s);
-
   static bool
   shouldLimitTransmission(const Interest& interest);
 private: // StrategyInfo
