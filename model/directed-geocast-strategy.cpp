@@ -346,9 +346,6 @@ DirectedGeocastStrategy::shouldLimitTransmission(const Interest& interest)
     return false;
   }
 
-  // auto name = interest.getName();
-  // auto target = name[-3].blockFromValue();
-
   // Interest name format
   // /v2vSafety/[targetVector]/[sourceVector]/[targetTimePointIsoString]/[LimitNumber]
 
@@ -363,8 +360,8 @@ DirectedGeocastStrategy::shouldLimitTransmission(const Interest& interest)
     }
     limit = interest.getName()[-1].toNumber();
     // strategy ignores time
-    ::ndn::Vector s(interest.getName()[-3].blockFromValue());
-    ::ndn::Vector t(interest.getName()[-4].blockFromValue());
+    ::ndn::Vector s(interest.getName()[-3]);
+    ::ndn::Vector t(interest.getName()[-4]);
 
     destination = ns3::Vector(s.x, s.y, s.z);
     source = ns3::Vector(t.x, t.y, t.z);

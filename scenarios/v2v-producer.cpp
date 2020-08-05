@@ -44,7 +44,7 @@ V2vProducer::respondIfCrashEstimate(const Interest& interest)
     auto velocity = m_positionGetter->getSpeed();
 
     auto expectToBeAtTarget = time::fromIsoString(interest.getName()[-2].toUri());
-    Vector target(interest.getName()[-4].blockFromValue());
+    Vector target(interest.getName()[-4]);
 
     using SecondsDouble = boost::chrono::duration<double>;
 
