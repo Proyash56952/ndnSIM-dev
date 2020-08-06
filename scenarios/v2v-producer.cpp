@@ -50,10 +50,11 @@ V2vProducer::respondIfCrashEstimate(const Interest& interest)
 
     auto time = time::duration_cast<SecondsDouble>(expectToBeAtTarget - time::system_clock::now()).count();
 
-    Position expectedPosition = position * time;
-
+    Position expectedPosition = position + (velocity * time);
+      NDN_LOG_DEBUG(expectedPosition);
+      NDN_LOG_DEBUG(expectedPosition.getDistance(target));
     if (expectedPosition.getDistance(target) < 2) { // within 2 meters
-      //
+      NDN_LOG_DEBUG("Data will be sent");
       Data data(interest.getName());
       Block content;
       content.push_back(makeStringBlock(1, m_id));

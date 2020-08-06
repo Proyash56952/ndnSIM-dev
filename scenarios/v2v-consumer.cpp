@@ -139,7 +139,7 @@ V2vConsumer::scheduledRequest(Position target)
                            m_requestInProgress = false;
 
                            // if real, do validation
-
+                           NDN_LOG_DEBUG("Get Data");
                            this->m_doesRequireAdjustment = true;
                          },
                          [this, target] (const Interest&, const lp::Nack&) {
