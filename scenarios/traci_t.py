@@ -121,15 +121,19 @@ def runSumoStep():
     targetTime = Simulator.Now().To(Time.S).GetDouble() + time_step
 
     g_traciStepByStep.simulationStep(Simulator.Now().To(Time.S).GetDouble() + time_step)
-
+    requireAdjustment = BooleanValue()
     print(nowTime, g_traciStepByStep.vehicle.getIDList())
     for vehicle in g_traciStepByStep.vehicle.getIDList():
         node = g_names[vehicle]
-
+        node.apps.GetAttribute("DoesRequireAdjustment",BooleanValue(requireAdjustment))
         pos = g_traciStepByStep.vehicle.getPosition(vehicle)
         speed = g_traciStepByStep.vehicle.getSpeed(vehicle)
         angle = g_traciStepByStep.vehicle.getAngle(vehicle)
         
+        # check if the node requires any speed adjustment
+        if(requireAdjustment.Get()):
+            speedAdjustment(vehicle)
+            
         if (findDistance(pos[0],pos[1],500.0,500.0) < 300):
             print(vehicle)
             targets = getTargets(vehicle)
