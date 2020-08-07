@@ -36,5 +36,16 @@ apps.Start(Seconds(5.1))
 # producerHelper.SetAttribute("PayloadSize", StringValue("50"))
 # producerHelper.Install(wifiNodes.Get(nodeNum-1))
 
+def tmp(node):
+    fib = ndn.L3Protocol.getL3Protocol(node.node).getForwarder().getFib()
+    # n = node.node.GetObject(ndn.L3Protocol.GetTypeId())
+    # fib = n.getForwarder().getFib()
+
+    print("=======", node.name, "=======")
+    for item in fib:
+        print(str(item.getPrefix()), ", ".join(["%s%d (%d)" % (str(nh.getFace()), nh.getFace().getId(), nh.getCost()) for nh in item.getNextHops()]))
+
+Simulator.Schedule(Seconds(8), tmp, c3)
+
 Simulator.Stop(cmd.duration)
 Simulator.Run()

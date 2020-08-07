@@ -45,6 +45,7 @@ mobility.SetMobilityModel("ns3::ConstantVelocityMobilityModel")
 
 ndnHelper = ndn.StackHelper()
 ndnHelper.SetDefaultRoutes(True)
+ndnHelper.SetDefaultRoutePrefix(ndn.Name("/v2vSafety"))
 
 customHelper = CustomHelper()
 

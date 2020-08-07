@@ -230,6 +230,9 @@ public:
   static void
   ProcessWarmupEvents();
 
+  void
+  SetDefaultRoutePrefix(Name name);
+
 private:
   void
   doInstall(Ptr<Node> node) const;
@@ -270,6 +273,8 @@ private:
 
   typedef std::list<std::pair<TypeId, FaceCreateCallback>> NetDeviceCallbackList;
   NetDeviceCallbackList m_netDeviceCallbacks;
+
+  Name m_defaultRoutePrefix;
 };
 
 } // namespace ndn

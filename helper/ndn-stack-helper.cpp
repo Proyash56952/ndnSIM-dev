@@ -422,7 +422,7 @@ StackHelper::createAndRegisterFace(Ptr<Node> node, Ptr<L3Protocol> ndn, Ptr<NetD
 
   if (m_needSetDefaultRoutes) {
     // default route with lowest priority possible
-    FibHelper::AddRoute(node, "/", face, std::numeric_limits<int32_t>::max());
+    FibHelper::AddRoute(node, m_defaultRoutePrefix, face, std::numeric_limits<int32_t>::max());
   }
   return face;
 }
@@ -477,6 +477,12 @@ StackHelper::ProcessWarmupEvents()
 #else
   Simulator::Run();
 #endif // HAVE_NS3_VISUALIZER
+}
+
+void
+StackHelper::SetDefaultRoutePrefix(Name name)
+{
+  m_defaultRoutePrefix = std::move(name);
 }
 
 

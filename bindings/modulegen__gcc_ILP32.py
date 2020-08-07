@@ -85,6 +85,7 @@ def register_methods(root_module):
         cls.add_method('InstallAll', retval('void'), [], is_const=True)
 
         cls.add_method('SetDefaultRoutes', retval('void'), [param('bool', 'isEnabled', default_value='true')], is_const=True)
+        cls.add_method('SetDefaultRoutePrefix', retval('void'), [param('Name', 'prefix')])
         cls.add_method('SetStackAttributes',
                        retval('void'),
                        [param('const std::string&', 'attr1', default_value='""'), param('const std::string&', 'value1', default_value='""'),
