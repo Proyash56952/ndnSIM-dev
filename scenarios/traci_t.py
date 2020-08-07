@@ -78,9 +78,15 @@ def setSpeedToReachNextWaypoint(node, referencePos, targetPos, targetTime, refer
     estimatedSpeedActual = distanceActual / targetTime
 
     estimatedSpeed = Vector(distance.x / targetTime, distance.y / targetTime, 0)
-
+    
+    x = targetPos.x + estimatedSpeed.x
+    y = targetPos.y + estimatedSpeed.y
+    if(x<=0 or x>=1000 or y<=0 or y>=1000):
+        node.mobility.SetPosition(posOutOfBound)
+        node.mobility.SetVelocity(Vector(0, 0, 0))
     # print("Node [%s] change speed to [%s] (now = %f seconds); reference speed %f, current position: %s, target position: %s" % (node.name, str(estimatedSpeed), Simulator.Now().To(Time.S).GetDouble(), referenceSpeed, str(prevPos), str(targetPos)))
-    node.mobility.SetVelocity(estimatedSpeed)
+    else:
+        node.mobility.SetVelocity(estimatedSpeed)
 
 def prepositionNode(node, targetPos, currentSpeed, angle, targetTime):
     '''This one is trying to set initial position of the node in such a way so it will be
@@ -135,6 +141,7 @@ def runSumoStep():
         speed = g_traciStepByStep.vehicle.getSpeed(vehicle)
         angle = g_traciStepByStep.vehicle.getAngle(vehicle)
         
+        
         # check if the node requires any speed adjustment
         if(requireAdjustment.Get()):
             print("Now the car will adjust speed ")
@@ -159,7 +166,9 @@ def runSumoStep():
             node.referencePos = Vector(pos[0], pos[1], 0.0)
         #g_traciStepByStep.vehicle.setSpeedMode(vehicle,0)
         #g_traciStepByStep.vehicle.setMinGap(vehicle,0)
-
+        #if((pos[0] < 20.0 or pos[0] > 980.0 or pos[1] < 20.0 or pos[1] > 980.0) and node.time > 10):
+            #node.mobility.SetPosition(posOutOfBound)
+            #node.mobility.SetVelocity(0)
 def findDistance(x1, y1, x2, y2):
     return math.sqrt(math.pow((x1-x2),2) + math.pow((y1-y2),2))
 
