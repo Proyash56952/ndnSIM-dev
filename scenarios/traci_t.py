@@ -15,8 +15,13 @@ import time
 import re
 import sumolib
 import math
+import csv
 
 from ns.mobility import MobilityModel, ConstantVelocityMobilityModel
+
+data_file = open('results/passing_vehicle_number.csv', 'w')
+csv_writer = csv.writer(data_file)
+csv_writer.writerow(["Time","Node_Count","Total_Node_Count"])
 
 net = sumolib.net.readNet('src/ndnSIM/scenarios/sumo/intersection.net.xml')
 sumoCmd = ["sumo", "-c", "src/ndnSIM/scenarios/sumo/intersection.sumocfg"]
@@ -49,7 +54,7 @@ def createAllVehicles(simTime):
         node.time = -1
         node.adjustment = False
         vehicleList.append(vehicle)
-    #print(vehicleList[1])
+    print(len(vehicleList))
         
     g_traciDryRun.close()
 
@@ -122,7 +127,7 @@ def runSumoStep():
 
     g_traciStepByStep.simulationStep(Simulator.Now().To(Time.S).GetDouble() + time_step)
     requireAdjustment = BooleanValue()
-    print(nowTime, g_traciStepByStep.vehicle.getIDList())
+    # print(nowTime, g_traciStepByStep.vehicle.getIDList())
     for vehicle in g_traciStepByStep.vehicle.getIDList():
         node = g_names[vehicle]
         node.apps.GetAttribute("DoesRequireAdjustment",BooleanValue(requireAdjustment))
@@ -132,14 +137,14 @@ def runSumoStep():
         
         # check if the node requires any speed adjustment
         if(requireAdjustment.Get()):
+            print("Now the car will adjust speed ")
             speedAdjustment(vehicle)
             
-        if (findDistance(pos[0],pos[1],500.0,500.0) < 300):
-            print(vehicle)
+        if (20 < findDistance(pos[0],pos[1],500.0,500.0) < 300):
+            # print(vehicle)
             targets = getTargets(vehicle)
-            print("          Points of interests:", [str(target) for target in targets])
+            #print("          Points of interests:", [str(target) for target in targets])
             sendInterest(vehicle,targets)
-            # speedAdjustment(vehicle)
             
         if node.time < 0: # a new node
             node.time = targetTime
@@ -147,7 +152,7 @@ def runSumoStep():
             node.referencePos = Vector(pos[0], pos[1], 0.0)
 
             targets = getTargets(vehicle)
-            print("          Points of interests:", [str(target) for target in targets])
+            #print("          Points of interests:", [str(target) for target in targets])
         else:
             node.time = targetTime
             setSpeedToReachNextWaypoint(node, node.referencePos, Vector(pos[0], pos[1], 0.0), targetTime - nowTime, speed)
@@ -174,28 +179,20 @@ passingVehicle_step = 0.5
 def passingVehicle():
     Simulator.Schedule(Seconds(passingVehicle_step), passingVehicle)
     nowTime = Simulator.Now().To(Time.S).GetDouble()
-    #print("hola "+str(nowTime))
     
     for vehicle in vehicleList:
         node = g_names[vehicle]
         position = node.mobility.GetPosition()
-        #print(position)
         if (findPoint(485,485,515,515,position.x,position.y)):
-            #print(position)
             nowList.append(vehicle)
     global prevList, departedCount
     departList = diff(prevList,nowList)
-    #print(nowTime)
-    #print(prevList)
-    #print(nowList)
-    #print(departList)
     prevList = nowList[:]
     nowList.clear()
-    #print(nowList)
     
     #print(len(departList))
     departedCount = departedCount + len(departList)
-    print(departedCount)
+    csv_writer.writerow([nowTime,len(departList),departedCount])
 
 # this module will adjust the speed of vehicle in such a way that it will reduce the final distance travlled by 2 meter to avoid a collision. In the first module it will reduce the speed by 2m in 1s and then again regain the same speed in next second by scheduling the speedUP module.
 def speedAdjustment(vehID):
@@ -206,7 +203,7 @@ def speedAdjustment(vehID):
     newSpeed = oldSpeed - 4
     g_traciStepByStep.vehicle.slowDown(vehID,newSpeed,1)
     print("New speed of "+ vehID+ " should be: "+str(newSpeed))
-    #Simulator.Schedule(Seconds(1), speedUP, vehID, oldSpeed)
+    Simulator.Schedule(Seconds(1), speedUP, vehID, oldSpeed)
 
 def speedUP(vehID,oldSpeed):
     g_traciStepByStep.simulationStep(Simulator.Now().To(Time.S).GetDouble())
@@ -225,21 +222,22 @@ def test():
 def installAllConsumerApp():
     for vehicle in vehicleList:
         consumerNode = g_names[vehicle]
-        print(consumerNode.node)
+        # print(consumerNode.node)
         apps = consumerAppHelper.Install(consumerNode.node)
         apps.Start(Seconds(0.1))
         consumerNode.apps = apps.Get(0)
 
 def installAllProducerApp():
     for vehicle in vehicleList:
-        producerNode = g_names[vehicle]
-        print(producerNode.node)
-        proapps = producerAppHelper.Install(producerNode.node)
-        proapps.Start(Seconds(0.5))
-        producerNode.proapps = proapps.Get(0)
+        if(vehicle not in ["f1.0","f3.0","f5.0","f7.0"]):
+            producerNode = g_names[vehicle]
+            # print(producerNode.node)
+            proapps = producerAppHelper.Install(producerNode.node)
+            proapps.Start(Seconds(0.5))
+            producerNode.proapps = proapps.Get(0)
         
 def sendInterest(vehID,targets):
-    print(vehID)
+    # print(vehID)
     consumerNode = g_names[vehID]
     for target in targets:
         consumerNode.apps.SetAttribute("RequestPositionStatus", StringValue(str(target)))
@@ -273,4 +271,3 @@ Simulator.Run()
 
 g_traciStepByStep.close()
 traci.close()
-

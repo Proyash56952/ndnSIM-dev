@@ -65,8 +65,8 @@ V2vConsumer::scheduledRequest(Position target)
 
   auto distance = target - position;
 
-  std::cerr << "Position: " << distance << std::endl;
-  std::cerr << "Velocity: " << velocity << std::endl;
+  //std::cerr << "Position: " << distance << std::endl;
+  //std::cerr << "Velocity: " << velocity << std::endl;
 
   if (distance.x * velocity.x < 0 ||
       distance.y * velocity.y < 0 ||
@@ -139,6 +139,7 @@ V2vConsumer::scheduledRequest(Position target)
                            m_requestInProgress = false;
 
                            // if real, do validation
+                           
                            NDN_LOG_DEBUG("Get Data");
                            this->m_doesRequireAdjustment = true;
                          },
@@ -150,6 +151,7 @@ V2vConsumer::scheduledRequest(Position target)
                          [this, target] (const Interest&) {
                            // timeout
                            m_requestInProgress = false;
+                           NDN_LOG_DEBUG("Did not get Data");
                            m_scheduler.schedule(200_ms, [this, target] () { this->scheduledRequest(target); });
                          });
 }

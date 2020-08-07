@@ -30,12 +30,12 @@
 <vehicle depart="0" id="v02" route="r02" departSpeed="12" type="CarC"/>
 <vehicle depart="0" id="v03" route="r03" departSpeed= "18" type="CarC"/>
 <vehicle depart="0" id="v04" route="r04" departSpeed="20" type="CarC"/>-->
-<flow id="f1" type="CarB" from="1i" to="4o" begin="0" end="100" number="5" departSpeed="random" departLane="3" maxSpeed="20.0" accel="3.5"/>
-<flow id="f2" type="CarB" from="1i" to="2o" begin="0" end="100" number="10" departSpeed="random" maxSpeed="18.0" departLane="2" accel="3.0"/>
-<flow id="f3" type="CarB" from="2i" to="3o" begin="0" end="100" number="5" departSpeed="random" departLane="3" maxSpeed="20.0" accel="3.5"/>
-<flow id="f4" type="CarB" from="2i" to="1o" begin="0" end="100" number="10" departSpeed="random" maxSpeed="18.0" accel="3.0"/>
-<flow id="f5" type="CarB" from="3i" to="1o" begin="0" end="100" number="5" departSpeed="random" departLane="3" maxSpeed="20.0" accel="3.5"/>
-<flow id="f6" type="CarB" from="3i" to="4o" begin="0" end="100" number="10" departSpeed="random" maxSpeed="18.0" accel="3.0"/>
-<flow id="f7" type="CarB" from="4i" to="2o" begin="0" end="100" number="5" departSpeed="random" departLane="3" maxSpeed="20.0" accel="3.5"/>
-<flow id="f8" type="CarB" from="4i" to="3o" begin="0" end="100" number="10" departSpeed="random" maxSpeed="18.0" accel="3.0"/>
+<flow id="f1" type="CarB" from="1i" to="4o" begin="0" end="200" number="5" departSpeed="random" departLane="3" maxSpeed="20.0" accel="3.5"/>
+<flow id="f2" type="CarB" from="1i" to="2o" begin="0" end="200" number="10" departSpeed="random" maxSpeed="18.0" departLane="2" accel="3.0"/>
+<flow id="f3" type="CarB" from="2i" to="3o" begin="0" end="200" number="5" departSpeed="random" departLane="3" maxSpeed="20.0" accel="3.5"/>
+<flow id="f4" type="CarB" from="2i" to="1o" begin="0" end="200" number="10" departSpeed="random" maxSpeed="18.0" accel="3.0"/>
+<flow id="f5" type="CarB" from="3i" to="1o" begin="0" end="200" number="5" departSpeed="random" departLane="3" maxSpeed="20.0" accel="3.5"/>
+<flow id="f6" type="CarB" from="3i" to="4o" begin="0" end="200" number="10" departSpeed="random" maxSpeed="18.0" accel="3.0"/>
+<flow id="f7" type="CarB" from="4i" to="2o" begin="0" end="200" number="5" departSpeed="random" departLane="3" maxSpeed="20.0" accel="3.5"/>
+<flow id="f8" type="CarB" from="4i" to="3o" begin="0" end="200" number="10" departSpeed="random" maxSpeed="18.0" accel="3.0"/>
 </routes>
