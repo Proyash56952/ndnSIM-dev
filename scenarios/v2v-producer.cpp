@@ -15,6 +15,7 @@ V2vProducer::V2vProducer(const std::string& id,
   : m_id(id)
   , m_positionGetter(positionGetter)
   , m_keyChain(keyChain)
+  // , m_scheduler(m_face.getIoService())
 {
   std::cerr << "[" << time::system_clock::now() << "] starting producer" << std::endl;
 
@@ -60,13 +61,17 @@ V2vProducer::respondIfCrashEstimate(const Interest& interest)
     Position expectedPosition = position + (velocity * time);
     NDN_LOG_DEBUG(expectedPosition);
     NDN_LOG_DEBUG(expectedPosition.getDistance(target));
-    if (expectedPosition.getDistance(target) < 50) { // within 2 meters
+    if (expectedPosition.getDistance(target) < 2) { // within 2 meters
       NDN_LOG_DEBUG("Data will be sent");
       Data data(interest.getName());
-      Block content;
+      data.setFreshnessPeriod(10_s);
+
+      Block content(tlv::ContentType);
       content.push_back(makeStringBlock(1, m_id));
       content.push_back(position.wireEncode());
       content.push_back(velocity.wireEncode());
+      content.encode();
+      data.setContent(content);
 
       m_keyChain.sign(data);
       m_face.put(data);
