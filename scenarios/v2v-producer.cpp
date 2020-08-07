@@ -44,7 +44,14 @@ V2vProducer::respondIfCrashEstimate(const Interest& interest)
     auto velocity = m_positionGetter->getSpeed();
 
     auto expectToBeAtTarget = time::fromIsoString(interest.getName()[-2].toUri());
-    Vector target(interest.getName()[-4]);
+    Position source(interest.getName()[-3]);
+    Position target(interest.getName()[-4]);
+
+    if (source.getDistance(position) < 2) { // may need to check if this should be adjusted
+      // don't respond
+      NDN_LOG_TRACE("Too close to the source; not responding");
+      return;
+    }
 
     using SecondsDouble = boost::chrono::duration<double>;
 
