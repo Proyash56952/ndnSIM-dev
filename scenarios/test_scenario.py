@@ -19,12 +19,12 @@ import csv
 
 from ns.mobility import MobilityModel, ConstantVelocityMobilityModel
 
-data_file = open('results/passing_vehicle_number.csv', 'w')
+data_file = open('results/test_passing_vehicle_number.csv', 'w')
 csv_writer = csv.writer(data_file)
 csv_writer.writerow(["Time","Node_Count","Total_Node_Count"])
 
-net = sumolib.net.readNet('src/ndnSIM/scenarios/sumo/intersection.net.xml')
-sumoCmd = ["sumo", "-c", "src/ndnSIM/scenarios/sumo/intersection.sumocfg"]
+net = sumolib.net.readNet('src/ndnSIM/scenarios/sumo/small_scenario/intersection.net.xml')
+sumoCmd = ["sumo", "-c", "src/ndnSIM/scenarios/sumo/small_scenario/intersection.sumocfg"]
 
 traci.start(sumoCmd, label="dry-run") # whole run to estimate and created all nodes with out of bound position and 0 speeds
 g_traciDryRun = traci.getConnection("dry-run")
@@ -147,7 +147,7 @@ def runSumoStep():
             print("Now the car will adjust speed ")
             speedAdjustment(vehicle)
             
-        if (20 < findDistance(pos[0],pos[1],500.0,500.0) < 300):
+        if (2 < findDistance(pos[0],pos[1],50.0,50.0) < 30):
             # print(vehicle)
             targets = getTargets(vehicle)
             #print("          Points of interests:", [str(target) for target in targets])
@@ -238,11 +238,12 @@ def installAllConsumerApp():
 
 def installAllProducerApp():
     for vehicle in vehicleList:
-        producerNode = g_names[vehicle]
-        # print(producerNode.node)
-        proapps = producerAppHelper.Install(producerNode.node)
-        proapps.Start(Seconds(0.5))
-        producerNode.proapps = proapps.Get(0)
+        if(vehicle not in ["f1.10","f3.10","f5.10","f7.10"]):
+            producerNode = g_names[vehicle]
+            # print(producerNode.node)
+            proapps = producerAppHelper.Install(producerNode.node)
+            proapps.Start(Seconds(0.5))
+            producerNode.proapps = proapps.Get(0)
         
 def sendInterest(vehID,targets):
     # print(vehID)
@@ -279,3 +280,4 @@ Simulator.Run()
 
 g_traciStepByStep.close()
 traci.close()
+

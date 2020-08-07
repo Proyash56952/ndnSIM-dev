@@ -76,7 +76,7 @@ V2vConsumer::scheduledRequest(Position target)
     return;
   }
 
-  if ((std::abs(distance.x) > 0.1 && std::abs(velocity.x) < 0.01) ||
+  /*if ((std::abs(distance.x) > 0.1 && std::abs(velocity.x) < 0.01) ||
       (std::abs(distance.y) > 0.1 && std::abs(velocity.y) < 0.01) ||
       (std::abs(distance.z) > 0.1 && std::abs(velocity.z) < 0.01)
       ) {
@@ -105,7 +105,7 @@ V2vConsumer::scheduledRequest(Position target)
   if (dvAngle > 1) {
     NDN_LOG_DEBUG("Velocity angle makes the target unreachable. INGORING");
     return;
-  }
+  }*/
 
   // rest is estimation, assuming target reachable with the current velocity
 
