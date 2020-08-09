@@ -43,8 +43,14 @@ c3.proapps = proapps.Get(0)
 def sendInterest():
     c1.apps.SetAttribute("RequestPositionStatus", StringValue("100.0:0.0:0.0"))
 
+def getValue():
+    Simulator.Schedule(Seconds(1), getValue)
+    requireAdjustment = BooleanValue()
+    c1.apps.GetAttribute("DoesRequireAdjustment",requireAdjustment)
+    print(requireAdjustment)
 
 Simulator.Schedule(Seconds(3.1), sendInterest)
+Simulator.Schedule(Seconds(1), getValue)
 
 
 

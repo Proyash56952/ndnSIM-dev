@@ -136,16 +136,17 @@ def runSumoStep():
     # print(nowTime, g_traciStepByStep.vehicle.getIDList())
     for vehicle in g_traciStepByStep.vehicle.getIDList():
         node = g_names[vehicle]
-        node.apps.GetAttribute("DoesRequireAdjustment",BooleanValue(requireAdjustment))
+        node.apps.GetAttribute("DoesRequireAdjustment",requireAdjustment)
         pos = g_traciStepByStep.vehicle.getPosition(vehicle)
         speed = g_traciStepByStep.vehicle.getSpeed(vehicle)
         angle = g_traciStepByStep.vehicle.getAngle(vehicle)
         
-        
+        # print(requireAdjustment.Get())
         # check if the node requires any speed adjustment
         if(requireAdjustment.Get()):
             print("Now the car will adjust speed ")
             speedAdjustment(vehicle)
+            node.apps.SetAttribute("DoesRequireAdjustment",BooleanValue())
             
         if (20 < findDistance(pos[0],pos[1],500.0,500.0) < 300):
             # print(vehicle)
@@ -164,8 +165,8 @@ def runSumoStep():
             node.time = targetTime
             setSpeedToReachNextWaypoint(node, node.referencePos, Vector(pos[0], pos[1], 0.0), targetTime - nowTime, speed)
             node.referencePos = Vector(pos[0], pos[1], 0.0)
-        #g_traciStepByStep.vehicle.setSpeedMode(vehicle,0)
-        #g_traciStepByStep.vehicle.setMinGap(vehicle,0)
+        g_traciStepByStep.vehicle.setSpeedMode(vehicle,0)
+        g_traciStepByStep.vehicle.setMinGap(vehicle,0)
         #if((pos[0] < 20.0 or pos[0] > 980.0 or pos[1] < 20.0 or pos[1] > 980.0) and node.time > 10):
             #node.mobility.SetPosition(posOutOfBound)
             #node.mobility.SetVelocity(0)
