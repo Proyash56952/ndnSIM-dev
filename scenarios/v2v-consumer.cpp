@@ -23,7 +23,7 @@ V2vConsumer::V2vConsumer(const std::string& id, std::shared_ptr<PositionGetter> 
   //                            std::bind([] { std::cout << "NACK!" << std::endl; }),
   //                            std::bind([] { std::cout << "Bye!.." << std::endl; }));
   //   });
-  scheduleNext();
+  //scheduleNext();
 }
 
 void
@@ -126,6 +126,7 @@ V2vConsumer::scheduledRequest(Position target)
     .appendNumber(100);
     
   m_requestInProgress = true;
+  m_doesRequireAdjustment = false;
   //auto t = target.wireEncode();
   //std::cout<< wireDecode(t);
   Interest i(request);
@@ -151,6 +152,7 @@ V2vConsumer::scheduledRequest(Position target)
                          [this, target] (const Interest&) {
                            // timeout
                            m_requestInProgress = false;
+                           //this->m_doesRequireAdjustment = false;
                            NDN_LOG_DEBUG("Did not get Data");
                            m_scheduler.schedule(200_ms, [this, target] () { this->scheduledRequest(target); });
                          });

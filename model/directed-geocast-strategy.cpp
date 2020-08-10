@@ -284,7 +284,7 @@ DirectedGeocastStrategy::calculateDelay(const Interest& interest)
 
   double maxDist = 200;
   double distance = CalculateDistance(*self,*from);
-    std::cout<<distance<<std::endl;
+    //std::cout<<distance<<std::endl;
   if (distance < maxDist) {
     auto RandomNo = m_randVar->GetValue ();
     return time::duration_cast<time::nanoseconds>(time::duration<double>{RandomNo});
@@ -385,7 +385,7 @@ DirectedGeocastStrategy::shouldLimitTransmission(const Interest& interest)
                     (2 * distCurSrc * distSrcDest);
   double angle = (acos(cosineAngle)*180)/3.141592;
   double projection = distCurSrc * cosineAngle;
-    std::cout<< distSrcDest <<" " <<distCurSrc <<" "<<distCurDest<<std::endl;
+    //std::cout<< distSrcDest <<" " <<distCurSrc <<" "<<distCurDest<<std::endl;
   if (distCurSrc < 5 || distCurDest < 5) {
     return true;
   }

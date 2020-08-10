@@ -61,7 +61,7 @@ V2vProducer::respondIfCrashEstimate(const Interest& interest)
     Position expectedPosition = position + (velocity * time);
     NDN_LOG_DEBUG(expectedPosition);
     NDN_LOG_DEBUG(expectedPosition.getDistance(target));
-    if (expectedPosition.getDistance(target) < 2) { // within 2 meters
+    if (expectedPosition.getDistance(target) < 5) { // within 2 meters
       NDN_LOG_DEBUG("Data will be sent");
       Data data(interest.getName());
       data.setFreshnessPeriod(10_s);
