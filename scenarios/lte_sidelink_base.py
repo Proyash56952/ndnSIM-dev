@@ -19,6 +19,7 @@ cmd.logFile = "default.log"
 cmd.tmin = 0.02
 cmd.tmax = 0.2
 cmd.vis = False
+cmd.numberOfInterest = 3
 
 cmd.AddValue("traceFile", "Name of the Trace File")
 cmd.AddValue("duration", "Total simulation time")
@@ -27,6 +28,7 @@ cmd.AddValue("tmin", "minimum time")
 cmd.AddValue("tmax", "maximum time")
 cmd.AddValue("sumo_granularity", "Granularity of SUMO")
 cmd.AddValue("vis", "enable visualizer")
+cmd.AddValue("numberOfInterest", "How many Interest will be sent in different targets")
 
 cmd.Parse(sys.argv)
 

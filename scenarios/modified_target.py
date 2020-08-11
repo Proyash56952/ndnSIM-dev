@@ -115,16 +115,73 @@ def getTargets(vehicle):
 
     x, y = sumolib.geomhelper.positionAtShapeOffset(currentLane.getShape(), currentLane.getLength())
     
+    numberOfInterest = int(cmd.numberOfInterest)
+    
+    interestNumber = 1
+    fraction = math.floor(28/(numberOfInterest+1))
+    half = math.floor(numberOfInterest/2)
     if(currentLaneId[0] == "1"):
-        x = x+16
+        if(currentLaneId == "1i_3"):
+            while(interestNumber <= half):
+                pos.append(Vector(x+(interestNumber*fraction),y,0))
+                interestNumber = interestNumber + 1
+            if(half %2 == 0):
+                pos.append(Vector(500, 500, 0))
+            interestNumber = 1
+            while(interestNumber <= half):
+                pos.append(Vector(x+15, 500+(interestNumber*fraction),0))
+                interestNumber = interestNumber + 1
+        else:
+            while(interestNumber <= numberOfInterest):
+                pos.append(Vector(x+(interestNumber*fraction),y,0))
+                interestNumber = interestNumber + 1
     elif(currentLaneId[0] == "2"):
-        x = x-16
-    elif(currentLaneId == "3"):
-        y = y+16
+        if(currentLaneId == "2i_3"):
+           while(interestNumber <= half):
+               pos.append(Vector(x-(interestNumber*fraction),y,0))
+               interestNumber = interestNumber + 1
+           if(half %2 == 0):
+               pos.append(Vector(500, 500, 0))
+           interestNumber = 1
+           while(interestNumber <= half):
+               pos.append(Vector(x-15, 500-(interestNumber*fraction),0))
+               interestNumber = interestNumber + 1
+        else:
+            while(interestNumber <= numberOfInterest):
+                pos.append(Vector(x-(interestNumber*fraction),y,0))
+                interestNumber = interestNumber + 1
+    elif(currentLaneId[0] == "3"):
+        if(currentLaneId == "3i_3"):
+            while(interestNumber <= half):
+                pos.append(Vector(x,y+(interestNumber*fraction),0))
+                interestNumber = interestNumber + 1
+            if(half %2 == 0):
+                pos.append(Vector(500, 500, 0))
+            interestNumber = 1
+            while(interestNumber <= half):
+                pos.append(Vector(500-(interestNumber*fraction), y+15,0))
+                interestNumber = interestNumber + 1
+        else:
+            while(interestNumber <= numberOfInterest):
+                pos.append(Vector(x,y+(interestNumber*fraction),0))
+                interestNumber = interestNumber + 1
     elif(currentLaneId[0] == "4"):
-        y = y-16
+        if(currentLaneId == "4i_3"):
+            while(interestNumber <= half):
+                pos.append(Vector(x,y-(interestNumber*fraction),0))
+                interestNumber = interestNumber + 1
+            if(half %2 == 0):
+                pos.append(Vector(500, 500, 0))
+            interestNumber = 1
+            while(interestNumber <= half):
+                pos.append(Vector(500+(interestNumber*fraction), y-15,0))
+                interestNumber = interestNumber + 1
+        else:
+            while(interestNumber <= numberOfInterest):
+                pos.append(Vector(x,y-(interestNumber*fraction),0))
+                interestNumber = interestNumber + 1
     # Position at the end of the current lane
-    pos.append(Vector(x, y, 0))
+    #pos.append(Vector(x, y, 0))
 
     #for connection in currentLane.getOutgoing():
         #nextLane = connection.getToLane()
@@ -160,7 +217,7 @@ def runSumoStep():
         if (20 < findDistance(pos[0],pos[1],500.0,500.0) < 300):
             # print(vehicle)
             targets = getTargets(vehicle)
-            #print("          Points of interests:", [str(target) for target in targets])
+            #print("Vehicle:   "+vehicle+"          Points of interests:", [str(target) for target in targets])
             sendInterest(vehicle,targets)
             
         if node.time < 0: # a new node
@@ -169,7 +226,7 @@ def runSumoStep():
             node.referencePos = Vector(pos[0], pos[1], 0.0)
 
             targets = getTargets(vehicle)
-            #print("          Points of interests:", [str(target) for target in targets])
+            print("Vehicle:   "+vehicle+"          Points of interests:", [str(target) for target in targets])
         else:
             node.time = targetTime
             setSpeedToReachNextWaypoint(node, node.referencePos, Vector(pos[0], pos[1], 0.0), targetTime - nowTime, speed)
@@ -276,7 +333,6 @@ installAllConsumerApp()
 installAllProducerApp()
 
 #Simulator.Schedule(Seconds(5.1), test2)
-
 
 Simulator.Schedule(Seconds(1), runSumoStep)
 
