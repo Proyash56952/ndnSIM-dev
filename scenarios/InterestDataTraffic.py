@@ -39,7 +39,8 @@ prevList = []
 nowList = []
 posOutOfBound = Vector(0, 0, -2000)
 departedCount = 0
-
+InterestCount = 0
+DataCount = 0
 
 def createAllVehicles(simTime):
     g_traciDryRun.simulationStep(simTime)
@@ -54,7 +55,7 @@ def createAllVehicles(simTime):
         node.time = -1
         node.adjustment = False
         vehicleList.append(vehicle)
-    #print(len(vehicleList))
+    print(len(vehicleList))
         
     g_traciDryRun.close()
 
@@ -192,7 +193,7 @@ def getTargets(vehicle):
 
 def runSumoStep():
     Simulator.Schedule(Seconds(time_step), runSumoStep)
-
+    global InterestCount, DataCount
     nowTime = Simulator.Now().To(Time.S).GetDouble()
     targetTime = Simulator.Now().To(Time.S).GetDouble() + time_step
 
@@ -210,13 +211,15 @@ def runSumoStep():
         # print(requireAdjustment.Get())
         # check if the node requires any speed adjustment
         if(requireAdjustment.Get()):
+            DataCount = DataCount + 1
             print("Now the car will adjust speed ")
-            #speedAdjustment(vehicle)
-            #node.apps.SetAttribute("DoesRequireAdjustment",noAdjustment)
+            speedAdjustment(vehicle)
+            node.apps.SetAttribute("DoesRequireAdjustment",noAdjustment)
             
         if (20 < findDistance(pos[0],pos[1],500.0,500.0) < 300):
             # print(vehicle)
             targets = getTargets(vehicle)
+            InterestCount = InterestCount + len(targets)
             #print("Vehicle:   "+vehicle+"          Points of interests:", [str(target) for target in targets])
             sendInterest(vehicle,targets)
             
@@ -226,16 +229,13 @@ def runSumoStep():
             node.referencePos = Vector(pos[0], pos[1], 0.0)
 
             targets = getTargets(vehicle)
-            #print("Vehicle:   "+vehicle+"          Points of interests:", [str(target) for target in targets])
+            print("Vehicle:   "+vehicle+"          Points of interests:", [str(target) for target in targets])
         else:
             node.time = targetTime
             setSpeedToReachNextWaypoint(node, node.referencePos, Vector(pos[0], pos[1], 0.0), targetTime - nowTime, speed)
             node.referencePos = Vector(pos[0], pos[1], 0.0)
         g_traciStepByStep.vehicle.setSpeedMode(vehicle,0)
         g_traciStepByStep.vehicle.setMinGap(vehicle,0)
-        
-
-        #g_traciStepByStep.vehicle.setTau(vehicle,0.1)
         #if((pos[0] < 20.0 or pos[0] > 980.0 or pos[1] < 20.0 or pos[1] > 980.0) and node.time > 10):
             #node.mobility.SetPosition(posOutOfBound)
             #node.mobility.SetVelocity(0)
@@ -328,11 +328,17 @@ producerAppHelper = ndn.AppHelper("ndn::v2v::Producer")
 # consumerNode = g_names["f1.1"]
 
 def countPassingVehicle():
-    print("Time: " + str(cmd.duration.To(Time.S).GetDouble()))
-    print("TotalCar: " + str(len(vehicleList)))
-    print("PassedVehicle: " + str(departedCount) )
+    print("Time is: " + str(cmd.duration.To(Time.S).GetDouble()))
+    print("Total Number of Cars: " + str(len(vehicleList)))
+    print("number of passing vehicle is: " + str(departedCount) )
 # consumerApp = ndn.AppHelper("ndn::v2v::Consumer")
 # apps = consumerApp.Install(consumerNode.node)
+
+def countInterestData():
+    print("Time is: " + str(cmd.duration.To(Time.S).GetDouble()))
+    print("TotalCar: " + str(len(vehicleList)))
+    print("InterestCount: "+ str(InterestCount))
+    print("DataCount: "+ str(DataCount))
 
 #test()
 installAllConsumerApp()
@@ -343,9 +349,9 @@ installAllProducerApp()
 Simulator.Schedule(Seconds(1), runSumoStep)
 
 Simulator.Schedule(Seconds(1), passingVehicle)
-print(type(cmd.duration.To(Time.S).GetDouble()))
+# print(type(cmd.duration.To(Time.S).GetDouble()))
 time = cmd.duration.To(Time.S).GetDouble()
-Simulator.Schedule(Seconds(time-1.0),countPassingVehicle)
+Simulator.Schedule(Seconds(time-1.0),countInterestData)
 
 Simulator.Stop(cmd.duration)
 Simulator.Run()
