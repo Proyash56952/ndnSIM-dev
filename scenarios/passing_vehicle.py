@@ -211,8 +211,8 @@ def runSumoStep():
         # check if the node requires any speed adjustment
         if(requireAdjustment.Get()):
             print("Now the car will adjust speed ")
-            #speedAdjustment(vehicle)
-            #node.apps.SetAttribute("DoesRequireAdjustment",noAdjustment)
+            speedAdjustment(vehicle)
+            node.apps.SetAttribute("DoesRequireAdjustment",noAdjustment)
             
         if (20 < findDistance(pos[0],pos[1],500.0,500.0) < 300):
             # print(vehicle)

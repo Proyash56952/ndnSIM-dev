@@ -41,6 +41,7 @@ posOutOfBound = Vector(0, 0, -2000)
 departedCount = 0
 InterestCount = 0
 DataCount = 0
+collisionCount = 0
 
 def createAllVehicles(simTime):
     g_traciDryRun.simulationStep(simTime)
@@ -53,7 +54,9 @@ def createAllVehicles(simTime):
         node.mobility.SetPosition(posOutOfBound)
         node.mobility.SetVelocity(Vector(0, 0, 0))
         node.time = -1
-        node.adjustment = False
+        node.needAdjustment = False
+        node.passedIntersection = False
+        node.collision = False
         vehicleList.append(vehicle)
     print(len(vehicleList))
         
@@ -193,7 +196,7 @@ def getTargets(vehicle):
 
 def runSumoStep():
     Simulator.Schedule(Seconds(time_step), runSumoStep)
-    global InterestCount, DataCount
+    global InterestCount, DataCount, collisionCount
     nowTime = Simulator.Now().To(Time.S).GetDouble()
     targetTime = Simulator.Now().To(Time.S).GetDouble() + time_step
 
@@ -207,20 +210,35 @@ def runSumoStep():
         pos = g_traciStepByStep.vehicle.getPosition(vehicle)
         speed = g_traciStepByStep.vehicle.getSpeed(vehicle)
         angle = g_traciStepByStep.vehicle.getAngle(vehicle)
+        distanceTravelled = g_traciStepByStep.vehicle.getDistance(vehicle)
         
+        # print("vehicle: "+str(vehicle)+" travelled: "+str(distanceTravelled))
+        
+        if(speed < 0.5 and findDistance(pos[0],pos[1],500.0,500.0) < 18 and node.collision == False):
+            node.collision = True
+            print("vehicle: "+str(vehicle)+ " has a collision")
+            collisionCount = collisionCount + 1
+        
+        #print(node.passedIntersection)
+        #print(node.collision)
         # print(requireAdjustment.Get())
         # check if the node requires any speed adjustment
         if(requireAdjustment.Get()):
             DataCount = DataCount + 1
-            print("Now the car will adjust speed ")
+            print("Vehicle "+str(vehicle)+" will adjust speed")
             speedAdjustment(vehicle)
             node.apps.SetAttribute("DoesRequireAdjustment",noAdjustment)
-            
-        if (20 < findDistance(pos[0],pos[1],500.0,500.0) < 300):
+            node.needAdjustment = True
+        
+        #print(node.needAdjustment)
+        #print(node.collision)
+
+        if ((20 < findDistance(pos[0],pos[1],500.0,500.0) < 300) and distanceTravelled < 500):
             # print(vehicle)
             targets = getTargets(vehicle)
             InterestCount = InterestCount + len(targets)
             #print("Vehicle:   "+vehicle+"          Points of interests:", [str(target) for target in targets])
+            # print("vehicle: "+str(vehicle)+" travelled: "+str(distanceTravelled))
             sendInterest(vehicle,targets)
             
         if node.time < 0: # a new node
@@ -253,6 +271,9 @@ def findPoint(x1, y1, x2,
 def diff(li1, li2):
     return (list(set(li1) - set(li2)))
 
+def intersection(li1, li2):
+    return (list(set(li1) & set(li2)))
+
 passingVehicle_step = 0.5
 
 def passingVehicle():
@@ -268,6 +289,9 @@ def passingVehicle():
     departList = diff(prevList,nowList)
     prevList = nowList[:]
     nowList.clear()
+    for v in departList:
+        n = g_names[v]
+        n.passedIntersection = True
     
     departedCount = departedCount + len(departList)
     csv_writer.writerow([nowTime,len(departList),departedCount])
@@ -340,6 +364,42 @@ def countInterestData():
     print("InterestCount: "+ str(InterestCount))
     print("DataCount: "+ str(DataCount))
 
+def countAdjustedVehicle():
+    adjusted = []
+    collided = []
+    passed = []
+    for vehicle in vehicleList:
+        node = g_names[vehicle]
+        if(node.needAdjustment):
+            adjusted.append(vehicle)
+        if(node.collision):
+            collided.append(vehicle)
+        if(node.passedIntersection):
+            passed.append(vehicle)
+    adjustedNotCollided = diff(adjusted,collided)
+    collidedNotAdjusted = diff(collided,adjusted)
+    adjustedButCollided = intersection(adjusted, collided)
+    adjustedAndPassed = intersection(adjusted,passed)
+    collidedButPassed = intersection(collided,passed)
+    print(adjusted)
+    print(collided)
+    print(passed)
+    print(adjustedNotCollided)
+    print(collidedNotAdjusted)
+    print(adjustedButCollided)
+    print(adjustedAndPassed)
+    print(collidedButPassed)
+    print("Time is: " + str(cmd.duration.To(Time.S).GetDouble()))
+    print("TotalCar: " + str(len(vehicleList)))
+    print("TotalAdjustedCar: "+ str(len(adjusted)))
+    print("TotalCollidedCar: "+ str(len(collided)))
+    print("TotalPassedCar: "+ str(len(passed)))
+    print("TotalAdjustedNotCollidedCar: " + str(len(adjustedNotCollided)))
+    print("TotalCollidedNotAdjustedCar: " + str(len(collidedNotAdjusted)))
+    print("TotalAdjustedButCollidedCar: " + str(len(adjustedButCollided)))
+    print("TotalAdjustedAndPassedCar: " + str(len(adjustedAndPassed)))
+    print("TotalCollidedButPassedCar: " + str(len(collidedButPassed)))
+
 #test()
 installAllConsumerApp()
 installAllProducerApp()
@@ -351,26 +411,7 @@ Simulator.Schedule(Seconds(1), runSumoStep)
 Simulator.Schedule(Seconds(1), passingVehicle)
 # print(type(cmd.duration.To(Time.S).GetDouble()))
 time = cmd.duration.To(Time.S).GetDouble()
-Simulator.Schedule(Seconds(time-1.0),countInterestData)
-
-data_file = open('results/InterestDataTraffic/count_traffic.csv', 'w')
-csv_writer = csv.writer(data_file)
-csv_writer.writerow(["Node","Time","Action","X","Y"])
-
-nfd.fw.DirectedGeocastStrategy.onAction.connect(name, type, x, y):
-    context = Simulator::GetContext();
-    time = Simulator::Now().ToDouble(Time.S);
-    # std::string action;
-    if (type == 0)
-        action = "Broadcast";
-    else if (type == 1)
-        action = "Received";
-    else if (type == 2)
-        action = "Duplicate";
-    else
-        action = "Suppressed";
-  # of << context << "," << time << "," << name.get(-1).toSequenceNumber() << "," << action << ","<< x << "," << y <<std::endl;
-    csv_writer.writerow([context,time,action,x,y])
+Simulator.Schedule(Seconds(time-1.0),countAdjustedVehicle)
 
 
 
@@ -379,4 +420,5 @@ Simulator.Run()
 
 g_traciStepByStep.close()
 traci.close()
+
 
