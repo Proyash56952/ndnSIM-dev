@@ -214,7 +214,7 @@ def runSumoStep():
         
         # print("vehicle: "+str(vehicle)+" travelled: "+str(distanceTravelled))
         
-        if(speed < 0.5 and findDistance(pos[0],pos[1],500.0,500.0) < 18 and node.collision == False):
+        if(speed < 0.5 and findPoint(485,485,515,515,pos[0],pos[1]) and node.collision == False):
             node.collision = True
             print("vehicle: "+str(vehicle)+ " has a collision")
             collisionCount = collisionCount + 1
