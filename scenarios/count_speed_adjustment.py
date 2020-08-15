@@ -44,6 +44,7 @@ departedCount = 0
 InterestCount = 0
 DataCount = 0
 totalCollisionCount = 0
+riskyDeceleration = 0
 
 def createAllVehicles(simTime):
     g_traciDryRun.simulationStep(simTime)
@@ -198,7 +199,7 @@ def getTargets(vehicle):
 
 def runSumoStep():
     Simulator.Schedule(Seconds(time_step), runSumoStep)
-    global InterestCount, DataCount, totalCollisionCount, collidedPreviousSecond
+    global InterestCount, DataCount, totalCollisionCount, collidedPreviousSecond, riskyDeceleration
     nowTime = Simulator.Now().To(Time.S).GetDouble()
     targetTime = Simulator.Now().To(Time.S).GetDouble() + time_step
     
@@ -214,6 +215,7 @@ def runSumoStep():
         pos = g_traciStepByStep.vehicle.getPosition(vehicle)
         speed = g_traciStepByStep.vehicle.getSpeed(vehicle)
         angle = g_traciStepByStep.vehicle.getAngle(vehicle)
+        accel = g_traciStepByStep.vehicle.getAcceleration(vehicle)
         distanceTravelled = g_traciStepByStep.vehicle.getDistance(vehicle)
         
         # print("vehicle: "+str(vehicle)+" travelled: "+str(distanceTravelled))
@@ -223,6 +225,9 @@ def runSumoStep():
             collisionCount = collisionCount + 1
             collidedThisSecond.append(node)
         
+        if(accel < -4.0):
+            riskyDeceleration = riskyDeceleration + 1
+            print("At "+ str(nowTime)+" vehicle " + str(vehicle)+ " has made a risky deceleration at rate: "+ str(accel))
         #print(node.passedIntersection)
         #print(node.collision)
         # print(requireAdjustment.Get())
@@ -420,6 +425,7 @@ def countAdjustedVehicle():
     print("TotalAdjustedAndPassedCar: " + str(len(adjustedAndPassed)))
     print("TotalCollidedButPassedCar: " + str(len(collidedButPassed)))
     print("TotalCollisionCount: "+ str(totalCollisionCount))
+    print("TotalRiskyDeceleration: " + str(riskyDeceleration))
 
 #test()
 installAllConsumerApp()
