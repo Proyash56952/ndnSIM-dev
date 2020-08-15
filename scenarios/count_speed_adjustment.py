@@ -37,11 +37,13 @@ p_names = {}
 vehicleList = []
 prevList = []
 nowList = []
+collidedThisSecond = []
+collidedPreviousSecond = []
 posOutOfBound = Vector(0, 0, -2000)
 departedCount = 0
 InterestCount = 0
 DataCount = 0
-collisionCount = 0
+totalCollisionCount = 0
 
 def createAllVehicles(simTime):
     g_traciDryRun.simulationStep(simTime)
@@ -196,10 +198,12 @@ def getTargets(vehicle):
 
 def runSumoStep():
     Simulator.Schedule(Seconds(time_step), runSumoStep)
-    global InterestCount, DataCount, collisionCount
+    global InterestCount, DataCount, totalCollisionCount, collidedPreviousSecond
     nowTime = Simulator.Now().To(Time.S).GetDouble()
     targetTime = Simulator.Now().To(Time.S).GetDouble() + time_step
-
+    
+    collisionCount = 0
+    
     g_traciStepByStep.simulationStep(Simulator.Now().To(Time.S).GetDouble() + time_step)
     requireAdjustment = BooleanValue()
     noAdjustment = BooleanValue(False)
@@ -213,11 +217,11 @@ def runSumoStep():
         distanceTravelled = g_traciStepByStep.vehicle.getDistance(vehicle)
         
         # print("vehicle: "+str(vehicle)+" travelled: "+str(distanceTravelled))
-        
         if(speed < 0.5 and findPoint(485,485,515,515,pos[0],pos[1]) and node.collision == False):
             node.collision = True
-            print("vehicle: "+str(vehicle)+ " has a collision")
+            print("vehicle: "+ str(vehicle)+ " has a collision")
             collisionCount = collisionCount + 1
+            collidedThisSecond.append(node)
         
         #print(node.passedIntersection)
         #print(node.collision)
@@ -253,10 +257,26 @@ def runSumoStep():
             setSpeedToReachNextWaypoint(node, node.referencePos, Vector(pos[0], pos[1], 0.0), targetTime - nowTime, speed)
             node.referencePos = Vector(pos[0], pos[1], 0.0)
         g_traciStepByStep.vehicle.setSpeedMode(vehicle,0)
-        g_traciStepByStep.vehicle.setMinGap(vehicle,0)
+        g_traciStepByStep.vehicle.setMinGap(vehicle,0.5)
         #if((pos[0] < 20.0 or pos[0] > 980.0 or pos[1] < 20.0 or pos[1] > 980.0) and node.time > 10):
             #node.mobility.SetPosition(posOutOfBound)
             #node.mobility.SetVelocity(0)
+    collided = collidedThisSecond + collidedPreviousSecond
+    #print(len(collided))
+    for i in range (0,len(collided)-1):
+        for j in range (i+1, len(collided)):
+            pos1 = collided[i].mobility.GetPosition()
+            pos2 = collided[j].mobility.GetPosition()
+            print(findDistance(pos1.x,pos1.y,pos2.x,pos2.y))
+            if(findDistance(pos1.x,pos1.y,pos2.x,pos2.y) < 5):
+                collisionCount = collisionCount - 1
+    #print(collidedThisSecond)
+    #print(collidedPreviousSecond)
+    collidedPreviousSecond = collidedThisSecond[:]
+    collidedThisSecond.clear()
+    
+    totalCollisionCount = totalCollisionCount + collisionCount
+
 def findDistance(x1, y1, x2, y2):
     return math.sqrt(math.pow((x1-x2),2) + math.pow((y1-y2),2))
 
@@ -399,6 +419,7 @@ def countAdjustedVehicle():
     print("TotalAdjustedButCollidedCar: " + str(len(adjustedButCollided)))
     print("TotalAdjustedAndPassedCar: " + str(len(adjustedAndPassed)))
     print("TotalCollidedButPassedCar: " + str(len(collidedButPassed)))
+    print("TotalCollisionCount: "+ str(totalCollisionCount))
 
 #test()
 installAllConsumerApp()
