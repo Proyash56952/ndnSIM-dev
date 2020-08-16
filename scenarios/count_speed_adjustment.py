@@ -19,9 +19,10 @@ import csv
 
 from ns.mobility import MobilityModel, ConstantVelocityMobilityModel
 
-data_file = open('results/adjusted_passing_vehicle_number.csv', 'w')
+data_file = open('results/numbers.csv', 'w')
 csv_writer = csv.writer(data_file)
-csv_writer.writerow(["Time","Node_Count","Total_Node_Count"])
+csv_writer.writerow(["Duration","Total_Number_Of_Vehicle","Total_Adjusted_Car","Total_Collided_Car","Total_Passed_Car","Total_AdjustedNot_CollidedCar","totalCollidedNotAdjustedCar","totalAdjustedButCollidedCar","totalAdjustedAndPassedCar"])
+
 
 net = sumolib.net.readNet('src/ndnSIM/scenarios/sumo/intersection.net.xml')
 sumoCmd = ["sumo", "-c", "src/ndnSIM/scenarios/sumo/intersection.sumocfg"]
@@ -39,6 +40,10 @@ prevList = []
 nowList = []
 collidedThisSecond = []
 collidedPreviousSecond = []
+adjusted = []
+collided = []
+passed = []
+
 posOutOfBound = Vector(0, 0, -2000)
 departedCount = 0
 InterestCount = 0
@@ -199,7 +204,7 @@ def getTargets(vehicle):
 
 def runSumoStep():
     Simulator.Schedule(Seconds(time_step), runSumoStep)
-    global InterestCount, DataCount, totalCollisionCount, collidedPreviousSecond, riskyDeceleration
+    global InterestCount, DataCount, totalCollisionCount, collidedPreviousSecond, riskyDeceleration, adjusted, collided, passed
     nowTime = Simulator.Now().To(Time.S).GetDouble()
     targetTime = Simulator.Now().To(Time.S).GetDouble() + time_step
     
@@ -239,9 +244,6 @@ def runSumoStep():
             node.apps.SetAttribute("DoesRequireAdjustment",noAdjustment)
             node.needAdjustment = True
         
-        #print(node.needAdjustment)
-        #print(node.collision)
-
         if ((20 < findDistance(pos[0],pos[1],500.0,500.0) < 300) and distanceTravelled < 500):
             # print(vehicle)
             targets = getTargets(vehicle)
@@ -267,7 +269,7 @@ def runSumoStep():
             #node.mobility.SetPosition(posOutOfBound)
             #node.mobility.SetVelocity(0)
     collided = collidedThisSecond + collidedPreviousSecond
-    #print(len(collided))
+
     for i in range (0,len(collided)-1):
         for j in range (i+1, len(collided)):
             pos1 = collided[i].mobility.GetPosition()
@@ -275,8 +277,7 @@ def runSumoStep():
             print(findDistance(pos1.x,pos1.y,pos2.x,pos2.y))
             if(findDistance(pos1.x,pos1.y,pos2.x,pos2.y) < 5):
                 collisionCount = collisionCount - 1
-    #print(collidedThisSecond)
-    #print(collidedPreviousSecond)
+
     collidedPreviousSecond = collidedThisSecond[:]
     collidedThisSecond.clear()
     
@@ -319,7 +320,6 @@ def passingVehicle():
         n.passedIntersection = True
     
     departedCount = departedCount + len(departList)
-    csv_writer.writerow([nowTime,len(departList),departedCount])
 
 # this module will adjust the speed of vehicle in such a way that it will reduce the final distance travlled by 2 meter to avoid a collision. In the first module it will reduce the speed by 2m in 1s and then again regain the same speed in next second by scheduling the speedUP module.
 def speedAdjustment(vehID):
@@ -340,12 +340,6 @@ def speedUP(vehID,oldSpeed):
     newSpeed = oldSpeed + 2
     g_traciStepByStep.vehicle.slowDown(vehID,newSpeed,1)
 
-def test():
-    consumerNode = g_names["f2.0"]
-    apps = consumerAppHelper.Install(consumerNode.node)
-    apps.Start(Seconds(0.1))
-    consumerNode.apps = apps.Get(0)
-
 def installAllConsumerApp():
     for vehicle in vehicleList:
         consumerNode = g_names[vehicle]
@@ -365,34 +359,13 @@ def sendInterest(vehID,targets):
     consumerNode = g_names[vehID]
     for target in targets:
         consumerNode.apps.SetAttribute("RequestPositionStatus", StringValue(str(target)))
-   
-def test2():
-    consumerNode = g_names["f2.0"]
-    consumerNode.apps.SetAttribute("RequestPositionStatus", StringValue("486.4:495.2:0"))
 
-
-createAllVehicles(cmd.duration.To(Time.S).GetDouble())
-consumerAppHelper = ndn.AppHelper("ndn::v2v::Consumer")
-producerAppHelper = ndn.AppHelper("ndn::v2v::Producer")
-# consumerNode = g_names["f1.1"]
-
-def countPassingVehicle():
-    print("Time is: " + str(cmd.duration.To(Time.S).GetDouble()))
-    print("Total Number of Cars: " + str(len(vehicleList)))
-    print("number of passing vehicle is: " + str(departedCount) )
-# consumerApp = ndn.AppHelper("ndn::v2v::Consumer")
-# apps = consumerApp.Install(consumerNode.node)
-
-def countInterestData():
-    print("Time is: " + str(cmd.duration.To(Time.S).GetDouble()))
-    print("TotalCar: " + str(len(vehicleList)))
-    print("InterestCount: "+ str(InterestCount))
-    print("DataCount: "+ str(DataCount))
-
-def countAdjustedVehicle():
+def writeToFile():
     adjusted = []
     collided = []
     passed = []
+    nowTime = Simulator.Now().To(Time.S).GetDouble()
+    print(time)
     for vehicle in vehicleList:
         node = g_names[vehicle]
         if(node.needAdjustment):
@@ -406,41 +379,23 @@ def countAdjustedVehicle():
     adjustedButCollided = intersection(adjusted, collided)
     adjustedAndPassed = intersection(adjusted,passed)
     collidedButPassed = intersection(collided,passed)
-    print(adjusted)
-    print(collided)
-    print(passed)
-    print(adjustedNotCollided)
-    print(collidedNotAdjusted)
-    print(adjustedButCollided)
-    print(adjustedAndPassed)
-    print(collidedButPassed)
-    print("Time is: " + str(cmd.duration.To(Time.S).GetDouble()))
-    print("TotalCar: " + str(len(vehicleList)))
-    print("TotalAdjustedCar: "+ str(len(adjusted)))
-    print("TotalCollidedCar: "+ str(len(collided)))
-    print("TotalPassedCar: "+ str(len(passed)))
-    print("TotalAdjustedNotCollidedCar: " + str(len(adjustedNotCollided)))
-    print("TotalCollidedNotAdjustedCar: " + str(len(collidedNotAdjusted)))
-    print("TotalAdjustedButCollidedCar: " + str(len(adjustedButCollided)))
-    print("TotalAdjustedAndPassedCar: " + str(len(adjustedAndPassed)))
-    print("TotalCollidedButPassedCar: " + str(len(collidedButPassed)))
-    print("TotalCollisionCount: "+ str(totalCollisionCount))
-    print("TotalRiskyDeceleration: " + str(riskyDeceleration))
+    
+    csv_writer.writerow([nowTime, len(vehicleList), len(adjusted), len(collided), len(passed), len(adjustedNotCollided), len(collidedNotAdjusted), len(adjustedButCollided), len(adjustedAndPassed) ])
+    
+    Simulator.Schedule(Seconds(10.0),writeToFile)
 
-#test()
+createAllVehicles(cmd.duration.To(Time.S).GetDouble())
+consumerAppHelper = ndn.AppHelper("ndn::v2v::Consumer")
+producerAppHelper = ndn.AppHelper("ndn::v2v::Producer")
+
 installAllConsumerApp()
 installAllProducerApp()
-
-#Simulator.Schedule(Seconds(5.1), test2)
 
 Simulator.Schedule(Seconds(1), runSumoStep)
 
 Simulator.Schedule(Seconds(1), passingVehicle)
-# print(type(cmd.duration.To(Time.S).GetDouble()))
-time = cmd.duration.To(Time.S).GetDouble()
-Simulator.Schedule(Seconds(time-1.0),countAdjustedVehicle)
 
-
+Simulator.Schedule(Seconds(10.0),writeToFile)
 
 Simulator.Stop(cmd.duration)
 Simulator.Run()
