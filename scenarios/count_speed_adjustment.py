@@ -205,7 +205,7 @@ def getTargets(vehicle):
 
 def runSumoStep():
     Simulator.Schedule(Seconds(time_step), runSumoStep)
-    global InterestCount, DataCount, totalCollisionCount, collidedPreviousSecond, riskyDeceleration, adjusted, collided, passed
+    global InterestCount, DataCount, totalCollisionCount, collidedPreviousSecond, riskyDeceleration, adjusted, collided, passed, numberOfLoadedVehicle
     nowTime = Simulator.Now().To(Time.S).GetDouble()
     targetTime = Simulator.Now().To(Time.S).GetDouble() + time_step
     
@@ -223,6 +223,9 @@ def runSumoStep():
         angle = g_traciStepByStep.vehicle.getAngle(vehicle)
         accel = g_traciStepByStep.vehicle.getAcceleration(vehicle)
         distanceTravelled = g_traciStepByStep.vehicle.getDistance(vehicle)
+        numberOfLoadedVehicle = g_traciStepByStep.simulation.getLoadedNumber()
+        
+        # print(numberOfLoadedVehicle)
         
         # print("vehicle: "+str(vehicle)+" travelled: "+str(distanceTravelled))
         if(speed < 0.5 and findPoint(485,485,515,515,pos[0],pos[1]) and node.collision == False):
@@ -329,8 +332,9 @@ def speedAdjustment(vehID):
     node.adjustment = True
     g_traciStepByStep.simulationStep(Simulator.Now().To(Time.S).GetDouble())
     oldSpeed = g_traciStepByStep.vehicle.getSpeed(vehID)
-    if(oldSpeed > 4):
-        newSpeed = oldSpeed - 4
+    deceleration = round(random.uniform(3,6),2)
+    if(oldSpeed > deceleration):
+        newSpeed = oldSpeed - deceleration
     else:
         newSpeed = 0
     g_traciStepByStep.vehicle.slowDown(vehID,newSpeed,1)
@@ -339,7 +343,7 @@ def speedAdjustment(vehID):
 
 def speedUP(vehID,oldSpeed):
     g_traciStepByStep.simulationStep(Simulator.Now().To(Time.S).GetDouble())
-    newSpeed = oldSpeed + 2
+    newSpeed = oldSpeed + round(random.uniform(3,6),2)
     g_traciStepByStep.vehicle.slowDown(vehID,newSpeed,1)
 
 def installAllConsumerApp():
@@ -368,7 +372,6 @@ def writeToFile():
     collided = []
     passed = []
     nowTime = Simulator.Now().To(Time.S).GetDouble()
-    print(time)
     for vehicle in vehicleList:
         node = g_names[vehicle]
         if(node.needAdjustment):
@@ -383,7 +386,7 @@ def writeToFile():
     adjustedAndPassed = intersection(adjusted,passed)
     collidedButPassed = intersection(collided,passed)
     
-    csv_writer.writerow([nowTime, len(vehicleList), len(adjusted), len(collided), len(passed), len(adjustedNotCollided), len(collidedNotAdjusted), len(adjustedButCollided), len(adjustedAndPassed) ])
+    csv_writer.writerow([nowTime, numberOfLoadedVehicle, len(adjusted), len(collided), len(passed), len(adjustedNotCollided), len(collidedNotAdjusted), len(adjustedButCollided), len(adjustedAndPassed) ])
     
     Simulator.Schedule(Seconds(10.0),writeToFile)
 
