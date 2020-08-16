@@ -24,6 +24,10 @@ data_file = open('results/numbers.csv', 'w')
 csv_writer = csv.writer(data_file)
 csv_writer.writerow(["Duration","Total_Number_Of_Vehicle","Total_Adjusted_Car","Total_Collided_Car","Total_Passed_Car","Total_AdjustedNot_CollidedCar","totalCollidedNotAdjustedCar","totalAdjustedButCollidedCar","totalAdjustedAndPassedCar"])
 
+file = open('results/risky_decelerations.csv', 'w')
+csv_writer1 = csv.writer(file)
+csv_writer1.writerow(["Duration","Total_Number_Of_Vehicle","Total_Risky_Deceleration_Count","Total_Number_Of_Risky_Decelerated_Car"])
+
 
 net = sumolib.net.readNet('src/ndnSIM/scenarios/sumo/intersection.net.xml')
 sumoCmd = ["sumo", "-c", "src/ndnSIM/scenarios/sumo/intersection.sumocfg"]
@@ -66,6 +70,7 @@ def createAllVehicles(simTime):
         node.needAdjustment = False
         node.passedIntersection = False
         node.collision = False
+        node.riskyDeceleration = False
         vehicleList.append(vehicle)
     print(len(vehicleList))
         
@@ -237,6 +242,7 @@ def runSumoStep():
         if(accel < -4.0):
             riskyDeceleration = riskyDeceleration + 1
             print("At "+ str(nowTime)+" vehicle " + str(vehicle)+ " has made a risky deceleration at rate: "+ str(accel))
+            node.riskyDeceleration = True
         #print(node.passedIntersection)
         #print(node.collision)
         # print(requireAdjustment.Get())
@@ -390,6 +396,17 @@ def writeToFile():
     
     Simulator.Schedule(Seconds(10.0),writeToFile)
 
+def risky_decelerations():
+    risky = []
+    nowTime = Simulator.Now().To(Time.S).GetDouble()
+    for vehicle in vehicleList:
+        node = g_names[vehicle]
+        if(node.riskyDeceleration):
+            risky.append(vehicle)
+    csv_writer1.writerow([nowTime, numberOfLoadedVehicle, riskyDeceleration, len(risky)])
+    
+    Simulator.Schedule(Seconds(10.0), risky_decelerations)
+
 createAllVehicles(cmd.duration.To(Time.S).GetDouble())
 consumerAppHelper = ndn.AppHelper("ndn::v2v::Consumer")
 producerAppHelper = ndn.AppHelper("ndn::v2v::Producer")
@@ -402,6 +419,8 @@ Simulator.Schedule(Seconds(1), runSumoStep)
 Simulator.Schedule(Seconds(1), passingVehicle)
 
 Simulator.Schedule(Seconds(10.0),writeToFile)
+
+Simulator.Schedule(Seconds(10.0), risky_decelerations)
 
 Simulator.Stop(cmd.duration)
 Simulator.Run()
