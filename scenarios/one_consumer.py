@@ -23,8 +23,8 @@ data_file = open('results/not_adjusted_speed.csv', 'w')
 csv_writer = csv.writer(data_file)
 csv_writer.writerow(["Time","Node_Count","Total_Node_Count"])
 
-net = sumolib.net.readNet('src/ndnSIM/scenarios/sumo/intersection.net.xml')
-sumoCmd = ["sumo", "-c", "src/ndnSIM/scenarios/sumo/intersection.sumocfg"]
+net = sumolib.net.readNet('sumo/intersection.net.xml')
+sumoCmd = ["sumo", "-c", "sumo/intersection.sumocfg"]
 
 traci.start(sumoCmd, label="dry-run") # whole run to estimate and created all nodes with out of bound position and 0 speeds
 g_traciDryRun = traci.getConnection("dry-run")
@@ -230,7 +230,7 @@ def speedUP(vehID,oldSpeed):
 consumerAppHelper = ndn.AppHelper("ndn::v2v::Consumer")
 
 def test():
-    consumerNode = g_names["f8.0"]
+    consumerNode = g_names["f7.0"]
     # print(consumerNode.node)
     apps = consumerAppHelper.Install(consumerNode.node)
     apps.Start(Seconds(0.1))

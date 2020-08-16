@@ -55,6 +55,7 @@ InterestCount = 0
 DataCount = 0
 totalCollisionCount = 0
 riskyDeceleration = 0
+numberOfLoadedVehicle = 0
 
 def createAllVehicles(simTime):
     g_traciDryRun.simulationStep(simTime)
@@ -217,6 +218,13 @@ def runSumoStep():
     collisionCount = 0
     
     g_traciStepByStep.simulationStep(Simulator.Now().To(Time.S).GetDouble() + time_step)
+    
+    numberOfVehicle = g_traciStepByStep.simulation.getLoadedNumber()
+    
+    numberOfLoadedVehicle = numberOfLoadedVehicle + numberOfVehicle
+    
+    print(numberOfLoadedVehicle)
+    
     requireAdjustment = BooleanValue()
     noAdjustment = BooleanValue(False)
     # print(nowTime, g_traciStepByStep.vehicle.getIDList())
@@ -228,9 +236,7 @@ def runSumoStep():
         angle = g_traciStepByStep.vehicle.getAngle(vehicle)
         accel = g_traciStepByStep.vehicle.getAcceleration(vehicle)
         distanceTravelled = g_traciStepByStep.vehicle.getDistance(vehicle)
-        numberOfLoadedVehicle = g_traciStepByStep.simulation.getLoadedNumber()
         
-        # print(numberOfLoadedVehicle)
         
         # print("vehicle: "+str(vehicle)+" travelled: "+str(distanceTravelled))
         if(speed < 0.5 and findPoint(485,485,515,515,pos[0],pos[1]) and node.collision == False):
@@ -377,6 +383,7 @@ def writeToFile():
     adjusted = []
     collided = []
     passed = []
+    global numberOfLoadedVehicle
     nowTime = Simulator.Now().To(Time.S).GetDouble()
     for vehicle in vehicleList:
         node = g_names[vehicle]
