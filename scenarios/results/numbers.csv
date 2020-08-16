@@ -1,0 +1,3 @@
+Duration,Total_Number_Of_Vehicle,Total_Adjusted_Car,Total_Collided_Car,Total_Passed_Car,Total_AdjustedNot_CollidedCar,totalCollidedNotAdjustedCar,totalAdjustedButCollidedCar,totalAdjustedAndPassedCar
+10.0,0,0,0,0,0,0,0,0
+20.0,0,1,0,0,1,0,0,0

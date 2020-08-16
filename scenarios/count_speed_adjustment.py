@@ -29,8 +29,8 @@ csv_writer1 = csv.writer(file)
 csv_writer1.writerow(["Duration","Total_Number_Of_Vehicle","Total_Risky_Deceleration_Count","Total_Number_Of_Risky_Decelerated_Car"])
 
 
-net = sumolib.net.readNet('src/ndnSIM/scenarios/sumo/intersection.net.xml')
-sumoCmd = ["sumo", "-c", "src/ndnSIM/scenarios/sumo/intersection.sumocfg"]
+net = sumolib.net.readNet('sumo/intersection.net.xml')
+sumoCmd = ["sumo", "-c", "sumo/intersection.sumocfg"]
 
 traci.start(sumoCmd, label="dry-run") # whole run to estimate and created all nodes with out of bound position and 0 speeds
 g_traciDryRun = traci.getConnection("dry-run")

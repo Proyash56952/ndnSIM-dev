@@ -19,12 +19,9 @@ import csv
 
 from ns.mobility import MobilityModel, ConstantVelocityMobilityModel
 
-data_file = open('results/adjusted_passing_vehicle_number.csv', 'w')
-csv_writer = csv.writer(data_file)
-csv_writer.writerow(["Time","Node_Count","Total_Node_Count"])
 
-net = sumolib.net.readNet('src/ndnSIM/scenarios/sumo/intersection.net.xml')
-sumoCmd = ["sumo", "-c", "src/ndnSIM/scenarios/sumo/intersection.sumocfg"]
+net = sumolib.net.readNet('sumo/intersection.net.xml')
+sumoCmd = ["sumo", "-c", "sumo/intersection.sumocfg"]
 
 traci.start(sumoCmd, label="dry-run") # whole run to estimate and created all nodes with out of bound position and 0 speeds
 g_traciDryRun = traci.getConnection("dry-run")
@@ -270,7 +267,6 @@ def passingVehicle():
     nowList.clear()
     
     departedCount = departedCount + len(departList)
-    csv_writer.writerow([nowTime,len(departList),departedCount])
 
 # this module will adjust the speed of vehicle in such a way that it will reduce the final distance travlled by 2 meter to avoid a collision. In the first module it will reduce the speed by 2m in 1s and then again regain the same speed in next second by scheduling the speedUP module.
 def speedAdjustment(vehID):
