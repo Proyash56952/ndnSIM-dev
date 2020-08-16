@@ -16,6 +16,7 @@ import re
 import sumolib
 import math
 import csv
+import random
 
 from ns.mobility import MobilityModel, ConstantVelocityMobilityModel
 
@@ -250,7 +251,8 @@ def runSumoStep():
             InterestCount = InterestCount + len(targets)
             #print("Vehicle:   "+vehicle+"          Points of interests:", [str(target) for target in targets])
             # print("vehicle: "+str(vehicle)+" travelled: "+str(distanceTravelled))
-            sendInterest(vehicle,targets)
+            Simulator.Schedule(Seconds(round(random.uniform(0.1,0.5),2)), sendInterest, vehicle, targets)
+            # sendInterest(vehicle,targets)
             
         if node.time < 0: # a new node
             node.time = targetTime
@@ -357,6 +359,7 @@ def installAllProducerApp():
 def sendInterest(vehID,targets):
     # print(vehID)
     consumerNode = g_names[vehID]
+    print("sending Interest at: " + str(Simulator.Now().To(Time.S).GetDouble()))
     for target in targets:
         consumerNode.apps.SetAttribute("RequestPositionStatus", StringValue(str(target)))
 
