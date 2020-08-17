@@ -1,0 +1,13 @@
+Duration,Total_Number_Of_Vehicle,Total_Risky_Deceleration_Count,Total_Number_Of_Risky_Decelerated_Car
+10.0,8,0,0
+20.0,8,1,1
+30.0,12,4,3
+40.0,12,7,5
+50.0,20,12,8
+60.0,20,12,8
+70.0,24,19,12
+80.0,24,21,13
+90.0,32,24,16
+100.0,32,25,16
+110.0,36,31,21
+120.0,36,36,22

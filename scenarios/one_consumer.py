@@ -19,9 +19,9 @@ import csv
 
 from ns.mobility import MobilityModel, ConstantVelocityMobilityModel
 
-data_file = open('results/not_adjusted_speed.csv', 'w')
+data_file = open('results/multiple_adjusted_speed.csv', 'w')
 csv_writer = csv.writer(data_file)
-csv_writer.writerow(["Time","Node_Count","Total_Node_Count"])
+csv_writer.writerow(["Time","Speed","X","Y"])
 
 net = sumolib.net.readNet('sumo/intersection.net.xml')
 sumoCmd = ["sumo", "-c", "sumo/intersection.sumocfg"]
@@ -87,7 +87,7 @@ def setSpeedToReachNextWaypoint(node, referencePos, targetPos, targetTime, refer
         
     else:
         node.mobility.SetVelocity(estimatedSpeed)
-    print("Node [%s] change speed to [%s] (now = %f seconds); reference speed %f, current position: %s, target position: %s" % (node.name, str(estimatedSpeed), Simulator.Now().To(Time.S).GetDouble(), referenceSpeed, str(prevPos), str(targetPos)))
+    # print("Node [%s] change speed to [%s] (now = %f seconds); reference speed %f, current position: %s, target position: %s" % (node.name, str(estimatedSpeed), Simulator.Now().To(Time.S).GetDouble(), referenceSpeed, str(prevPos), str(targetPos)))
 def prepositionNode(node, targetPos, currentSpeed, angle, targetTime):
     '''This one is trying to set initial position of the node in such a way so it will be
        traveling at currentSpeed and arrives at the targetPos (basically, set position using reverse speed)'''
@@ -116,7 +116,7 @@ def getTargets(vehicle):
     x, y = sumolib.geomhelper.positionAtShapeOffset(currentLane.getShape(), currentLane.getLength())
 
     # Position at the end of the current lane
-    y = y - 16
+    y = y + 16
     pos.append(Vector(x, y, 0))
 
     #for connection in currentLane.getOutgoing():
@@ -142,21 +142,24 @@ def runSumoStep():
         pos = g_traciStepByStep.vehicle.getPosition(vehicle)
         speed = g_traciStepByStep.vehicle.getSpeed(vehicle)
         angle = g_traciStepByStep.vehicle.getAngle(vehicle)
+        distanceTravelled = g_traciStepByStep.vehicle.getDistance(vehicle)
         
-        if(vehicle =="f8.0"):
+        if(vehicle =="f7.0"):
             node.apps.GetAttribute("DoesRequireAdjustment",requireAdjustment)
-            print(requireAdjustment.Get())
+            # print(requireAdjustment.Get())
             # check if the node requires any speed adjustment
             if(requireAdjustment.Get()):
                 print("Now the car will adjust speed ")
                 speedAdjustment(vehicle)
                 node.apps.SetAttribute("DoesRequireAdjustment",noAdjustment)
             
-            if (20 < findDistance(pos[0],pos[1],500.0,500.0) < 300):
+            if (20 < findDistance(pos[0],pos[1],500.0,500.0) < 300 and distanceTravelled < 500):
                 # print(vehicle)
                 targets = getTargets(vehicle)
                 #print("          Points of interests:", [str(target) for target in targets])
                 sendInterest(vehicle,targets)
+            
+            csv_writer.writerow([nowTime,speed,pos[0],pos[1]])
             
         if node.time < 0: # a new node
             node.time = targetTime
@@ -209,7 +212,7 @@ def passingVehicle():
     
     #print(len(departList))
     departedCount = departedCount + len(departList)
-    csv_writer.writerow([nowTime,len(departList),departedCount])
+    # csv_writer.writerow([nowTime,len(departList),departedCount])
 
 # this module will adjust the speed of vehicle in such a way that it will reduce the final distance travlled by 2 meter to avoid a collision. In the first module it will reduce the speed by 2m in 1s and then again regain the same speed in next second by scheduling the speedUP module.
 def speedAdjustment(vehID):

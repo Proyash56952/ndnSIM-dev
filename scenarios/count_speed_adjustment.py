@@ -223,7 +223,7 @@ def runSumoStep():
     
     numberOfLoadedVehicle = numberOfLoadedVehicle + numberOfVehicle
     
-    print(numberOfLoadedVehicle)
+    # print(numberOfLoadedVehicle)
     
     requireAdjustment = BooleanValue()
     noAdjustment = BooleanValue(False)
@@ -244,8 +244,10 @@ def runSumoStep():
             print("vehicle: "+ str(vehicle)+ " has a collision")
             collisionCount = collisionCount + 1
             collidedThisSecond.append(node)
+            # node.mobility.SetPosition(posOutOfBound)
+            # node.mobility.SetVelocity(Vector(0,0,0))
         
-        if(accel < -4.0):
+        if(accel < -7.0):
             riskyDeceleration = riskyDeceleration + 1
             print("At "+ str(nowTime)+" vehicle " + str(vehicle)+ " has made a risky deceleration at rate: "+ str(accel))
             node.riskyDeceleration = True

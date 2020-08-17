@@ -1,0 +1,13 @@
+Duration,Total_Number_Of_Vehicle,Total_Adjusted_Car,Total_Collided_Car,Total_Passed_Car,Total_AdjustedNot_CollidedCar,totalCollidedNotAdjustedCar,totalAdjustedButCollidedCar,totalAdjustedAndPassedCar
+10,8,0,0,0,0,0,0,0
+20,8,1,0,0,1,0,0,0
+30,12,1,2,1,0,1,1,0
+40,12,1,4,2,0,3,1,0
+50,20,3,5,2,2,4,1,0
+60,20,5,10,3,1,6,4,1
+70,24,8,11,6,3,6,5,4
+80,24,10,14,7,4,8,6,5
+90,32,11,16,10,4,9,7,7
+100,32,13,16,11,6,9,7,8
+110,36,15,20,12,5,10,10,8
+120,36,16,21,15,5,10,11,11
