@@ -126,7 +126,6 @@ V2vConsumer::scheduledRequest(Position target)
     .appendNumber(100);
     
   m_requestInProgress = true;
-  m_doesRequireAdjustment = false;
   //auto t = target.wireEncode();
   //std::cout<< wireDecode(t);
   Interest i(request);

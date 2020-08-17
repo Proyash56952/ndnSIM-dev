@@ -34,7 +34,9 @@ public:
   bool
   doesRequireAdjustment() const
   {
-    return m_doesRequireAdjustment;
+    auto ret = m_doesRequireAdjustment;
+    const_cast<V2vConsumer*>(this)->m_doesRequireAdjustment = false;
+    return ret;
   }
 
   void
