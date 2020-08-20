@@ -4,6 +4,7 @@
 
 #include <ndn-cxx/interest.hpp>
 #include <ndn-cxx/util/logger.hpp>
+#include <ndn-cxx/lp/tags.hpp>
 
 namespace ndn {
 
@@ -124,7 +125,7 @@ V2vConsumer::scheduledRequest(Position target)
     .append(name::Component(position.wireEncode()))
     .append(time::toIsoString(expectToBeAtTarget))
     .appendNumber(100);
-    
+
   m_requestInProgress = true;
   //auto t = target.wireEncode();
   //std::cout<< wireDecode(t);
@@ -133,13 +134,22 @@ V2vConsumer::scheduledRequest(Position target)
   i.setMustBeFresh(true);
   i.setInterestLifetime(1_s);
 
+  ++m_interestCounter;
+
   m_face.expressInterest(i,
-                         [this] (const Interest&, const Data&) {
+                         [this, counter=m_interestCounter, backThere=time::system_clock::now()] (const Interest& i, const Data& d) {
                            // data
                            m_requestInProgress = false;
 
                            // if real, do validation
-                           
+
+                           int hopCount = 0;
+                           auto hopCountTag = d.template getTag<lp::HopCountTag>();
+                           if (hopCountTag != nullptr) { // e.g., packet came from local node's cache
+                             hopCount = *hopCountTag;
+                           }
+                           this->afterDataReceived(counter, time::system_clock::now() - backThere, hopCount);
+
                            NDN_LOG_DEBUG("Get Data");
                            this->m_doesRequireAdjustment = true;
                          },

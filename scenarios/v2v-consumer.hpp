@@ -6,6 +6,7 @@
 #include <ndn-cxx/face.hpp>
 #include <ndn-cxx/security/key-chain.hpp>
 #include <ndn-cxx/util/scheduler.hpp>
+#include <ndn-cxx/util/signal.hpp>
 
 #include "v2v-position-getter.hpp"
 
@@ -42,6 +43,9 @@ public:
   void
   requestPositionStatus(Position position);
 
+public: // Signals
+  ndn::util::Signal<V2vConsumer, uint32_t, time::nanoseconds, int32_t> afterDataReceived;
+
 private:
   void
   scheduleNext();
@@ -58,6 +62,8 @@ private:
 
   bool m_requestInProgress = false;
   bool m_doesRequireAdjustment = false;
+
+  uint32_t m_interestCounter = 0;
 };
 
 } // namespace ndn

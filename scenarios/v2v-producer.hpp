@@ -6,6 +6,7 @@
 #include <ndn-cxx/face.hpp>
 #include <ndn-cxx/security/key-chain.hpp>
 #include <ndn-cxx/util/scheduler.hpp>
+#include <ndn-cxx/util/signal.hpp>
 
 #include "v2v-position-getter.hpp"
 
@@ -42,6 +43,9 @@ public:
   {
     //BOOST_ASSERT(false);
   }
+
+public: // Signals
+  ndn::util::Signal<V2vProducer, uint32_t, time::nanoseconds, int32_t> afterDataReceived;
 
 private:
   void

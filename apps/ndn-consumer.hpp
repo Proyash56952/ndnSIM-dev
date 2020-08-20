@@ -95,8 +95,8 @@ public:
   WillSendOutInterest(uint32_t sequenceNumber);
 
 public:
-  typedef void (*LastRetransmittedInterestDataDelayCallback)(Ptr<App> app, uint32_t seqno, Time delay, int32_t hopCount);
-  typedef void (*FirstInterestDataDelayCallback)(Ptr<App> app, uint32_t seqno, Time delay, uint32_t retxCount, int32_t hopCount);
+  typedef void (*LastRetransmittedInterestDataDelayCallback)(Ptr<Application> app, uint32_t seqno, Time delay, int32_t hopCount);
+  typedef void (*FirstInterestDataDelayCallback)(Ptr<Application> app, uint32_t seqno, Time delay, uint32_t retxCount, int32_t hopCount);
 
 protected:
   // from App
@@ -206,9 +206,9 @@ protected:
   SeqTimeoutsContainer m_seqFullDelay;
   std::map<uint32_t, uint32_t> m_seqRetxCounts;
 
-  TracedCallback<Ptr<App> /* app */, uint32_t /* seqno */, Time /* delay */, int32_t /*hop count*/>
+  TracedCallback<Ptr<Application> /* app */, uint32_t /* seqno */, Time /* delay */, int32_t /*hop count*/>
     m_lastRetransmittedInterestDataDelay;
-  TracedCallback<Ptr<App> /* app */, uint32_t /* seqno */, Time /* delay */,
+  TracedCallback<Ptr<Application> /* app */, uint32_t /* seqno */, Time /* delay */,
                  uint32_t /*retx count*/, int32_t /*hop count*/> m_firstInterestDataDelay;
 
   /// @endcond

@@ -38,6 +38,7 @@ def register_types(module):
         module.add_class('AppHelper')
         module.add_class('GlobalRoutingHelper')
         module.add_class('L3RateTracer')
+        module.add_class('AppDelayTracer')
 
         module.add_class('L3Protocol', parent=module.get_root()['ns3::Object'])
 
@@ -162,6 +163,13 @@ def register_methods(root_module):
         cls.add_method('Install', 'void', [param('const ns3::NodeContainer&', 'nodes'), param('const std::string&', 'file'), param('Time', 'averagingPeriod')], is_const=True, is_static=True)
         cls.add_method('Install', 'void', [param('ns3::Ptr<ns3::Node>', 'node'), param('const std::string&', 'file'), param('Time', 'averagingPeriod')], is_const=True, is_static=True)
     reg_L3RateTracer(root_module['ns3::ndn::L3RateTracer'])
+
+    def reg_AppDelayTracer(cls):
+        cls.add_method('InstallAll', 'void', [param('const std::string&', 'file')], is_const=True, is_static=True)
+        cls.add_method('Install', 'void', [param('const ns3::NodeContainer&', 'nodes'), param('const std::string&', 'file')], is_const=True, is_static=True)
+        cls.add_method('Install', 'void', [param('ns3::Ptr<ns3::Node>', 'node'), param('const std::string&', 'file')], is_const=True, is_static=True)
+        cls.add_method('Destroy', 'void', [], is_const=True, is_static=True)
+    reg_AppDelayTracer(root_module['ns3::ndn::AppDelayTracer'])
     
     def reg_CustomHelper(cls):
         cls.add_constructor([])

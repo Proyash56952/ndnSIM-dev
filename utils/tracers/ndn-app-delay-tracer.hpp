@@ -38,8 +38,6 @@ class Packet;
 
 namespace ndn {
 
-class App;
-
 /**
  * @ingroup ndn-tracers
  * @brief Tracer to obtain application-level delays
@@ -132,10 +130,10 @@ private:
   Connect();
 
   void
-  LastRetransmittedInterestDataDelay(Ptr<App> app, uint32_t seqno, Time delay, int32_t hopCount);
+  LastRetransmittedInterestDataDelay(Ptr<Application> app, uint32_t seqno, Time delay, int32_t hopCount);
 
   void
-  FirstInterestDataDelay(Ptr<App> app, uint32_t seqno, Time delay, uint32_t rextCount,
+  FirstInterestDataDelay(Ptr<Application> app, uint32_t seqno, Time delay, uint32_t rextCount,
                          int32_t hopCount);
 
 private:

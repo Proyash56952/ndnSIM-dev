@@ -231,10 +231,10 @@ AppDelayTracer::PrintHeader(std::ostream& os) const
 }
 
 void
-AppDelayTracer::LastRetransmittedInterestDataDelay(Ptr<App> app, uint32_t seqno, Time delay,
+AppDelayTracer::LastRetransmittedInterestDataDelay(Ptr<Application> app, uint32_t seqno, Time delay,
                                                    int32_t hopCount)
 {
-  *m_os << Simulator::Now().ToDouble(Time::S) << "\t" << m_node << "\t" << app->GetId() << "\t"
+  *m_os << Simulator::Now().ToDouble(Time::S) << "\t" << m_node << "\t" << app->GetNode()->GetId() << "\t"
         << seqno << "\t"
         << "LastDelay"
         << "\t" << delay.ToDouble(Time::S) << "\t" << delay.ToDouble(Time::US) << "\t" << 1 << "\t"
@@ -242,10 +242,10 @@ AppDelayTracer::LastRetransmittedInterestDataDelay(Ptr<App> app, uint32_t seqno,
 }
 
 void
-AppDelayTracer::FirstInterestDataDelay(Ptr<App> app, uint32_t seqno, Time delay, uint32_t retxCount,
+AppDelayTracer::FirstInterestDataDelay(Ptr<Application> app, uint32_t seqno, Time delay, uint32_t retxCount,
                                        int32_t hopCount)
 {
-  *m_os << Simulator::Now().ToDouble(Time::S) << "\t" << m_node << "\t" << app->GetId() << "\t"
+  *m_os << Simulator::Now().ToDouble(Time::S) << "\t" << m_node << "\t" << app->GetNode()->GetId() << "\t"
         << seqno << "\t"
         << "FullDelay"
         << "\t" << delay.ToDouble(Time::S) << "\t" << delay.ToDouble(Time::US) << "\t" << retxCount

@@ -34,6 +34,16 @@ public:
                     MakeVectorAccessor(&RealAppHelper<RealApp>::Noop2,
                                        &RealAppHelper<RealApp>::RequestPositionStatus),
                     MakeVectorChecker())
+
+      .AddTraceSource("LastRetransmittedInterestDataDelay",
+                      "Delay between last retransmitted Interest and received Data",
+                      MakeTraceSourceAccessor(&RealAppHelper<RealApp>::m_lastRetransmittedInterestDataDelay),
+                      "ns3::ndn::Consumer::LastRetransmittedInterestDataDelayCallback")
+
+      .AddTraceSource("FirstInterestDataDelay",
+                      "Delay between first transmitted Interest and received Data",
+                      MakeTraceSourceAccessor(&RealAppHelper<RealApp>::m_firstInterestDataDelay),
+                      "ns3::ndn::Consumer::FirstInterestDataDelayCallback");
       ;
 
     return tid;
@@ -66,6 +76,10 @@ private:
     // Create an instance of the app, and passing the dummy version of KeyChain (no real signing)
     m_instance = ::ndn::make_unique<RealApp>(id, positionGetter, ndn::StackHelper::getKeyChain());
     m_instance->run(); // can be omitted
+
+    m_instance->afterDataReceived.connect([this] (uint32_t seqNo, ::ndn::time::nanoseconds diff, int32_t hops) {
+        this->m_firstInterestDataDelay(this, seqNo, NanoSeconds(diff.count()), 1, hops);
+      });
   }
 
   bool
@@ -100,6 +114,11 @@ private:
 
 private:
   std::unique_ptr<RealApp> m_instance;
+
+  TracedCallback<Ptr<Application> /* app */, uint32_t /* seqno */, Time /* delay */, int32_t /*hop count*/>
+    m_lastRetransmittedInterestDataDelay;
+  TracedCallback<Ptr<Application> /* app */, uint32_t /* seqno */, Time /* delay */,
+                 uint32_t /*retx count*/, int32_t /*hop count*/> m_firstInterestDataDelay;
 };
 
 } // namespace ns3
