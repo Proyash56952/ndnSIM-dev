@@ -23,6 +23,7 @@ def register_types(module):
 
     module.add_class('TypeId', import_from_module='ns.core')
     module.add_class('AttributeValue', import_from_module='ns.core')
+    module.add_class('Time', import_from_module='ns.core')
 
     module.add_class('NodeContainer', import_from_module='ns.network')
     module.add_class('Node', import_from_module='ns.network', parent=module['ns3::Object'])
@@ -36,6 +37,7 @@ def register_types(module):
         module.add_class('StrategyChoiceHelper')
         module.add_class('AppHelper')
         module.add_class('GlobalRoutingHelper')
+        module.add_class('L3RateTracer')
 
         module.add_class('L3Protocol', parent=module.get_root()['ns3::Object'])
 
@@ -155,6 +157,12 @@ def register_methods(root_module):
         cls.add_method('CalculateAllPossibleRoutes', 'void', [])
     reg_GlobalRoutingHelper(root_module['ns3::ndn::GlobalRoutingHelper'])
 
+    def reg_L3RateTracer(cls):
+        cls.add_method('InstallAll', 'void', [param('const std::string&', 'file'), param('Time', 'averagingPeriod')], is_const=True, is_static=True)
+        cls.add_method('Install', 'void', [param('const ns3::NodeContainer&', 'nodes'), param('const std::string&', 'file'), param('Time', 'averagingPeriod')], is_const=True, is_static=True)
+        cls.add_method('Install', 'void', [param('ns3::Ptr<ns3::Node>', 'node'), param('const std::string&', 'file'), param('Time', 'averagingPeriod')], is_const=True, is_static=True)
+    reg_L3RateTracer(root_module['ns3::ndn::L3RateTracer'])
+    
     def reg_CustomHelper(cls):
         cls.add_constructor([])
         cls.add_method('Install', retval('void' ), [param('ns3::Ptr<ns3::Node>', 'node')], is_const=True)

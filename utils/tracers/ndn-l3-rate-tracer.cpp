@@ -67,6 +67,10 @@ L3RateTracer::InstallAll(const std::string& file, Time averagingPeriod /* = Seco
   }
 
   for (NodeList::Iterator node = NodeList::Begin(); node != NodeList::End(); node++) {
+    if ((*node)->GetObject<L3Protocol>() == nullptr) {
+      // avoid non-NDN nodes
+      continue;
+    }
     Ptr<L3RateTracer> trace = Install(*node, outputStream, averagingPeriod);
     tracers.push_back(trace);
   }
