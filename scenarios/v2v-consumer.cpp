@@ -57,7 +57,7 @@ V2vConsumer::scheduledRequest(Position target)
 
   if (m_requestInProgress) {
     NDN_LOG_DEBUG("Already requested adjustments; ignoring the second request");
-    return;
+    // return;
   }
 
   auto position = m_positionGetter->getPosition();
@@ -74,7 +74,7 @@ V2vConsumer::scheduledRequest(Position target)
       distance.z * velocity.z < 0) {
     // unrechable, as going different directions
     NDN_LOG_DEBUG("Target unreachable, going different directions. IGNORING");
-    return;
+    // return;
   }
 
   if ((std::abs(distance.x) > 0.1 && std::abs(velocity.x) < 0.01) ||
@@ -83,21 +83,21 @@ V2vConsumer::scheduledRequest(Position target)
       ) {
     // target unrechable
     NDN_LOG_DEBUG("Target unreachable. IGNORING");
-    return;
+    // return;
   }
 
   auto maxSpeed = max(abs(velocity));
   if (maxSpeed < 0.1) {
     // speed is too low, ignore adjustments even requested
     NDN_LOG_DEBUG("Requested position status, but speed is too low for that. IGNORING");
-    return;
+    // return;
   }
 
   auto maxDistance = max(abs(distance));
   if (maxDistance < 20) {
     // distance is too low, no point of adjustments even if requested
     NDN_LOG_DEBUG("Requested position status, but target is within 20 meters. IGNORING");
-    return;
+    // return;
   }
 
   // distance / velocity
@@ -105,7 +105,7 @@ V2vConsumer::scheduledRequest(Position target)
   double dvAngle = std::abs(angle(distance, velocity));
   if (dvAngle > 1) {
     NDN_LOG_DEBUG("Velocity angle makes the target unreachable. INGORING");
-    return;
+    // return;
   }
 
   // rest is estimation, assuming target reachable with the current velocity
@@ -135,7 +135,7 @@ V2vConsumer::scheduledRequest(Position target)
   i.setInterestLifetime(1_s);
 
   ++m_interestCounter;
-
+  //std::cout<<"Interest is being sent by "<<m_id<<" at "<<time::system_clock::now()<<std::endl;
   m_face.expressInterest(i,
                          [this, counter=m_interestCounter, backThere=time::system_clock::now()] (const Interest& i, const Data& d) {
                            // data
@@ -149,7 +149,7 @@ V2vConsumer::scheduledRequest(Position target)
                              hopCount = *hopCountTag;
                            }
                            this->afterDataReceived(counter, time::system_clock::now() - backThere, hopCount);
-
+                           //std::cerr << "get Data" <<std::endl;
                            NDN_LOG_DEBUG("Get Data");
                            this->m_doesRequireAdjustment = true;
                          },
@@ -163,6 +163,7 @@ V2vConsumer::scheduledRequest(Position target)
                            m_requestInProgress = false;
                            //this->m_doesRequireAdjustment = false;
                            NDN_LOG_DEBUG("Did not get Data");
+                           //std::cerr <<"Did not get Data" <<std::endl;
                            m_scheduler.schedule(200_ms, [this, target] () { this->scheduledRequest(target); });
                          });
 }

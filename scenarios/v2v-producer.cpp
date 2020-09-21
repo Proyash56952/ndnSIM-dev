@@ -61,8 +61,9 @@ V2vProducer::respondIfCrashEstimate(const Interest& interest)
     Position expectedPosition = position + (velocity * time);
     NDN_LOG_DEBUG(expectedPosition);
     NDN_LOG_DEBUG(expectedPosition.getDistance(target));
-    if (expectedPosition.getDistance(target) < 14) { // within 2 meters
+    if (expectedPosition.getDistance(target) < 2) { // within 2 meters
       NDN_LOG_DEBUG("Data will be sent");
+      std::cout<<"Data will be sent from expected position of "<<expectedPosition<<std::endl;
       Data data(interest.getName());
       data.setFreshnessPeriod(10_s);
 
@@ -78,6 +79,7 @@ V2vProducer::respondIfCrashEstimate(const Interest& interest)
     }
     else {
       // most likely case; not expected at the position
+      //std::cout<< "Got Interest, but don't expect to be at the position (" << target << "m from target" <<std::endl;
       NDN_LOG_TRACE("Got Interest, but don't expect to be at the position (" << target << "m from target");
     }
   }
