@@ -28,6 +28,8 @@
 // #include "ns3/ndnSIM/helper/ndn-link-control-helper.hpp"
 #include "ns3/ndnSIM/helper/custom-helper.hpp"
 
+#include "ns3/ndnSIM/helper/custom-udp-helper.hpp"
+
 #include "ns3/ndnSIM/utils/topology/annotated-topology-reader.hpp"
 #include "ns3/ndnSIM/utils/topology/rocketfuel-map-reader.hpp"
 #include "ns3/ndnSIM/utils/topology/rocketfuel-weights-reader.hpp"

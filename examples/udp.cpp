@@ -28,6 +28,9 @@
 #include "ns3/csma-module.h"
 #include "ns3/applications-module.h"
 #include "ns3/internet-module.h"
+#include "ns3/ndnSIM-module.h"
+
+//#include "../helper/custom-udp-helper.hpp"
 
 using namespace ns3;
 
