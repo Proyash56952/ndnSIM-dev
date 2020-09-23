@@ -18,11 +18,14 @@
  * Author: Mohamed Amine Ismail <amine.ismail@sophia.inria.fr>
  */
 #include "custom-udp-helper.hpp"
+
 #include "ns3/udp-server.h"
-#include "ns3/custom-udp-client.h"
-#include "ns3/udp-trace-client.h"
 #include "ns3/uinteger.h"
 #include "ns3/string.h"
+
+#include "ns3/ndnSIM/helper/custom-udp-client.hpp"
+#include "ns3/udp-trace-client.h"
+
 
 namespace ns3 {
 

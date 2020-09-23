@@ -26,7 +26,9 @@
 #include "ns3/object-factory.h"
 #include "ns3/ipv4-address.h"
 #include "ns3/udp-server.h"
-#include "ns3/custom-udp-client.h"
+
+#include "ns3/ndnSIM/helper/custom-udp-client.hpp"
+
 namespace ns3 {
 
 /**
