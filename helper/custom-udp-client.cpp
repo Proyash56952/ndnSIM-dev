@@ -95,6 +95,7 @@ void
 CustomUdpClient::SetRemote (Address ip, uint16_t port)
 {
   NS_LOG_FUNCTION (this << ip << port);
+    std::cout<< ip <<std::endl;
   m_peerAddress = ip;
   m_peerPort = port;
 }
@@ -160,7 +161,8 @@ CustomUdpClient::StartApplication (void)
         }
     }
 
-  m_socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
+  //m_socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
+  m_socket->SetRecvCallback (MakeCallback (&CustomUdpClient::HandleRead, this));
   m_socket->SetAllowBroadcast (true);
   m_sendEvent = Simulator::Schedule (Seconds (0.0), &CustomUdpClient::Send, this);
 }
@@ -203,10 +205,10 @@ CustomUdpClient::Send (void)
                                     << peerAddressStringStream.str () << " Uid: "
                                     << p->GetUid () << " Time: "
                                     << (Simulator::Now ()).GetSeconds ());
-    //std::cout<< "TraceDelay TX " << m_size << " bytes to "
-    //<< peerAddressStringStream.str () << " Uid: "
-    //<< p->GetUid () << " Time: "
-    //<< (Simulator::Now ()).GetSeconds () <<std::endl;
+    std::cout<< "TraceDelay TX " << m_size << " bytes to "
+    << peerAddressStringStream.str () << " Uid: "
+    << p->GetUid () << " Time: "
+    << (Simulator::Now ()).GetSeconds () <<std::endl;
 
     }
   else
@@ -219,6 +221,11 @@ CustomUdpClient::Send (void)
     {
       m_sendEvent = Simulator::Schedule (m_interval, &CustomUdpClient::Send, this);
     }
+}
+
+void CustomUdpClient::HandleRead(Ptr<Socket> socket)
+{
+    std::cout<< "Packet received"<< std::endl;
 }
 
 } // Namespace ns3

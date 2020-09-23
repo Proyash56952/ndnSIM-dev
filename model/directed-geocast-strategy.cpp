@@ -100,6 +100,7 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
   this->onAction(interest.getName(), Received, posX, posY);
 
   NFD_LOG_DEBUG("ReceivedInterest: ");
+  std::cout<< "Received Interest" <<std::endl;
 
   const fib::Entry& fibEntry = this->lookupFib(*pitEntry);
   const fib::NextHopList& nexthops = fibEntry.getNextHops();

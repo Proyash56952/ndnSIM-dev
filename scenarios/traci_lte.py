@@ -1,7 +1,7 @@
 from ns.core import *
 from ns.network import *
 from ns.mobility import MobilityHelper, ListPositionAllocator
-from ns.ndnSIM import ndn
+from ns.ndnSIM import ndn, CustomUdpHelper
 from ns.internet import InternetStackHelper, Ipv4StaticRoutingHelper, Ipv4
 
 from ns.lte import LteHelper, PointToPointEpcHelper, LteSidelinkHelper, LteSpectrumValueHelper, LteSlUeRrc, LteRrcSap, LteSlPreconfigPoolFactory, LteSlTft

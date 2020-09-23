@@ -51,13 +51,15 @@ main (int argc, char *argv[])
   CommandLine cmd;
   cmd.AddValue ("useIpv6", "Use Ipv6", useV6);
   cmd.Parse (argc, argv);
+    
+    Address remoteAddress,localAddress;
 
 //
 // Explicitly create the nodes required by the topology (shown above).
 //
   NS_LOG_INFO ("Create nodes.");
   NodeContainer n;
-  n.Create (2);
+  n.Create (3);
 
   InternetStackHelper internet;
   internet.Install (n);
@@ -82,6 +84,10 @@ main (int argc, char *argv[])
       ipv4.SetBase ("10.1.1.0", "255.255.255.0");
       Ipv4InterfaceContainer i = ipv4.Assign (d);
       serverAddress = Address (i.GetAddress (1));
+        
+      Ipv4Address groupAddress4 ("225.0.0.0");
+        remoteAddress = InetSocketAddress (groupAddress4, 8000);
+        localAddress = InetSocketAddress (Ipv4Address::GetAny (), 8000);
     }
   else
     {
@@ -106,17 +112,32 @@ main (int argc, char *argv[])
 // node one.
 //
   uint32_t MaxPacketSize = 1024;
-  Time interPacketInterval = Seconds (0.05);
+  Time interPacketInterval = Seconds (0.25);
   uint32_t maxPacketCount = 320;
   uint32_t data = 420;
+
   CustomUdpHelper client (serverAddress, port);
   client.SetAttribute ("MaxPackets", UintegerValue (maxPacketCount));
   client.SetAttribute ("Interval", TimeValue (interPacketInterval));
   client.SetAttribute ("PacketSize", UintegerValue (MaxPacketSize));
   client.SetAttribute ("CustomData", UintegerValue(data));
-  apps = client.Install (n.Get (0));
+  apps = client.Install (n);
   apps.Start (Seconds (2.0));
   apps.Stop (Seconds (10.0));
+    
+  /*ApplicationContainer serverApps;
+  PacketSinkHelper sidelinkSink ("ns3::UdpSocketFactory", serverAddress);
+  serverApps = sidelinkSink.Install (n.Get (1));
+  serverApps.Start (Seconds (2.0));*/
+    
+    /*CustomUdpHelper client1 (serverAddress, port);
+    client1.SetAttribute ("MaxPackets", UintegerValue (maxPacketCount));
+    client1.SetAttribute ("Interval", TimeValue (interPacketInterval));
+    client1.SetAttribute ("PacketSize", UintegerValue (MaxPacketSize));
+    client1.SetAttribute ("CustomData", UintegerValue(data));
+    apps = client1.Install (n.Get (1));
+    apps.Start (Seconds (5.0));
+    apps.Stop (Seconds (10.0));*/
 
 //
 // Now, do the actual simulation.
