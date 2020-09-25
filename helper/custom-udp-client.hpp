@@ -77,12 +77,14 @@ private:
    * \brief Send a packet
    */
   void Send (void);
+  void SendPacket (uint32_t);
   void HandleRead(Ptr<Socket> socket);
 
   uint32_t m_count; //!< Maximum number of packets the application will send
   Time m_interval; //!< Packet inter-send time
   uint32_t m_size; //!< Size of the sent packet (including the SeqTsHeader)
   uint32_t m_data;
+  uint32_t m_bal;
 
   uint32_t m_sent; //!< Counter for sent packets
   Ptr<Socket> m_socket; //!< Socket

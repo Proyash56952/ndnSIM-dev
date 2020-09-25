@@ -74,6 +74,11 @@ CustomUdpClient::GetTypeId (void)
                    UintegerValue (100),
                    MakeUintegerAccessor (&CustomUdpClient::m_data),
                    MakeUintegerChecker<uint32_t> ())
+    .AddAttribute ("SendData",
+                   "Sending Data Packet",
+                   UintegerValue (100),
+                   MakeUintegerAccessor (&CustomUdpClient::SendPacket),
+                   MakeUintegerChecker<uint32_t> ())
   ;
   return tid;
 }
@@ -164,7 +169,7 @@ CustomUdpClient::StartApplication (void)
   //m_socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
   m_socket->SetRecvCallback (MakeCallback (&CustomUdpClient::HandleRead, this));
   m_socket->SetAllowBroadcast (true);
-  m_sendEvent = Simulator::Schedule (Seconds (0.0), &CustomUdpClient::Send, this);
+  m_sendEvent = Simulator::Schedule (Seconds (0.0), &CustomUdpClient::SendPacket, this,103);
 }
 
 void
@@ -178,6 +183,7 @@ void
 CustomUdpClient::Send (void)
 {
   NS_LOG_FUNCTION (this);
+  std::cout<<"wtf"<<std::endl;
   NS_ASSERT (m_sendEvent.IsExpired ());
   SeqTsHeader seqTs;
   seqTs.SetSeq (m_sent);
@@ -220,8 +226,57 @@ CustomUdpClient::Send (void)
   if (m_sent < m_count)
     {
       m_sendEvent = Simulator::Schedule (m_interval, &CustomUdpClient::Send, this);
-    }
+      }
 }
+
+void
+CustomUdpClient::SendPacket (uint32_t data)
+{
+  NS_LOG_FUNCTION (this);
+  //std::cout<< "data " << data << std::endl;
+  //NS_ASSERT (m_sendEvent.IsExpired ());
+  SeqTsHeader seqTs;
+  seqTs.SetSeq (m_sent);
+  seqTs.SetData (m_data);
+  Ptr<Packet> p = Create<Packet> (m_size-(8+4)); // 8+4 : the size of the seqTs header
+  NS_LOG_INFO("The packet content is: " << seqTs);
+  p->AddHeader (seqTs);
+  NS_LOG_INFO("The packet content is: " << *p);
+    //p->AddHeader("abcd");
+  
+  std::stringstream peerAddressStringStream;
+  if (Ipv4Address::IsMatchingType (m_peerAddress))
+    {
+      peerAddressStringStream << Ipv4Address::ConvertFrom (m_peerAddress);
+    }
+  else if (Ipv6Address::IsMatchingType (m_peerAddress))
+    {
+      peerAddressStringStream << Ipv6Address::ConvertFrom (m_peerAddress);
+    }
+  //m_socket->Send (p);
+
+  if(Simulator::Now() > 0.5){
+  if ((m_socket->Send (p)) >= 0)
+    {
+      std::cout<<"hi"<<std::endl;
+      ++m_sent;
+      NS_LOG_INFO ("TraceDelay TX " << m_size << " bytes to "
+                                    << peerAddressStringStream.str () << " Uid: "
+                                    << p->GetUid () << " Time: "
+                                    << (Simulator::Now ()).GetSeconds ());
+    std::cout<< "TraceDelay TX " << m_size << " bytes to "
+    << peerAddressStringStream.str () << " Uid: "
+    << p->GetUid () << " Time: "
+    << (Simulator::Now ()).GetSeconds () <<std::endl;
+
+    }
+  else
+    {
+      NS_LOG_INFO ("Error while sending " << m_size << " bytes to "
+                                          << peerAddressStringStream.str ());
+                                          }
+  }
+    }
 
 void CustomUdpClient::HandleRead(Ptr<Socket> socket)
 {

@@ -23,7 +23,8 @@
 #include "ns3/uinteger.h"
 #include "ns3/string.h"
 
-#include "ns3/ndnSIM/helper/custom-udp-client.hpp"
+//#include "ns3/ndnSIM/helper/custom-udp-client.hpp"
+#include "custom-udp-client.hpp"
 #include "ns3/udp-trace-client.h"
 
 

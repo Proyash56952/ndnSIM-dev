@@ -59,7 +59,7 @@ main (int argc, char *argv[])
 //
   NS_LOG_INFO ("Create nodes.");
   NodeContainer n;
-  n.Create (3);
+  n.Create (5);
 
   InternetStackHelper internet;
   internet.Install (n);
@@ -112,7 +112,7 @@ main (int argc, char *argv[])
 // node one.
 //
   uint32_t MaxPacketSize = 1024;
-  Time interPacketInterval = Seconds (0.25);
+  Time interPacketInterval = Seconds (1);
   uint32_t maxPacketCount = 320;
   uint32_t data = 420;
 
@@ -120,7 +120,8 @@ main (int argc, char *argv[])
   client.SetAttribute ("MaxPackets", UintegerValue (maxPacketCount));
   client.SetAttribute ("Interval", TimeValue (interPacketInterval));
   client.SetAttribute ("PacketSize", UintegerValue (MaxPacketSize));
-  client.SetAttribute ("CustomData", UintegerValue(data));
+  //client.SetAttribute ("CustomData", UintegerValue(data));
+  client.SetAttribute ("SendData", UintegerValue(data));
   apps = client.Install (n);
   apps.Start (Seconds (2.0));
   apps.Stop (Seconds (10.0));
