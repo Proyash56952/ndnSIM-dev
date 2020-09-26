@@ -169,7 +169,7 @@ CustomUdpClient::StartApplication (void)
   //m_socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
   m_socket->SetRecvCallback (MakeCallback (&CustomUdpClient::HandleRead, this));
   m_socket->SetAllowBroadcast (true);
-  m_sendEvent = Simulator::Schedule (Seconds (0.0), &CustomUdpClient::SendPacket, this,103);
+  //m_sendEvent = Simulator::Schedule (Seconds (0.0), &CustomUdpClient::SendPacket, this,103);
 }
 
 void
@@ -237,7 +237,7 @@ CustomUdpClient::SendPacket (uint32_t data)
   //NS_ASSERT (m_sendEvent.IsExpired ());
   SeqTsHeader seqTs;
   seqTs.SetSeq (m_sent);
-  seqTs.SetData (m_data);
+  seqTs.SetData (data);
   Ptr<Packet> p = Create<Packet> (m_size-(8+4)); // 8+4 : the size of the seqTs header
   NS_LOG_INFO("The packet content is: " << seqTs);
   p->AddHeader (seqTs);
@@ -258,7 +258,6 @@ CustomUdpClient::SendPacket (uint32_t data)
   if(Simulator::Now() > 0.5){
   if ((m_socket->Send (p)) >= 0)
     {
-      std::cout<<"hi"<<std::endl;
       ++m_sent;
       NS_LOG_INFO ("TraceDelay TX " << m_size << " bytes to "
                                     << peerAddressStringStream.str () << " Uid: "

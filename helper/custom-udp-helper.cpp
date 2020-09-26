@@ -69,6 +69,16 @@ CustomUdpHelper::Install (NodeContainer c)
   return apps;
 }
 
+ApplicationContainer
+CustomUdpHelper::Install (Ptr<Node> node)
+{
+    ApplicationContainer apps;
+    Ptr<CustomUdpClient> client = m_factory.Create<CustomUdpClient> ();
+    node->AddApplication (client);
+    apps.Add(client);
+    
+    return apps;
+}
 
 
 } // namespace ns3

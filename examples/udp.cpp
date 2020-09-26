@@ -121,7 +121,7 @@ main (int argc, char *argv[])
   client.SetAttribute ("Interval", TimeValue (interPacketInterval));
   client.SetAttribute ("PacketSize", UintegerValue (MaxPacketSize));
   //client.SetAttribute ("CustomData", UintegerValue(data));
-  client.SetAttribute ("SendData", UintegerValue(data));
+  //client.SetAttribute ("SendData", UintegerValue(data));
   apps = client.Install (n);
   apps.Start (Seconds (2.0));
   apps.Stop (Seconds (10.0));
