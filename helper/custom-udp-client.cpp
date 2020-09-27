@@ -29,7 +29,10 @@
 #include "ns3/packet.h"
 #include "ns3/uinteger.h"
 #include "custom-udp-client.hpp"
+#include "ns3/mobility-helper.h"
+#include "ns3/mobility-model.h"
 #include "custom-seq-ts-header.hpp"
+#include "ns3/vector.h"
 #include <cstdlib>
 #include <cstdio>
 
@@ -100,7 +103,6 @@ void
 CustomUdpClient::SetRemote (Address ip, uint16_t port)
 {
   NS_LOG_FUNCTION (this << ip << port);
-    std::cout<< ip <<std::endl;
   m_peerAddress = ip;
   m_peerPort = port;
 }
@@ -169,7 +171,7 @@ CustomUdpClient::StartApplication (void)
   //m_socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
   m_socket->SetRecvCallback (MakeCallback (&CustomUdpClient::HandleRead, this));
   m_socket->SetAllowBroadcast (true);
-  //m_sendEvent = Simulator::Schedule (Seconds (0.0), &CustomUdpClient::SendPacket, this,103);
+  m_sendEvent = Simulator::Schedule (Seconds (0.0), &CustomUdpClient::Send, this);
 }
 
 void
@@ -183,11 +185,13 @@ void
 CustomUdpClient::Send (void)
 {
   NS_LOG_FUNCTION (this);
-  std::cout<<"wtf"<<std::endl;
+  auto a = m_socket->GetNode()->GetObject<ns3::MobilityModel>() -> GetPosition();
+    std::cout<<typeid(a).name()<<std::endl;
+  double time = Simulator::Now().ToDouble(Time::S);
   NS_ASSERT (m_sendEvent.IsExpired ());
   SeqTsHeader seqTs;
   seqTs.SetSeq (m_sent);
-  seqTs.SetData (m_data);
+  //seqTs.SetData (m_data);
   Ptr<Packet> p = Create<Packet> (m_size-(8+4)); // 8+4 : the size of the seqTs header
   NS_LOG_INFO("The packet content is: " << seqTs);
   p->AddHeader (seqTs);
@@ -237,7 +241,7 @@ CustomUdpClient::SendPacket (uint32_t data)
   //NS_ASSERT (m_sendEvent.IsExpired ());
   SeqTsHeader seqTs;
   seqTs.SetSeq (m_sent);
-  seqTs.SetData (data);
+  //seqTs.SetData (data);
   Ptr<Packet> p = Create<Packet> (m_size-(8+4)); // 8+4 : the size of the seqTs header
   NS_LOG_INFO("The packet content is: " << seqTs);
   p->AddHeader (seqTs);

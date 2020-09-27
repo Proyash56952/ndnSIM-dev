@@ -23,6 +23,9 @@
 
 #include "ns3/header.h"
 #include "ns3/nstime.h"
+#include "ns3/vector.h"
+
+#include "../scenarios/v2v-position-getter.hpp"
 
 namespace ns3 {
 /**
@@ -49,11 +52,13 @@ public:
   /**
    * \return the time stamp
    */
-    void SetData (uint32_t data);
+    void SetPosition (ns3::Vector data);
     /**
      * \return the sequence number
      */
-    uint32_t GetData (void) const;
+    ns3::Vector GetPosition (void) const;
+    
+    double GetTime(void) const;
     /**
      * \return the time stamp
      */
@@ -74,7 +79,8 @@ public:
 private:
   uint32_t m_seq; //!< Sequence number
   uint64_t m_ts; //!< Timestamp
-  uint32_t m_data;
+  ns3::Vector m_pos;
+  double m_time;
 };
 
 } // namespace ns3
