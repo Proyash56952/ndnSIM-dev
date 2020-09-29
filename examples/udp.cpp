@@ -102,7 +102,7 @@ main (int argc, char *argv[])
 // Create one udpServer applications on node one.
 //
   uint16_t port = 4000;
-  UdpServerHelper server (port);
+  CustomUdpServerHelper server (port);
   ApplicationContainer apps = server.Install (n.Get (1));
   apps.Start (Seconds (1.0));
   apps.Stop (Seconds (10.0));

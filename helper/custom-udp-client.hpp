@@ -77,7 +77,6 @@ private:
    * \brief Send a packet
    */
   void Send (void);
-  void SendPacket (uint32_t);
   void HandleRead(Ptr<Socket> socket);
 
   uint32_t m_count; //!< Maximum number of packets the application will send

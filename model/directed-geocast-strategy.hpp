@@ -80,6 +80,9 @@ private:
 
   static bool
   shouldLimitTransmission(const Interest& interest);
+    
+  static bool
+  shouldNotTransmit(const Interest& interest);
 private: // StrategyInfo
   /** \brief StrategyInfo on PIT entry
    */

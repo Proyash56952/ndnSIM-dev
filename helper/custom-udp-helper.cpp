@@ -19,16 +19,56 @@
  */
 #include "custom-udp-helper.hpp"
 
-#include "ns3/udp-server.h"
+//#include "ns3/udp-server.h"
 #include "ns3/uinteger.h"
 #include "ns3/string.h"
 
 //#include "ns3/ndnSIM/helper/custom-udp-client.hpp"
 #include "custom-udp-client.hpp"
+#include "custom-udp-server.hpp"
 #include "ns3/udp-trace-client.h"
 
 
 namespace ns3 {
+
+CustomUdpServerHelper::CustomUdpServerHelper ()
+{
+  m_factory.SetTypeId (CustomUdpServer::GetTypeId ());
+}
+
+CustomUdpServerHelper::CustomUdpServerHelper (uint16_t port)
+{
+  m_factory.SetTypeId (CustomUdpServer::GetTypeId ());
+  SetAttribute ("Port", UintegerValue (port));
+}
+
+void
+CustomUdpServerHelper::SetAttribute (std::string name, const AttributeValue &value)
+{
+  m_factory.Set (name, value);
+}
+
+ApplicationContainer
+CustomUdpServerHelper::Install (NodeContainer c)
+{
+  ApplicationContainer apps;
+  for (NodeContainer::Iterator i = c.Begin (); i != c.End (); ++i)
+    {
+      Ptr<Node> node = *i;
+
+      m_server = m_factory.Create<CustomUdpServer> ();
+      node->AddApplication (m_server);
+      apps.Add (m_server);
+
+    }
+  return apps;
+}
+
+Ptr<CustomUdpServer>
+CustomUdpServerHelper::GetServer (void)
+{
+  return m_server;
+}
 
 
 CustomUdpHelper::CustomUdpHelper ()

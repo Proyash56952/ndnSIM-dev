@@ -58,6 +58,7 @@ public:
      */
     ns3::Vector GetPosition (void) const;
     
+    void SetTime (double time);
     double GetTime(void) const;
     /**
      * \return the time stamp

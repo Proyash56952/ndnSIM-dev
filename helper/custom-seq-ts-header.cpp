@@ -64,6 +64,13 @@ SeqTsHeader::GetPosition (void) const
   return m_pos;
 }
 
+void
+SeqTsHeader::SetTime (double time)
+{
+  NS_LOG_FUNCTION (this << time);
+  m_time = time;
+}
+
 double
 SeqTsHeader::GetTime (void) const
 {

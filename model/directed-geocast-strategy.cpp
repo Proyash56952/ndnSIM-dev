@@ -100,7 +100,7 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
   this->onAction(interest.getName(), Received, posX, posY);
 
   NFD_LOG_DEBUG("ReceivedInterest: ");
-  std::cout<< "Received Interest" <<std::endl;
+  //std::cout<< "Received Interest" <<std::endl;
 
   const fib::Entry& fibEntry = this->lookupFib(*pitEntry);
   const fib::NextHopList& nexthops = fibEntry.getNextHops();
@@ -135,11 +135,17 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
         continue;
       }
 
-      if(shouldLimitTransmission(interest)) {
+      /*if(shouldLimitTransmission(interest)) {
         NFD_LOG_DEBUG("limiting the transmission of " << interest);
         //std::cerr << "limiting transmission point" << std::endl;
         continue;
-      }
+      }*/
+        
+      /*if(shouldNotTransmit(interest)) {
+        NFD_LOG_DEBUG("limiting the transmission of " << interest);
+        //std::cerr << "limiting transmission point" << std::endl;
+        continue;
+      }*/
 
       // calculate time to delay interest
       auto delay = calculateDelay(interest);
@@ -399,6 +405,71 @@ DirectedGeocastStrategy::shouldLimitTransmission(const Interest& interest)
     NFD_LOG_DEBUG("limiting for distance");
     return true;
   }
+
+ return false;
+}
+
+bool
+DirectedGeocastStrategy::shouldNotTransmit(const Interest& interest)
+{
+  NFD_LOG_DEBUG("Entered in should not transmit");
+  auto newFrom = extractPositionFromTag(interest);
+  if (!newFrom) {
+    // originator
+    return false;
+  }
+
+  // Interest name format
+  // /v2vSafety/[targetVector]/[sourceVector]/[targetTimePointIsoString]/[LimitNumber]
+
+  ns3::Vector destination;
+  ns3::Vector source;
+  double limit = 0;
+
+  try {
+    if (interest.getName().size() < 5) {
+      NFD_LOG_DEBUG("Interest doesn't look like v2vsafety (not enough components)");
+      return false;
+    }
+    limit = interest.getName()[-1].toNumber();
+    // strategy ignores time
+    ::ndn::Vector s(interest.getName()[-3]);
+    ::ndn::Vector t(interest.getName()[-4]);
+
+    source = ns3::Vector(s.x, s.y, s.z);
+    destination = ns3::Vector(t.x, t.y, t.z);
+  }
+  catch (const tlv::Error&) {
+    NFD_LOG_DEBUG("Interest doesn't look like v2vsafety (could not correctly parse name components)");
+    return false;
+  }
+
+  auto self = getSelfPosition();
+  if (!self) {
+    NFD_LOG_DEBUG("self position is missing");
+    return false;
+  }
+
+  double distSrcDest = CalculateDistance(*newFrom, destination);
+  double distCurSrc = CalculateDistance(*newFrom, *self);
+  double distCurDest = CalculateDistance(destination, *self);
+  double cosineAngle = (pow(distCurSrc, 2) - pow(distCurDest, 2) + pow(distSrcDest, 2)) /
+                    (2 * distCurSrc * distSrcDest);
+  double angle = (acos(cosineAngle)*180)/3.141592;
+  /*double projection = distCurSrc * cosineAngle;
+    //std::cout<< distSrcDest <<" " <<distCurSrc <<" "<<distCurDest<<std::endl;
+  if (distCurSrc < 5 || distCurDest < 5) {
+    return true;
+  }*/
+  //std::cout<<angle<<std::endl;
+  if (isnan(angle) || angle < 0 || angle > 90) {
+    NFD_LOG_DEBUG("limiting for angle " << angle);
+    return true;
+  }
+  /*else if (projection > distSrcDest + limit) {
+    NFD_LOG_DEBUG("limiting for distance");
+    return true;
+  }*/
 
  return false;
 }

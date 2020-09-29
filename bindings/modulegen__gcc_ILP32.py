@@ -32,6 +32,7 @@ def register_types(module):
 
     module.add_class('CustomHelper')
     module.add_class('CustomUdpHelper')
+    module.add_class('CustomUdpServerHelper')
 
     def reg_ndn(module):
         module.add_class('StackHelper')
@@ -187,6 +188,14 @@ def register_methods(root_module):
         cls.add_method('Install', retval('ns3::ApplicationContainer'), [param('ns3::Ptr<ns3::Node>', 'node')])
         
     reg_CustomUdpHelper(root_module['ns3::CustomUdpHelper'])
+    
+    def reg_CustomUdpServerHelper(cls):
+        cls.add_constructor([])
+        cls.add_constructor([param('uint16_t', 'port')])
+        cls.add_method('SetAttribute', retval('void'), [param('std::string', 'name'), param('const ns3::AttributeValue&', 'value')])
+        cls.add_method('Install', retval('ns3::ApplicationContainer'), [param('ns3::NodeContainer', 'c')])
+        
+    reg_CustomUdpServerHelper(root_module['ns3::CustomUdpServerHelper'])
 
     def reg_Name(root_module, cls):
         cls.add_output_stream_operator()

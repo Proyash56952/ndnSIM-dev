@@ -77,11 +77,6 @@ CustomUdpClient::GetTypeId (void)
                    UintegerValue (100),
                    MakeUintegerAccessor (&CustomUdpClient::m_data),
                    MakeUintegerChecker<uint32_t> ())
-    .AddAttribute ("SendData",
-                   "Sending Data Packet",
-                   UintegerValue (100),
-                   MakeUintegerAccessor (&CustomUdpClient::SendPacket),
-                   MakeUintegerChecker<uint32_t> ())
   ;
   return tid;
 }
@@ -132,31 +127,17 @@ CustomUdpClient::StartApplication (void)
       m_socket = Socket::CreateSocket (GetNode (), tid);
       if (Ipv4Address::IsMatchingType(m_peerAddress) == true)
         {
+            std::cout<<"ipv4"<<std::endl;
           if (m_socket->Bind () == -1)
             {
               NS_FATAL_ERROR ("Failed to bind socket");
             }
           m_socket->Connect (InetSocketAddress (Ipv4Address::ConvertFrom(m_peerAddress), m_peerPort));
         }
-      else if (Ipv6Address::IsMatchingType(m_peerAddress) == true)
-        {
-          if (m_socket->Bind6 () == -1)
-            {
-              NS_FATAL_ERROR ("Failed to bind socket");
-            }
-          m_socket->Connect (Inet6SocketAddress (Ipv6Address::ConvertFrom(m_peerAddress), m_peerPort));
-        }
       else if (InetSocketAddress::IsMatchingType (m_peerAddress) == true)
         {
+            std::cout<<"inet"<<std::endl;
           if (m_socket->Bind () == -1)
-            {
-              NS_FATAL_ERROR ("Failed to bind socket");
-            }
-          m_socket->Connect (m_peerAddress);
-        }
-      else if (Inet6SocketAddress::IsMatchingType (m_peerAddress) == true)
-        {
-          if (m_socket->Bind6 () == -1)
             {
               NS_FATAL_ERROR ("Failed to bind socket");
             }
@@ -166,6 +147,16 @@ CustomUdpClient::StartApplication (void)
         {
           NS_ASSERT_MSG (false, "Incompatible address type: " << m_peerAddress);
         }
+        
+        InetSocketAddress local = InetSocketAddress (Ipv4Address::GetAny (),
+                                                     m_peerPort);
+        std::cout<<m_peerPort<<std::endl;
+        std::cout<<m_peerAddress<<std::endl;
+        /*if (m_socket->Bind (local) == -1)
+          {
+              std::cout<<"Failed to bind socket"<<std::endl;
+            NS_FATAL_ERROR ("Failed to bind socket");
+          }*/
     }
 
   //m_socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
@@ -186,13 +177,14 @@ CustomUdpClient::Send (void)
 {
   NS_LOG_FUNCTION (this);
   auto a = m_socket->GetNode()->GetObject<ns3::MobilityModel>() -> GetPosition();
-    std::cout<<typeid(a).name()<<std::endl;
+  std::cout<<typeid(a).name()<<std::endl;
   double time = Simulator::Now().ToDouble(Time::S);
   NS_ASSERT (m_sendEvent.IsExpired ());
   SeqTsHeader seqTs;
   seqTs.SetSeq (m_sent);
-  //seqTs.SetData (m_data);
-  Ptr<Packet> p = Create<Packet> (m_size-(8+4)); // 8+4 : the size of the seqTs header
+  seqTs.SetPosition (a);
+  seqTs.SetTime (time);
+  Ptr<Packet> p = Create<Packet> (m_size-(8+4+8+24)); // 8+4 : the size of the seqTs header
   NS_LOG_INFO("The packet content is: " << seqTs);
   p->AddHeader (seqTs);
   NS_LOG_INFO("The packet content is: " << *p);
@@ -232,54 +224,6 @@ CustomUdpClient::Send (void)
       m_sendEvent = Simulator::Schedule (m_interval, &CustomUdpClient::Send, this);
       }
 }
-
-void
-CustomUdpClient::SendPacket (uint32_t data)
-{
-  NS_LOG_FUNCTION (this);
-  //std::cout<< "data " << data << std::endl;
-  //NS_ASSERT (m_sendEvent.IsExpired ());
-  SeqTsHeader seqTs;
-  seqTs.SetSeq (m_sent);
-  //seqTs.SetData (data);
-  Ptr<Packet> p = Create<Packet> (m_size-(8+4)); // 8+4 : the size of the seqTs header
-  NS_LOG_INFO("The packet content is: " << seqTs);
-  p->AddHeader (seqTs);
-  NS_LOG_INFO("The packet content is: " << *p);
-    //p->AddHeader("abcd");
-  
-  std::stringstream peerAddressStringStream;
-  if (Ipv4Address::IsMatchingType (m_peerAddress))
-    {
-      peerAddressStringStream << Ipv4Address::ConvertFrom (m_peerAddress);
-    }
-  else if (Ipv6Address::IsMatchingType (m_peerAddress))
-    {
-      peerAddressStringStream << Ipv6Address::ConvertFrom (m_peerAddress);
-    }
-  //m_socket->Send (p);
-
-  if(Simulator::Now() > 0.5){
-  if ((m_socket->Send (p)) >= 0)
-    {
-      ++m_sent;
-      NS_LOG_INFO ("TraceDelay TX " << m_size << " bytes to "
-                                    << peerAddressStringStream.str () << " Uid: "
-                                    << p->GetUid () << " Time: "
-                                    << (Simulator::Now ()).GetSeconds ());
-    std::cout<< "TraceDelay TX " << m_size << " bytes to "
-    << peerAddressStringStream.str () << " Uid: "
-    << p->GetUid () << " Time: "
-    << (Simulator::Now ()).GetSeconds () <<std::endl;
-
-    }
-  else
-    {
-      NS_LOG_INFO ("Error while sending " << m_size << " bytes to "
-                                          << peerAddressStringStream.str ());
-                                          }
-  }
-    }
 
 void CustomUdpClient::HandleRead(Ptr<Socket> socket)
 {

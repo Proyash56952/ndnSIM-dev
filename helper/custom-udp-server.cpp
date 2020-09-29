@@ -29,8 +29,8 @@
 #include "ns3/socket-factory.h"
 #include "ns3/packet.h"
 #include "ns3/uinteger.h"
+//#include "../../applications/model/packet-loss-counter.h"
 #include "ns3/packet-loss-counter.h"
-
 #include "custom-seq-ts-header.hpp"
 #include "custom-udp-server.hpp"
 
@@ -119,7 +119,7 @@ CustomUdpServer::DoDispose (void)
 void
 CustomUdpServer::StartApplication (void)
 {
-    std::cout<<"app start"<<std::endl;
+    std::cout<<"app starting"<<std::endl;
   NS_LOG_FUNCTION (this);
 
   if (m_socket == 0)
@@ -130,25 +130,11 @@ CustomUdpServer::StartApplication (void)
                                                    m_port);
       if (m_socket->Bind (local) == -1)
         {
-          NS_FATAL_ERROR ("Failed to bind socket");
+          NS_FATAL_ERROR ("Failed haha to bind socket");
         }
     }
 
   m_socket->SetRecvCallback (MakeCallback (&CustomUdpServer::HandleRead, this));
-
-  if (m_socket6 == 0)
-    {
-      TypeId tid = TypeId::LookupByName ("ns3::UdpSocketFactory");
-      m_socket6 = Socket::CreateSocket (GetNode (), tid);
-      Inet6SocketAddress local = Inet6SocketAddress (Ipv6Address::GetAny (),
-                                                   m_port);
-      if (m_socket6->Bind (local) == -1)
-        {
-          NS_FATAL_ERROR ("Failed to bind socket");
-        }
-    }
-
-  m_socket6->SetRecvCallback (MakeCallback (&CustomUdpServer::HandleRead, this));
 
 }
 
@@ -166,7 +152,6 @@ CustomUdpServer::StopApplication ()
 void
 CustomUdpServer::HandleRead (Ptr<Socket> socket)
 {
-    std::cout<<"packet received "<<std::endl;
   NS_LOG_FUNCTION (this << socket);
   Ptr<Packet> packet;
   Address from;
@@ -190,6 +175,15 @@ CustomUdpServer::HandleRead (Ptr<Socket> socket)
                            " TXtime: " << seqTs.GetTs () <<
                            " RXtime: " << Simulator::Now () <<
                            " Delay: " << Simulator::Now () - seqTs.GetTs ());
+               std::cout << "TraceDelay: RX " << packet->GetSize () <<
+                             " bytes from "<< InetSocketAddress::ConvertFrom (from).GetIpv4 () <<
+                             " Sequence Number: " << currentSequenceNumber <<
+                             " Time: " << seqTs.GetTime() <<
+                             " Position: " <<seqTs.GetPosition() <<
+                             " Uid: " << packet->GetUid () <<
+                             " TXtime: " << seqTs.GetTs () <<
+                             " RXtime: " << Simulator::Now () <<
+                             " Delay: " << Simulator::Now () - seqTs.GetTs () << std::endl;
             }
           else if (Inet6SocketAddress::IsMatchingType (from))
             {
