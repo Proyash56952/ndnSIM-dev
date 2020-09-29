@@ -141,11 +141,11 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
         continue;
       }*/
         
-      /*if(shouldNotTransmit(interest)) {
+      if(shouldNotTransmit(interest)) {
         NFD_LOG_DEBUG("limiting the transmission of " << interest);
         //std::cerr << "limiting transmission point" << std::endl;
         continue;
-      }*/
+      }
 
       // calculate time to delay interest
       auto delay = calculateDelay(interest);
