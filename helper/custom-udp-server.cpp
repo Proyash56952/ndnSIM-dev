@@ -180,6 +180,7 @@ CustomUdpServer::HandleRead (Ptr<Socket> socket)
                              " Sequence Number: " << currentSequenceNumber <<
                              " Time: " << seqTs.GetTime() <<
                              " Position: " <<seqTs.GetPosition() <<
+                             " Velocity: " <<seqTs.GetVelocity() <<
                              " Uid: " << packet->GetUid () <<
                              " TXtime: " << seqTs.GetTs () <<
                              " RXtime: " << Simulator::Now () <<

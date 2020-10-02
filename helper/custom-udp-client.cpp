@@ -176,15 +176,16 @@ void
 CustomUdpClient::Send (void)
 {
   NS_LOG_FUNCTION (this);
-  auto a = m_socket->GetNode()->GetObject<ns3::MobilityModel>() -> GetPosition();
-  std::cout<<typeid(a).name()<<std::endl;
+  auto position = m_socket->GetNode()->GetObject<ns3::MobilityModel>() -> GetPosition();
+  auto velocity = m_socket->GetNode()->GetObject<ns3::MobilityModel>() -> GetVelocity();
   double time = Simulator::Now().ToDouble(Time::S);
   NS_ASSERT (m_sendEvent.IsExpired ());
   SeqTsHeader seqTs;
   seqTs.SetSeq (m_sent);
-  seqTs.SetPosition (a);
+  seqTs.SetPosition (position);
+  seqTs.SetVelocity (velocity);
   seqTs.SetTime (time);
-  Ptr<Packet> p = Create<Packet> (m_size-(8+4+8+24)); // 8+4 : the size of the seqTs header
+  Ptr<Packet> p = Create<Packet> (m_size-(8+4+8+24+24)); // 8+4 : the size of the seqTs header
   NS_LOG_INFO("The packet content is: " << seqTs);
   p->AddHeader (seqTs);
   NS_LOG_INFO("The packet content is: " << *p);

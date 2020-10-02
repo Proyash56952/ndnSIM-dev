@@ -65,6 +65,19 @@ SeqTsHeader::GetPosition (void) const
 }
 
 void
+SeqTsHeader::SetVelocity (ns3::Vector vel)
+{
+  NS_LOG_FUNCTION (this << vel);
+  m_vel = vel;
+}
+ns3::Vector
+SeqTsHeader::GetVelocity (void) const
+{
+  NS_LOG_FUNCTION (this);
+  return m_vel;
+}
+
+void
 SeqTsHeader::SetTime (double time)
 {
   NS_LOG_FUNCTION (this << time);
@@ -110,7 +123,7 @@ uint32_t
 SeqTsHeader::GetSerializedSize (void) const
 {
   NS_LOG_FUNCTION (this);
-  return 4+8+8+24;
+  return 4+8+8+24+24;
 }
 
 void
@@ -124,6 +137,9 @@ SeqTsHeader::Serialize (Buffer::Iterator start) const
   i.WriteHtonU64 (m_pos.y);
   i.WriteHtonU64 (m_pos.z);
   i.WriteHtonU64 (m_time);
+  i.WriteHtonU64 (m_vel.x);
+  i.WriteHtonU64 (m_vel.y);
+  i.WriteHtonU64 (m_vel.z);
 }
 uint32_t
 SeqTsHeader::Deserialize (Buffer::Iterator start)
@@ -136,6 +152,9 @@ SeqTsHeader::Deserialize (Buffer::Iterator start)
   m_pos.y = i.ReadNtohU64 ();
   m_pos.z = i.ReadNtohU64 ();
   m_time = i.ReadNtohU64 ();
+  m_vel.x = i.ReadNtohU64 ();
+  m_vel.y = i.ReadNtohU64 ();
+  m_vel.z = i.ReadNtohU64 ();
     
   return GetSerializedSize ();
 }

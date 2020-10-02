@@ -118,6 +118,9 @@ V2vConsumer::scheduledRequest(Position target)
   auto time = absDistance / absSpeed;
   auto expectToBeAtTarget = time::system_clock::now() +
     time::duration_cast<time::nanoseconds>(SecondsDouble(time));
+    auto a = time::toString(time::system_clock::now());
+    std::cout<<typeid(a).name() <<std::endl;
+    std::cout<<time::system_clock::now() <<std::endl;
   Name request("/v2vSafety");
   request
     .append(name::Component(target.wireEncode()))

@@ -58,6 +58,12 @@ public:
      */
     ns3::Vector GetPosition (void) const;
     
+    void SetVelocity (ns3::Vector position);
+    /**
+     * \return the sequence number
+     */
+    ns3::Vector GetVelocity (void) const;
+    
     void SetTime (double time);
     double GetTime(void) const;
     /**
@@ -82,6 +88,7 @@ private:
   uint64_t m_ts; //!< Timestamp
   ns3::Vector m_pos;
   double m_time;
+  ns3::Vector m_vel;
 };
 
 } // namespace ns3
