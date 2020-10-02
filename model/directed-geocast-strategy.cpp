@@ -143,7 +143,7 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
         
       if(shouldNotTransmit(interest)) {
         NFD_LOG_DEBUG("limiting the transmission of " << interest);
-        //std::cerr << "limiting transmission point" << std::endl;
+        std::cerr << "limiting transmission point" << std::endl;
         continue;
       }
 

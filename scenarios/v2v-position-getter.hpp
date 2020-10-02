@@ -164,6 +164,9 @@ class PositionGetter
 public:
   virtual Position
   getPosition() = 0;
+    
+  virtual Position
+  getCoarsedPosition() = 0;
 
   virtual Speed
   getSpeed() = 0;
@@ -186,6 +189,9 @@ public:
 
   Position
   getPosition() override;
+    
+  Position
+  getCoarsedPosition() override;
 
   Speed
   getSpeed() override;

@@ -60,7 +60,7 @@ V2vConsumer::scheduledRequest(Position target)
     // return;
   }
 
-  auto position = m_positionGetter->getPosition();
+  auto position = m_positionGetter->getCoarsedPosition();
   auto velocity = m_positionGetter->getSpeed();
 
 
@@ -118,7 +118,6 @@ V2vConsumer::scheduledRequest(Position target)
   auto time = absDistance / absSpeed;
   auto expectToBeAtTarget = time::system_clock::now() +
     time::duration_cast<time::nanoseconds>(SecondsDouble(time));
-
   Name request("/v2vSafety");
   request
     .append(name::Component(target.wireEncode()))

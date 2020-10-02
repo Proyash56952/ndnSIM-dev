@@ -48,11 +48,11 @@ V2vProducer::respondIfCrashEstimate(const Interest& interest)
     Position source(interest.getName()[-3]);
     Position target(interest.getName()[-4]);
 
-    if (source.getDistance(position) < 2) { // may need to check if this should be adjusted
+    /*if (source.getDistance(position) < 2) { // may need to check if this should be adjusted
       // don't respond
       NDN_LOG_TRACE("Too close to the source; not responding");
       return;
-    }
+    }*/
 
     using SecondsDouble = boost::chrono::duration<double>;
 
@@ -86,6 +86,7 @@ V2vProducer::respondIfCrashEstimate(const Interest& interest)
   catch (const tlv::Error&) {
     // should not be possible in our case, but just in case
     NDN_LOG_DEBUG("Got interest, but cannot handle it");
+      std::cout<< "Got interest, but cannot handle it" << std::endl;
   }
 }
 

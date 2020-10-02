@@ -86,6 +86,29 @@ Ns3PositionGetter::getPosition()
   return Position{pos.x, pos.y, pos.z};
 }
 
+Position
+Ns3PositionGetter::getCoarsedPosition()
+{
+  auto pos = m_mobility->GetPosition();
+    double rem;
+    rem = (int) pos.x % 5;
+    if(rem > 2.0) {
+      pos.x += (5.0-rem);
+    }
+    else {
+      pos.x -= rem;
+    }
+    
+    rem = (int)pos.y % 5;
+    if(rem > 2.0) {
+      pos.y += (5.0-rem);
+    }
+    else {
+      pos.y -= rem;
+    }
+  return Position{pos.x, pos.y, pos.z};
+}
+
 Speed
 Ns3PositionGetter::getSpeed()
 {
