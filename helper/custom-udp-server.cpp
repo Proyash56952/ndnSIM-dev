@@ -176,7 +176,6 @@ CustomUdpServer::HandleRead (Ptr<Socket> socket)
                            " RXtime: " << Simulator::Now () <<
                            " Delay: " << Simulator::Now () - seqTs.GetTs ());
                std::cout << "TraceDelay: RX " << packet->GetSize () <<
-                             " bytes from "<< InetSocketAddress::ConvertFrom (from).GetIpv4 () <<
                              " Sequence Number: " << currentSequenceNumber <<
                              " Time: " << seqTs.GetTime() <<
                              " Position: " <<seqTs.GetPosition() <<

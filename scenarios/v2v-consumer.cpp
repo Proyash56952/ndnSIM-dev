@@ -60,9 +60,26 @@ V2vConsumer::scheduledRequest(Position target)
     // return;
   }
 
-  auto position = m_positionGetter->getCoarsedPosition();
+  auto position = m_positionGetter->getPosition();
   auto velocity = m_positionGetter->getSpeed();
+    
+  double rem;
+  rem = (int)target.x % 5;
 
+  if(rem > 2.0) {
+    target.x = (int)target.x + (5.0-rem);
+  }
+  else {
+    target.x = (int)target.x - rem;
+  }
+    
+  rem = (int)target.y % 5;
+  if(rem > 2.0) {
+    target.y = (int)target.y + (5.0-rem);
+  }
+  else {
+    target.y = (int)target.y - rem;
+  }
 
   auto distance = target - position;
 
@@ -115,17 +132,20 @@ V2vConsumer::scheduledRequest(Position target)
   auto absDistance = position.getDistance(target);
   auto absSpeed = velocity.getAbsSpeed();
 
-  auto time = absDistance / absSpeed;
+  auto time = (absDistance / absSpeed);
+    //std::string abc = std::to_string(time);
+    //std::cout<<typeid(time).name();
   auto expectToBeAtTarget = time::system_clock::now() +
     time::duration_cast<time::nanoseconds>(SecondsDouble(time));
-    auto a = time::toString(time::system_clock::now());
-    std::cout<<typeid(a).name() <<std::endl;
-    std::cout<<time::system_clock::now() <<std::endl;
+    //auto a = time::toString(time::system_clock::now());
+    //std::cout<< ns3::Simulator::Now ().GetSeconds () <<std::endl;
+    //std::cout<<time::system_clock::now() <<std::endl;
   Name request("/v2vSafety");
   request
     .append(name::Component(target.wireEncode()))
-    .append(name::Component(position.wireEncode()))
+    //.append(name::Component(position.wireEncode()))
     .append(time::toIsoString(expectToBeAtTarget))
+    //.append(std::to_string(time))
     .appendNumber(100);
 
   m_requestInProgress = true;

@@ -143,7 +143,6 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
         
       if(shouldNotTransmit(interest)) {
         NFD_LOG_DEBUG("limiting the transmission of " << interest);
-        std::cerr << "limiting transmission point" << std::endl;
         continue;
       }
 
@@ -413,6 +412,7 @@ bool
 DirectedGeocastStrategy::shouldNotTransmit(const Interest& interest)
 {
   NFD_LOG_DEBUG("Entered in should not transmit");
+    //std::cout<<"Entered in should not transmit"<<std::endl;
   auto newFrom = extractPositionFromTag(interest);
   if (!newFrom) {
     // originator
@@ -427,16 +427,16 @@ DirectedGeocastStrategy::shouldNotTransmit(const Interest& interest)
   double limit = 0;
 
   try {
-    if (interest.getName().size() < 5) {
+    if (interest.getName().size() < 4) {
       NFD_LOG_DEBUG("Interest doesn't look like v2vsafety (not enough components)");
       return false;
     }
     limit = interest.getName()[-1].toNumber();
     // strategy ignores time
-    ::ndn::Vector s(interest.getName()[-3]);
-    ::ndn::Vector t(interest.getName()[-4]);
+    //::ndn::Vector s(interest.getName()[-3]);
+    ::ndn::Vector t(interest.getName()[-3]);
 
-    source = ns3::Vector(s.x, s.y, s.z);
+    //source = ns3::Vector(s.x, s.y, s.z);
     destination = ns3::Vector(t.x, t.y, t.z);
   }
   catch (const tlv::Error&) {
