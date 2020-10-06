@@ -65,6 +65,10 @@ CustomUdpServer::GetTypeId (void)
     .AddTraceSource ("RxWithAddresses", "A packet has been received",
                      MakeTraceSourceAccessor (&CustomUdpServer::m_rxTraceWithAddresses),
                      "ns3::Packet::TwoAddressTracedCallback")
+    .AddTraceSource ("RxWithInfo",
+                     "A packet is received with necessary information",
+                     MakeTraceSourceAccessor(&CustomUdpServer::m_rxTraceWithInfo),
+                     "ns3::Packet::RxInfoTraceCallback")
   ;
   return tid;
 }
@@ -184,6 +188,7 @@ CustomUdpServer::HandleRead (Ptr<Socket> socket)
                              " TXtime: " << seqTs.GetTs () <<
                              " RXtime: " << Simulator::Now () <<
                              " Delay: " << Simulator::Now () - seqTs.GetTs () << std::endl;
+              m_rxTraceWithInfo(seqTs.GetPosition(), seqTs.GetTime());
             }
           else if (Inet6SocketAddress::IsMatchingType (from))
             {

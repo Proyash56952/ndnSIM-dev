@@ -29,6 +29,7 @@
 #include "ns3/address.h"
 #include "ns3/traced-callback.h"
 #include "ns3/packet-loss-counter.h"
+#include "ns3/vector.h"
 //#include "../../applications/model/packet-loss-counter.h"
 
 namespace ns3 {
@@ -109,6 +110,8 @@ private:
 
   /// Callbacks for tracing the packet Rx events, includes source and destination addresses
   TracedCallback<Ptr<const Packet>, const Address &, const Address &> m_rxTraceWithAddresses;
+    
+  TracedCallback <ns3::Vector, double> m_rxTraceWithInfo;
 
 };
 

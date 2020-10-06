@@ -133,13 +133,13 @@ V2vConsumer::scheduledRequest(Position target)
   auto absSpeed = velocity.getAbsSpeed();
 
   auto time = (absDistance / absSpeed);
-    //std::string abc = std::to_string(time);
-    //std::cout<<typeid(time).name();
+    
   auto expectToBeAtTarget = time::system_clock::now() +
     time::duration_cast<time::nanoseconds>(SecondsDouble(time));
-    //auto a = time::toString(time::system_clock::now());
-    //std::cout<< ns3::Simulator::Now ().GetSeconds () <<std::endl;
-    //std::cout<<time::system_clock::now() <<std::endl;
+
+  auto a = time::toUnixTimestamp(expectToBeAtTarget).count();
+  a = a - (a%1000);
+  expectToBeAtTarget = time::fromUnixTimestamp(time::milliseconds(a));
   Name request("/v2vSafety");
   request
     .append(name::Component(target.wireEncode()))
