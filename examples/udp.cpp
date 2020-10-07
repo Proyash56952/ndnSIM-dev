@@ -29,13 +29,20 @@
 #include "ns3/applications-module.h"
 #include "ns3/internet-module.h"
 #include "ns3/ndnSIM-module.h"
+#include "ns3/mobility-module.h"
+#include "ns3/vector.h"
+
+#include "ns3/cost231-propagation-loss-model.h"
 
 //#include "../helper/custom-udp-helper.hpp"
 
 using namespace ns3;
 
 NS_LOG_COMPONENT_DEFINE ("UdpClientServerExample");
-
+void trace(ns3::Vector v, double t)
+{
+  std::cout<<"Position: " << v <<" time: " << t <<std::endl;
+}
 int
 main (int argc, char *argv[])
 {
@@ -59,7 +66,19 @@ main (int argc, char *argv[])
 //
   NS_LOG_INFO ("Create nodes.");
   NodeContainer n;
-  n.Create (5);
+  n.Create (3);
+    
+  MobilityHelper mobility;
+  Ptr<ListPositionAllocator> initialAlloc = CreateObject<ListPositionAllocator> ();
+  initialAlloc->Add(Vector(0.0,0.0,0.0));
+  initialAlloc->Add(Vector(20.0,0.0,0.0));
+  initialAlloc->Add(Vector(0.0,20.0,0.0));
+    
+  mobility.SetPositionAllocator(initialAlloc);
+  mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+  for(int j=0;j<3;j++){
+    mobility.Install(n.Get(j));
+  }
 
   InternetStackHelper internet;
   internet.Install (n);
@@ -144,6 +163,9 @@ main (int argc, char *argv[])
 // Now, do the actual simulation.
 //
   NS_LOG_INFO ("Run Simulation.");
+    
+  Config::ConnectWithoutContext("/NodeList/*/ApplicationList/*/RxWithInfo",
+                                    MakeCallback(&trace));
   Simulator::Run ();
   Simulator::Destroy ();
   NS_LOG_INFO ("Done.");
