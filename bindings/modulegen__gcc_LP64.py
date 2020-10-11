@@ -29,6 +29,8 @@ def register_types(module):
     module.add_class('Node', import_from_module='ns.network', parent=module['ns3::Object'])
     module.add_class('ApplicationContainer', import_from_module='ns.network')
     module.add_class('Address', import_from_module='ns.network')
+    module.add_class('CallbackBase', import_from_module='ns.core')
+    module.add_class('AttributeConstructionList', import_from_module='ns.core')
 
     module.add_class('CustomHelper')
     module.add_class('CustomUdpHelper')
@@ -42,6 +44,7 @@ def register_types(module):
         module.add_class('GlobalRoutingHelper')
         module.add_class('L3RateTracer')
         module.add_class('AppDelayTracer')
+        module.add_class('UdpPacketTracer')
 
         module.add_class('L3Protocol', parent=module.get_root()['ns3::Object'])
 
@@ -80,6 +83,8 @@ def register_types(module):
     reg_ndn(module.add_cpp_namespace('ndn'))
 
 def register_methods(root_module):
+    #register_Ns3ObjectBase_methods(root_module, root_module['ns3::ObjectBase'])
+    #register_Ns3TraceSourceAccessor_methods(root_module, root_module['ns3::TraceSourceAccessor'])
     reg_other_modules(root_module)
 
     def reg_stackhelper(cls):
@@ -174,6 +179,13 @@ def register_methods(root_module):
         cls.add_method('Destroy', 'void', [], is_const=True, is_static=True)
     reg_AppDelayTracer(root_module['ns3::ndn::AppDelayTracer'])
     
+    def reg_UdpPacketTracer(cls):
+        cls.add_method('InstallAll', 'void', [param('const std::string&', 'file')], is_const=True, is_static=True)
+        cls.add_method('Install', 'void', [param('const ns3::NodeContainer&', 'nodes'), param('const std::string&', 'file')], is_const=True, is_static=True)
+        cls.add_method('Install', 'void', [param('ns3::Ptr<ns3::Node>', 'node'), param('const std::string&', 'file')], is_const=True, is_static=True)
+        cls.add_method('Destroy', 'void', [], is_const=True, is_static=True)
+    reg_UdpPacketTracer(root_module['ns3::ndn::UdpPacketTracer'])
+    
     def reg_CustomHelper(cls):
         cls.add_constructor([])
         cls.add_method('Install', retval('void' ), [param('ns3::Ptr<ns3::Node>', 'node')], is_const=True)
@@ -184,8 +196,9 @@ def register_methods(root_module):
         cls.add_constructor([param('ns3::Address', 'ip'), param('uint16_t', 'port')])
         cls.add_constructor([param('ns3::Address', 'ip')])
         cls.add_method('SetAttribute', retval('void'), [param('std::string', 'name'), param('const ns3::AttributeValue&', 'value')])
-        cls.add_method('Install', retval('ns3::ApplicationContainer' ), [param('ns3::NodeContainer', 'c')])
+        cls.add_method('Install', retval('ns3::ApplicationContainer'), [param('ns3::NodeContainer', 'c')])
         cls.add_method('Install', retval('ns3::ApplicationContainer'), [param('ns3::Ptr<ns3::Node>', 'node')])
+        
     reg_CustomUdpHelper(root_module['ns3::CustomUdpHelper'])
     
     def reg_CustomUdpServerHelper(cls):
@@ -193,7 +206,7 @@ def register_methods(root_module):
         cls.add_constructor([param('uint16_t', 'port')])
         cls.add_method('SetAttribute', retval('void'), [param('std::string', 'name'), param('const ns3::AttributeValue&', 'value')])
         cls.add_method('Install', retval('ns3::ApplicationContainer'), [param('ns3::NodeContainer', 'c')])
-    
+        
     reg_CustomUdpServerHelper(root_module['ns3::CustomUdpServerHelper'])
 
     def reg_Name(root_module, cls):
@@ -352,6 +365,96 @@ def register_methods(root_module):
     reg_NfdFaceTable(root_module, root_module['ns3::ndn::nfd::FaceTable'])
     #### FaceTable ####
     ###################
+    
+    def register_Ns3ObjectBase_methods(root_module, cls):
+        ## object-base.h (module 'core'): ns3::ObjectBase::ObjectBase() [constructor]
+        cls.add_constructor([])
+        ## object-base.h (module 'core'): ns3::ObjectBase::ObjectBase(ns3::ObjectBase const & arg0) [constructor]
+        cls.add_constructor([param('ns3::ObjectBase const &', 'arg0')])
+        ## object-base.h (module 'core'): void ns3::ObjectBase::GetAttribute(std::string name, ns3::AttributeValue & value) const [member function]
+        cls.add_method('GetAttribute',
+                   'void',
+                   [param('std::string', 'name'), param('ns3::AttributeValue &', 'value')],
+                   is_const=True)
+        ## object-base.h (module 'core'): bool ns3::ObjectBase::GetAttributeFailSafe(std::string name, ns3::AttributeValue & value) const [member function]
+        cls.add_method('GetAttributeFailSafe',
+                   'bool',
+                   [param('std::string', 'name'), param('ns3::AttributeValue &', 'value')],
+                   is_const=True)
+        ## object-base.h (module 'core'): ns3::TypeId ns3::ObjectBase::GetInstanceTypeId() const [member function]
+        cls.add_method('GetInstanceTypeId',
+                   'ns3::TypeId',
+                   [],
+                   is_const=True, is_virtual=True, is_pure_virtual=True)
+        ## object-base.h (module 'core'): static ns3::TypeId ns3::ObjectBase::GetTypeId() [member function]
+        cls.add_method('GetTypeId',
+                   'ns3::TypeId',
+                   [],
+                   is_static=True)
+        ## object-base.h (module 'core'): void ns3::ObjectBase::SetAttribute(std::string name, ns3::AttributeValue const & value) [member function]
+        cls.add_method('SetAttribute',
+                   'void',
+                   [param('std::string', 'name'), param('ns3::AttributeValue const &', 'value')])
+        ## object-base.h (module 'core'): bool ns3::ObjectBase::SetAttributeFailSafe(std::string name, ns3::AttributeValue const & value) [member function]
+        cls.add_method('SetAttributeFailSafe',
+                   'bool',
+                   [param('std::string', 'name'), param('ns3::AttributeValue const &', 'value')])
+        ## object-base.h (module 'core'): bool ns3::ObjectBase::TraceConnect(std::string name, std::string context, ns3::CallbackBase const & cb) [member function]
+        cls.add_method('TraceConnect',
+                   'bool',
+                   [param('std::string', 'name'), param('std::string', 'context'), param('ns3::CallbackBase const &', 'cb')])
+        ## object-base.h (module 'core'): bool ns3::ObjectBase::TraceConnectWithoutContext(std::string name, ns3::CallbackBase const & cb) [member function]
+        cls.add_method('TraceConnectWithoutContext',
+                   'bool',
+                   [param('std::string', 'name'), param('ns3::CallbackBase const &', 'cb')])
+        ## object-base.h (module 'core'): bool ns3::ObjectBase::TraceDisconnect(std::string name, std::string context, ns3::CallbackBase const & cb) [member function]
+        cls.add_method('TraceDisconnect',
+                   'bool',
+                   [param('std::string', 'name'), param('std::string', 'context'), param('ns3::CallbackBase const &', 'cb')])
+        ## object-base.h (module 'core'): bool ns3::ObjectBase::TraceDisconnectWithoutContext(std::string name, ns3::CallbackBase const & cb) [member function]
+        cls.add_method('TraceDisconnectWithoutContext',
+                   'bool',
+                   [param('std::string', 'name'), param('ns3::CallbackBase const &', 'cb')])
+        ## object-base.h (module 'core'): void ns3::ObjectBase::ConstructSelf(ns3::AttributeConstructionList const & attributes) [member function]
+        cls.add_method('ConstructSelf',
+                   'void',
+                   [param('ns3::AttributeConstructionList const &', 'attributes')],
+                   visibility='protected')
+        ## object-base.h (module 'core'): void ns3::ObjectBase::NotifyConstructionCompleted() [member function]
+        cls.add_method('NotifyConstructionCompleted',
+                   'void',
+                   [],
+                   is_virtual=True, visibility='protected')
+        return
+        
+    def register_Ns3TraceSourceAccessor_methods(root_module, cls):
+        ## trace-source-accessor.h (module 'core'): ns3::TraceSourceAccessor::TraceSourceAccessor(ns3::TraceSourceAccessor const & arg0) [constructor]
+        cls.add_constructor([param('ns3::TraceSourceAccessor const &', 'arg0')])
+        ## trace-source-accessor.h (module 'core'): ns3::TraceSourceAccessor::TraceSourceAccessor() [constructor]
+        cls.add_constructor([])
+        ## trace-source-accessor.h (module 'core'): bool ns3::TraceSourceAccessor::Connect(ns3::ObjectBase * obj, std::string context, ns3::CallbackBase const & cb) const [member function]
+        cls.add_method('Connect',
+                   'bool',
+                   [param('ns3::ObjectBase *', 'obj', transfer_ownership=False), param('std::string', 'context'), param('ns3::CallbackBase const &', 'cb')],
+                   is_const=True, is_virtual=True, is_pure_virtual=True)
+        ## trace-source-accessor.h (module 'core'): bool ns3::TraceSourceAccessor::ConnectWithoutContext(ns3::ObjectBase * obj, ns3::CallbackBase const & cb) const [member function]
+        cls.add_method('ConnectWithoutContext',
+                   'bool',
+                   [param('ns3::ObjectBase *', 'obj', transfer_ownership=False), param('ns3::CallbackBase const &', 'cb')],
+                   is_const=True, is_virtual=True, is_pure_virtual=True)
+        ## trace-source-accessor.h (module 'core'): bool ns3::TraceSourceAccessor::Disconnect(ns3::ObjectBase * obj, std::string context, ns3::CallbackBase const & cb) const [member function]
+        cls.add_method('Disconnect',
+                   'bool',
+                   [param('ns3::ObjectBase *', 'obj', transfer_ownership=False), param('std::string', 'context'), param('ns3::CallbackBase const &', 'cb')],
+                   is_const=True, is_virtual=True, is_pure_virtual=True)
+        ## trace-source-accessor.h (module 'core'): bool ns3::TraceSourceAccessor::DisconnectWithoutContext(ns3::ObjectBase * obj, ns3::CallbackBase const & cb) const [member function]
+        cls.add_method('DisconnectWithoutContext',
+                   'bool',
+                   [param('ns3::ObjectBase *', 'obj', transfer_ownership=False), param('ns3::CallbackBase const &', 'cb')],
+                   is_const=True, is_virtual=True, is_pure_virtual=True)
+        return
+
+
 
 def reg_other_modules(root_module):
     def reg_ApplicationContainer(cls):
@@ -361,6 +464,8 @@ def reg_other_modules(root_module):
 
 def register_functions(root_module):
     return
+
+
 
 def main():
     out = FileCodeSink(sys.stdout)
@@ -372,3 +477,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

@@ -35,6 +35,7 @@
 #include "ns3/ndnSIM/utils/topology/rocketfuel-weights-reader.hpp"
 #include "ns3/ndnSIM/utils/tracers/l2-rate-tracer.hpp"
 #include "ns3/ndnSIM/utils/tracers/ndn-app-delay-tracer.hpp"
+#include "ns3/ndnSIM/utils/tracers/udp-packet-tracer.hpp"
 #include "ns3/ndnSIM/utils/tracers/ndn-cs-tracer.hpp"
 #include "ns3/ndnSIM/utils/tracers/ndn-l3-rate-tracer.hpp"
 

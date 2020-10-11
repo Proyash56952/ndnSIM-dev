@@ -111,7 +111,7 @@ private:
   /// Callbacks for tracing the packet Rx events, includes source and destination addresses
   TracedCallback<Ptr<const Packet>, const Address &, const Address &> m_rxTraceWithAddresses;
     
-  TracedCallback <ns3::Vector, double> m_rxTraceWithInfo;
+  TracedCallback <uint32_t, ns3::Vector, double> m_rxTraceWithInfo;
 
 };
 

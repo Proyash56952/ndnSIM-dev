@@ -123,7 +123,6 @@ CustomUdpServer::DoDispose (void)
 void
 CustomUdpServer::StartApplication (void)
 {
-    std::cout<<"app starting"<<std::endl;
   NS_LOG_FUNCTION (this);
 
   if (m_socket == 0)
@@ -134,7 +133,7 @@ CustomUdpServer::StartApplication (void)
                                                    m_port);
       if (m_socket->Bind (local) == -1)
         {
-          NS_FATAL_ERROR ("Failed haha to bind socket");
+          NS_FATAL_ERROR ("Failed to bind socket");
         }
     }
 
@@ -170,37 +169,22 @@ CustomUdpServer::HandleRead (Ptr<Socket> socket)
           SeqTsHeader seqTs;
           packet->RemoveHeader (seqTs);
           uint32_t currentSequenceNumber = seqTs.GetSeq ();
+          auto nodeId = socket->GetNode()->GetId();
           if (InetSocketAddress::IsMatchingType (from))
             {
               NS_LOG_INFO ("TraceDelay: RX " << packet->GetSize () <<
                            " bytes from "<< InetSocketAddress::ConvertFrom (from).GetIpv4 () <<
                            " Sequence Number: " << currentSequenceNumber <<
                            " Uid: " << packet->GetUid () <<
+                           " Time: " << seqTs.GetTime() <<
+                           " Position: " <<seqTs.GetPosition() <<
+                           " Velocity: " <<seqTs.GetVelocity() <<
                            " TXtime: " << seqTs.GetTs () <<
                            " RXtime: " << Simulator::Now () <<
                            " Delay: " << Simulator::Now () - seqTs.GetTs ());
-               std::cout << "TraceDelay: RX " << packet->GetSize () <<
-                             " Sequence Number: " << currentSequenceNumber <<
-                             " Time: " << seqTs.GetTime() <<
-                             " Position: " <<seqTs.GetPosition() <<
-                             " Velocity: " <<seqTs.GetVelocity() <<
-                             " Uid: " << packet->GetUid () <<
-                             " TXtime: " << seqTs.GetTs () <<
-                             " RXtime: " << Simulator::Now () <<
-                             " Delay: " << Simulator::Now () - seqTs.GetTs () << std::endl;
-              m_rxTraceWithInfo(seqTs.GetPosition(), seqTs.GetTime());
-            }
-          else if (Inet6SocketAddress::IsMatchingType (from))
-            {
-              NS_LOG_INFO ("TraceDelay: RX " << packet->GetSize () <<
-                           " bytes from "<< Inet6SocketAddress::ConvertFrom (from).GetIpv6 () <<
-                           " Sequence Number: " << currentSequenceNumber <<
-                           " Uid: " << packet->GetUid () <<
-                           " TXtime: " << seqTs.GetTs () <<
-                           " RXtime: " << Simulator::Now () <<
-                           " Delay: " << Simulator::Now () - seqTs.GetTs ());
-            }
 
+              m_rxTraceWithInfo(nodeId, seqTs.GetPosition(), seqTs.GetTime());
+            }
           m_lossCounter.NotifyReceived (currentSequenceNumber);
           m_received++;
         }
