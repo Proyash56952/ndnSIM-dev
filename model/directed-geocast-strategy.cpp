@@ -131,7 +131,8 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
       PitInfo* pi = pitEntry->insertStrategyInfo<PitInfo>().first;
       if (pi->queue.find(faceId) != pi->queue.end()) {
         NFD_LOG_DEBUG(interest << " already scheduled pitEntry-to=" << outFace.getId());
-        std::cerr << "Impossible point" << std::endl;
+        //std::cerr << "Impossible point" << std::endl;
+        //shouldCancelTransmission(pitEntry ,interest);
         continue;
       }
 

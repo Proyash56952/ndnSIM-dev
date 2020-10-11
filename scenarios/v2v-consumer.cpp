@@ -53,7 +53,7 @@ void
 V2vConsumer::scheduledRequest(Position target)
 {
   // Interest name format
-  // /v2vSafety/[targetVector]/[sourceVector]/[targetTimePointIsoString]/[LimitNumber]
+  // /v2vSafety/[targetVector]/[targetTimePointIsoString]/[LimitNumber]
 
   if (m_requestInProgress) {
     NDN_LOG_DEBUG("Already requested adjustments; ignoring the second request");
@@ -62,7 +62,14 @@ V2vConsumer::scheduledRequest(Position target)
 
   auto position = m_positionGetter->getPosition();
   auto velocity = m_positionGetter->getSpeed();
-    
+
+  // In this section, we have made the target position coarser.
+  // To be more specific, coordinates will only be multiple of 5.
+  // If the regex of x or y coordinate is (a)+b.c,
+  // Then, if b > 2, then make b=5,otherwise make b = 0
+  // For example, a coordinate of 488.4 will be converted into 490
+  // whereas 486.1 will be converted into 485
+
   double rem;
   rem = (int)target.x % 5;
 
@@ -82,9 +89,6 @@ V2vConsumer::scheduledRequest(Position target)
   }
 
   auto distance = target - position;
-
-  //std::cerr << "Position: " << distance << std::endl;
-  //std::cerr << "Velocity: " << velocity << std::endl;
 
   if (distance.x * velocity.x < 0 ||
       distance.y * velocity.y < 0 ||
@@ -137,27 +141,29 @@ V2vConsumer::scheduledRequest(Position target)
   auto expectToBeAtTarget = time::system_clock::now() +
     time::duration_cast<time::nanoseconds>(SecondsDouble(time));
 
+    
+  // Here, we make the expected arrival time coarses.
+  // We are converting the time into complete seconds with no fraction (i.e., 25 seconds, 42 seconds etc.).
+
   auto a = time::toUnixTimestamp(expectToBeAtTarget).count();
   a = a - (a%1000);
   expectToBeAtTarget = time::fromUnixTimestamp(time::milliseconds(a));
+
   Name request("/v2vSafety");
   request
     .append(name::Component(target.wireEncode()))
     //.append(name::Component(position.wireEncode()))
     .append(time::toIsoString(expectToBeAtTarget))
-    //.append(std::to_string(time))
     .appendNumber(100);
 
   m_requestInProgress = true;
-  //auto t = target.wireEncode();
-  //std::cout<< wireDecode(t);
+
   Interest i(request);
   i.setCanBePrefix(false);
   i.setMustBeFresh(true);
   i.setInterestLifetime(1_s);
 
   ++m_interestCounter;
-  //std::cout<<"Interest is being sent by "<<m_id<<" at "<<time::system_clock::now()<<std::endl;
   m_face.expressInterest(i,
                          [this, counter=m_interestCounter, backThere=time::system_clock::now()] (const Interest& i, const Data& d) {
                            // data

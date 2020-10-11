@@ -57,11 +57,28 @@ V2vProducer::respondIfCrashEstimate(const Interest& interest)
     using SecondsDouble = boost::chrono::duration<double>;
 
     auto time = time::duration_cast<SecondsDouble>(expectToBeAtTarget - time::system_clock::now()).count();
-
     Position expectedPosition = position + (velocity * time);
+    
+    double rem;
+    rem = (int)expectedPosition.x % 5;
+
+    if(rem > 2.0) {
+      expectedPosition.x = (int)expectedPosition.x + (5.0-rem);
+    }
+    else {
+      expectedPosition.x = (int)expectedPosition.x - rem;
+    }
+        
+    rem = (int)expectedPosition.y % 5;
+    if(rem > 2.0) {
+      expectedPosition.y = (int)expectedPosition.y + (5.0-rem);
+    }
+    else {
+      expectedPosition.y = (int)expectedPosition.y - rem;
+    }
     NDN_LOG_DEBUG(expectedPosition);
     NDN_LOG_DEBUG(expectedPosition.getDistance(target));
-    if (expectedPosition.getDistance(target) < 2) { // within 2 meters
+    if (expectedPosition.getDistance(target) < 11) { // within 2 meters
       NDN_LOG_DEBUG("Data will be sent");
       std::cout<<"Data will be sent from expected position of "<<expectedPosition<<std::endl;
       Data data(interest.getName());
