@@ -77,6 +77,9 @@ private:
    */
   static bool
   shouldCancelTransmission(const pit::Entry& oldPitEntry, const Interest& newInterest);
+    
+  static bool
+  modifiedshouldCancelTransmission(const pit::Entry& oldPitEntry, const Interest& newInterest);
 
   static bool
   shouldLimitTransmission(const Interest& interest);

@@ -237,7 +237,7 @@ DirectedGeocastStrategy::afterReceiveLoopedInterest(const FaceEndpoint& ingress,
     return;
   }
 
-  if (shouldCancelTransmission(pitEntry, interest)) {
+  if (modifiedshouldCancelTransmission(pitEntry, interest)) {
     item->second.cancel();
     this->onAction(interest.getName(), Canceled, posX1, posY1);
 
@@ -337,6 +337,33 @@ DirectedGeocastStrategy::shouldCancelTransmission(const pit::Entry& oldPitEntry,
     return false;
    }*/
   if (projection > distanceToOldhop) {
+    NFD_LOG_DEBUG("Interest need to be cancelled due to distance");
+    return true;
+   }
+  NFD_LOG_DEBUG("Interest need not to be cancelled");
+  return false;
+}
+
+bool
+DirectedGeocastStrategy::modifiedshouldCancelTransmission(const pit::Entry& oldPitEntry, const Interest& newInterest)
+{
+  auto cur = getSelfPosition();
+  auto prev = extractPositionFromTag(newInterest);
+    
+  ns3::Vector destination;
+  ::ndn::Vector t(newInterest.getName()[-3]);
+  destination = ns3::Vector(t.x, t.y, t.z);
+
+  if (!cur || !prev) {
+    NFD_LOG_DEBUG("self, oldFrom, or newFrom position is missing");
+    return false;
+  }
+
+  //distance calculation
+  double distanceCurDest = CalculateDistance(*cur, destination);
+  double distancePrevDest = CalculateDistance(*prev, destination);
+
+  if (distanceCurDest > distancePrevDest) {
     NFD_LOG_DEBUG("Interest need to be cancelled due to distance");
     return true;
    }
