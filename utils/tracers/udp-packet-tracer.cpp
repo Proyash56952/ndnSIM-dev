@@ -206,12 +206,11 @@ UdpPacketTracer::Connect()
 void
 UdpPacketTracer::PrintHeader(std::ostream& os) const
 {
-  os <<"node ID"
+  os <<"node_ID"
      << "\t"
      << "Position"
      << "\t"
-     << "Time"
-     << "";
+     << "Time";
 }
 
 void

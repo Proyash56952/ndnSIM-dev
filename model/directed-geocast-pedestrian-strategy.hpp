@@ -31,13 +31,13 @@ namespace fw {
 
 /** \brief TBD
  */
-class DirectedGeocastStrategy : public Strategy
+class DirectedGeocastPedestrianStrategy : public Strategy
 {
 public:
   // storage stuff inside pit entry
 
   explicit
-  DirectedGeocastStrategy(Forwarder& forwarder, const Name& name = getStrategyName());
+  DirectedGeocastPedestrianStrategy(Forwarder& forwarder, const Name& name = getStrategyName());
 
   static const Name&
   getStrategyName();
@@ -50,45 +50,8 @@ public:
   afterReceiveLoopedInterest(const FaceEndpoint& ingress, const Interest& interest,
                              pit::Entry& pitEntry) override;
 
-  enum {
-    Sent = 0,
-    Received = 1,
-    ReceivedDup = 2,
-    Canceled = 3,
-  };
-  static ndn::util::Signal<DirectedGeocastStrategy, Name, int, double, double> onAction;
-
-private:
-  static ndn::optional<ns3::Vector>
-  getSelfPosition();
-
-  static ndn::optional<ns3::Vector>
-  extractPositionFromTag(const Interest& interest);
 
 
-  /**
-   * if returns 0_s, then either own position or geo tag in interest is missing
-   */
-  time::nanoseconds
-  calculateDelay(const Interest& interest);
-    
-  time::nanoseconds
-  prevcalculateDelay(const Interest& interest);
-
-  /**
-   * will return false if own position is unknown or old PIT entry or new Interest are missing geo tag
-   */
-  static bool
-  shouldCancelTransmission(const pit::Entry& oldPitEntry, const Interest& newInterest);
-    
-  static bool
-  modifiedshouldCancelTransmission(const pit::Entry& oldPitEntry, const Interest& newInterest);
-
-  static bool
-  shouldLimitTransmission(const Interest& interest);
-    
-  static bool
-  shouldNotTransmit(const Interest& interest);
 private: // StrategyInfo
   /** \brief StrategyInfo on PIT entry
    */

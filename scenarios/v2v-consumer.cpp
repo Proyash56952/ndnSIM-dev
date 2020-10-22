@@ -64,38 +64,38 @@ V2vConsumer::scheduledRequest(Position target)
   auto velocity = m_positionGetter->getSpeed();
 
   // In this section, we have made the target position coarser.
-  // To be more specific, coordinates will only be multiple of 5.
+  // To be more specific, coordinates will only be multiple of 10.
   // If the regex of x or y coordinate is (a)+b.c,
-  // Then, if b > 2, then make b=5,otherwise make b = 0
+  // Then, if b > 5, then make b=10,otherwise make b = 0
   // For example, a coordinate of 488.4 will be converted into 490
-  // whereas 486.1 will be converted into 485
+  // whereas 483.1 will be converted into 480
 
   double rem;
-  rem = (int)target.x % 5;
+  rem = (int)target.x % 100;
 
-  if(rem > 2.0) {
-    target.x = (int)target.x + (5.0-rem);
+  if(rem >= 50.0) {
+    target.x = (int)target.x + (100.0-rem);
   }
   else {
     target.x = (int)target.x - rem;
   }
     
-  rem = (int)target.y % 5;
-  if(rem > 2.0) {
-    target.y = (int)target.y + (5.0-rem);
+  rem = (int)target.y % 100;
+  if(rem >= 50.0) {
+    target.y = (int)target.y + (100.0-rem);
   }
   else {
     target.y = (int)target.y - rem;
   }
-
+  std::cout<<"coarse target: " << target <<std::endl;
   auto distance = target - position;
-
-  if (distance.x * velocity.x < 0 ||
+  
+  /*if (distance.x * velocity.x < 0 ||
       distance.y * velocity.y < 0 ||
       distance.z * velocity.z < 0) {
     // unrechable, as going different directions
     NDN_LOG_DEBUG("Target unreachable, going different directions. IGNORING");
-    // return;
+    return;
   }
 
   if ((std::abs(distance.x) > 0.1 && std::abs(velocity.x) < 0.01) ||
@@ -103,22 +103,25 @@ V2vConsumer::scheduledRequest(Position target)
       (std::abs(distance.z) > 0.1 && std::abs(velocity.z) < 0.01)
       ) {
     // target unrechable
+    NDN_LOG_DEBUG("distance_x: "<< std::abs(distance.x) <<" velocity: " << std::abs(velocity.x));
+      NDN_LOG_DEBUG("distance_y: "<< std::abs(distance.y) <<" velocity: " << std::abs(velocity.y));
+      NDN_LOG_DEBUG("distance_z: "<< std::abs(distance.z) <<" velocity: " << std::abs(velocity.z));
     NDN_LOG_DEBUG("Target unreachable. IGNORING");
-    // return;
-  }
+    return;
+  }*/
 
   auto maxSpeed = max(abs(velocity));
   if (maxSpeed < 0.1) {
     // speed is too low, ignore adjustments even requested
     NDN_LOG_DEBUG("Requested position status, but speed is too low for that. IGNORING");
-    // return;
+    return;
   }
 
   auto maxDistance = max(abs(distance));
   if (maxDistance < 20) {
     // distance is too low, no point of adjustments even if requested
     NDN_LOG_DEBUG("Requested position status, but target is within 20 meters. IGNORING");
-    // return;
+    return;
   }
 
   // distance / velocity
@@ -126,7 +129,7 @@ V2vConsumer::scheduledRequest(Position target)
   double dvAngle = std::abs(angle(distance, velocity));
   if (dvAngle > 1) {
     NDN_LOG_DEBUG("Velocity angle makes the target unreachable. INGORING");
-    // return;
+    return;
   }
 
   // rest is estimation, assuming target reachable with the current velocity
@@ -143,10 +146,14 @@ V2vConsumer::scheduledRequest(Position target)
 
     
   // Here, we make the expected arrival time coarses.
-  // We are converting the time into complete seconds with no fraction (i.e., 25 seconds, 42 seconds etc.).
+  // We are converting the time into complete integers with no fraction (i.e., 25 seconds, 42 seconds etc.).
 
   auto a = time::toUnixTimestamp(expectToBeAtTarget).count();
+    //std::cout<<"seconds (): "<<a<<std::endl;
   a = a - (a%1000);
+  //std::cout<<"seconds: "<<a<<std::endl;
+    if(a < 0)
+        std::cout<<a<<std::endl;
   expectToBeAtTarget = time::fromUnixTimestamp(time::milliseconds(a));
 
   Name request("/v2vSafety");

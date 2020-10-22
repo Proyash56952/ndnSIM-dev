@@ -132,7 +132,22 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
       if (pi->queue.find(faceId) != pi->queue.end()) {
         NFD_LOG_DEBUG(interest << " already scheduled pitEntry-to=" << outFace.getId());
         //std::cerr << "Impossible point" << std::endl;
-        //shouldCancelTransmission(pitEntry ,interest);
+          auto item = pi->queue.find(ingress.face.getId());
+          if (item == pi->queue.end()) {
+            NFD_LOG_DEBUG("Got the modified looped interest, but no even was scheduled for the face");
+            return;
+          }
+
+          if (shouldCancelTransmission(*pitEntry, interest)) {
+            item->second.cancel();
+              std::cout<<"cancelling:"<<std::endl;
+            //this->onAction(interest.getName(), Canceled, posX1, posY1);
+
+            // don't do anything to the PIT entry (let it expire as usual)
+            NFD_LOG_DEBUG("Canceling transmission of " << interest << " via=" << ingress.face.getId());
+            pi->queue.erase(item);
+          }
+        //shouldCancelTransmission(*pitEntry ,interest);
         continue;
       }
 
@@ -303,6 +318,34 @@ DirectedGeocastStrategy::calculateDelay(const Interest& interest)
   }
 }
 
+time::nanoseconds
+DirectedGeocastStrategy::prevcalculateDelay(const Interest& interest)
+{
+  auto self = getSelfPosition();
+  auto from = extractPositionFromTag(interest);
+  //NFD_LOG_DEBUG("the interest is " << interest);
+
+  if (!self || !from) {
+    NFD_LOG_DEBUG("self or from position is missing");
+    return 0_s;
+  }
+
+  double maxDist = 200;
+  double distance = CalculateDistance(*self,*from);
+    //std::cout<<distance<<std::endl;
+  if (distance < maxDist) {
+    auto RandomNo = m_randVar->GetValue ();
+    auto delay = (m_maxTime) * ((maxDist - distance) / maxDist) + RandomNo;
+    std::cout<< time::duration_cast<time::nanoseconds>(time::duration<double>{delay}) <<std::endl;
+    return time::duration_cast<time::nanoseconds>(time::duration<double>{delay});
+  }
+
+  else {
+    NFD_LOG_DEBUG("Minimum Delay added is: 10ms ");
+    return 10_ms;
+  }
+}
+
 bool
 DirectedGeocastStrategy::shouldCancelTransmission(const pit::Entry& oldPitEntry, const Interest& newInterest)
 {
@@ -362,11 +405,16 @@ DirectedGeocastStrategy::modifiedshouldCancelTransmission(const pit::Entry& oldP
   //distance calculation
   double distanceCurDest = CalculateDistance(*cur, destination);
   double distancePrevDest = CalculateDistance(*prev, destination);
+  double distanceCurPrev = CalculateDistance(*cur, *prev);
 
   if (distanceCurDest > distancePrevDest) {
     NFD_LOG_DEBUG("Interest need to be cancelled due to distance");
     return true;
    }
+  /*if (distanceCurPrev < 30) {
+    NFD_LOG_DEBUG ("Internet need to be cancelled due to close proximity");
+    return true;
+  }*/
   NFD_LOG_DEBUG("Interest need not to be cancelled");
   return false;
 }
@@ -494,6 +542,11 @@ DirectedGeocastStrategy::shouldNotTransmit(const Interest& interest)
     NFD_LOG_DEBUG("limiting for angle " << angle);
     return true;
   }
+    
+  /*if (distSrcDest < 120) {
+    std::cout << "limiting for less than 1 hop distance" << std::endl;
+    return true;
+  }*/
   /*else if (projection > distSrcDest + limit) {
     NFD_LOG_DEBUG("limiting for distance");
     return true;
