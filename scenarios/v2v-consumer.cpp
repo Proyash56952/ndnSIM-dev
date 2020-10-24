@@ -87,7 +87,7 @@ V2vConsumer::scheduledRequest(Position target)
   else {
     target.y = (int)target.y - rem;
   }
-  std::cout<<"coarse target: " << target <<std::endl;
+  //std::cout<<"coarse target: " << target <<std::endl;
   auto distance = target - position;
   
   /*if (distance.x * velocity.x < 0 ||

@@ -140,7 +140,7 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
 
           if (shouldCancelTransmission(*pitEntry, interest)) {
             item->second.cancel();
-              std::cout<<"cancelling:"<<std::endl;
+              //std::cout<<"cancelling:"<<std::endl;
             //this->onAction(interest.getName(), Canceled, posX1, posY1);
 
             // don't do anything to the PIT entry (let it expire as usual)

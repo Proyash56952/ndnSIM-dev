@@ -85,12 +85,119 @@ DirectedGeocastPedestrianStrategy::getStrategyName()
   return strategyName;
 }
 
+/*void
+DirectedGeocastPedestrianStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const Interest& interest,
+                                              const shared_ptr<pit::Entry>& pitEntry)
+{
+  NFD_LOG_DEBUG("ReceivedInterest: ");
+  const fib::Entry& fibEntry = this->lookupFib(*pitEntry);
+  const fib::NextHopList& nexthops = fibEntry.getNextHops();
+
+    int nEligibleNextHops = 0;
+    for (const auto& nexthop : nexthops) {
+      Face& outFace = nexthop.getFace();
+      if ((outFace.getId() == ingress.face.getId() && outFace.getLinkType() != ndn::nfd::LINK_TYPE_AD_HOC) ||
+          wouldViolateScope(ingress.face, interest, outFace)) {
+        continue;
+      }
+      if (outFace.getLinkType() != ndn::nfd::LINK_TYPE_AD_HOC) {
+          // for non-ad hoc links, send interest as usual
+        this->sendInterest(pitEntry, FaceEndpoint(outFace, 0), interest);
+          //this->onAction(interest.getName(), Sent, posX, posY);
+
+        NFD_LOG_DEBUG(interest << " from=" << ingress << " pitEntry-to=" << outFace.getId());
+      }
+
+      else {
+        std::weak_ptr<pit::Entry> pitEntryWeakPtr = pitEntry;
+        auto faceId = ingress.face.getId();
+
+          // if transmission was already scheduled, ignore the interest
+
+        PitInfo* pi = pitEntry->insertStrategyInfo<PitInfo>().first;
+        if (pi->queue.find(faceId) != pi->queue.end()) {
+          NFD_LOG_DEBUG(interest << " already scheduled pitEntry-to=" << outFace.getId());
+          std::cerr << "Impossible point" << std::endl;
+          continue;
+        }
+
+        auto pitEntry = pitEntryWeakPtr.lock();
+        auto outFace = getFaceTable().get(faceId);
+        if (pitEntry == nullptr || outFace == nullptr) {
+                // something bad happened to the PIT entry, nothing to process
+          return;
+        }
+
+        this->sendInterest(pitEntry, FaceEndpoint(*outFace, 0), interest);
+        this->sendInterest(pitEntry, FaceEndpoint(outFace, 0), interest);
+        // save `event` into pitEntry
+       // pi->queue.emplace(faceId, std::move(event));
+      }
+
+        ++nEligibleNextHops;
+      }
+  }*/
+
 void
 DirectedGeocastPedestrianStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const Interest& interest,
                                               const shared_ptr<pit::Entry>& pitEntry)
 {
   NFD_LOG_DEBUG("ReceivedInterest: ");
+    
+  const fib::Entry& fibEntry = this->lookupFib(*pitEntry);
+  const fib::NextHopList& nexthops = fibEntry.getNextHops();
+    
+  int nEligibleNextHops = 0;
+    
+  for (const auto& nexthop : nexthops) {
+    Face& outFace = nexthop.getFace();
+    if ((outFace.getId() == ingress.face.getId() && outFace.getLinkType() != ndn::nfd::LINK_TYPE_AD_HOC) ||
+        wouldViolateScope(ingress.face, interest, outFace)) {
+      continue;
+    }
+      
+    if (outFace.getLinkType() != ndn::nfd::LINK_TYPE_AD_HOC) {
+      // for non-ad hoc links, send interest as usual
+      this->sendInterest(pitEntry, FaceEndpoint(outFace, 0), interest);
+
+      NFD_LOG_DEBUG(interest << " from=" << ingress << " pitEntry-to=" << outFace.getId());
+    }
+
+    else {
+      std::weak_ptr<pit::Entry> pitEntryWeakPtr = pitEntry;
+      auto faceId = ingress.face.getId();
+
+      // if transmission was already scheduled, ignore the interest
+
+      PitInfo* pi = pitEntry->insertStrategyInfo<PitInfo>().first;
+        
+      if (pi->queue.find(faceId) != pi->queue.end()) {
+        NFD_LOG_DEBUG(interest << " already scheduled pitEntry-to=" << outFace.getId());
+        auto item = pi->queue.find(ingress.face.getId());
+        if (item == pi->queue.end()) {
+          NFD_LOG_DEBUG("Got the modified looped interest, but no even was scheduled for the face");
+          return;
+        }
+        continue;
+      }
+
+      auto delay = 0_s;
+      scheduler::ScopedEventId event = getScheduler().schedule(delay, [this, pitEntryWeakPtr,
+                                                                       faceId, interest] {
+      auto pitEntry = pitEntryWeakPtr.lock();
+      auto outFace = getFaceTable().get(faceId);
+      if (pitEntry == nullptr || outFace == nullptr) {
+        // something bad happened to the PIT entry, nothing to process
+        return;
+      }
+
+      this->sendInterest(pitEntry, FaceEndpoint(*outFace, 0), interest);
+      });
+    }
+    ++nEligibleNextHops;
+  }
 }
+
 
 void
 DirectedGeocastPedestrianStrategy::afterReceiveLoopedInterest(const FaceEndpoint& ingress, const Interest& interest,
