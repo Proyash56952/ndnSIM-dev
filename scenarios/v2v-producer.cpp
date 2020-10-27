@@ -39,7 +39,7 @@ V2vProducer::respondIfCrashEstimate(const Interest& interest)
 {
   try {
     // Interest name format
-    // /v2vSafety/[targetVector]/[sourceVector]/[targetTimePointIsoString]/[LimitNumber]
+    // /v2vSafety/[targetVector]/[targetTimePointIsoString]/[LimitNumber]
 
     auto position = m_positionGetter->getPosition();
     auto velocity = m_positionGetter->getSpeed();
@@ -59,7 +59,7 @@ V2vProducer::respondIfCrashEstimate(const Interest& interest)
     auto time = time::duration_cast<SecondsDouble>(expectToBeAtTarget - time::system_clock::now()).count();
     Position expectedPosition = position + (velocity * time);
     
-    double rem;
+    /*double rem;
     rem = (int)expectedPosition.x % 5;
 
     if(rem > 2.0) {
@@ -75,10 +75,11 @@ V2vProducer::respondIfCrashEstimate(const Interest& interest)
     }
     else {
       expectedPosition.y = (int)expectedPosition.y - rem;
-    }
+    }*/
+      
     NDN_LOG_DEBUG(expectedPosition);
     NDN_LOG_DEBUG(expectedPosition.getDistance(target));
-    if (expectedPosition.getDistance(target) < 10) { // within 2 meters
+    if (expectedPosition.getDistance(target) < 40) { // within 6 meters
       NDN_LOG_DEBUG("Data will be sent");
       std::cout<<"Data will be sent from expected position of "<<expectedPosition<<std::endl;
       Data data(interest.getName());
@@ -103,7 +104,7 @@ V2vProducer::respondIfCrashEstimate(const Interest& interest)
   catch (const tlv::Error&) {
     // should not be possible in our case, but just in case
     NDN_LOG_DEBUG("Got interest, but cannot handle it");
-      std::cout<< "Got interest, but cannot handle it" << std::endl;
+      //std::cout<< "Got interest, but cannot handle it" << std::endl;
   }
 }
 

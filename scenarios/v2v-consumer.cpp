@@ -152,8 +152,9 @@ V2vConsumer::scheduledRequest(Position target)
     //std::cout<<"seconds (): "<<a<<std::endl;
   a = a - (a%1000);
   //std::cout<<"seconds: "<<a<<std::endl;
-    if(a < 0)
-        std::cout<<a<<std::endl;
+  if(a < 0)
+    std::cout<<a<<std::endl;
+    
   expectToBeAtTarget = time::fromUnixTimestamp(time::milliseconds(a));
 
   Name request("/v2vSafety");
@@ -161,14 +162,16 @@ V2vConsumer::scheduledRequest(Position target)
     .append(name::Component(target.wireEncode()))
     //.append(name::Component(position.wireEncode()))
     .append(time::toIsoString(expectToBeAtTarget))
-    .appendNumber(100);
+    .appendNumber(20);
 
   m_requestInProgress = true;
-
+  
   Interest i(request);
   i.setCanBePrefix(false);
   i.setMustBeFresh(true);
   i.setInterestLifetime(1_s);
+
+  //std::cout<<"Interest Name: "<<i<<std::endl;
 
   ++m_interestCounter;
   m_face.expressInterest(i,

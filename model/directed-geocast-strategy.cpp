@@ -130,100 +130,82 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
 
       PitInfo* pi = pitEntry->insertStrategyInfo<PitInfo>().first;
       if (pi->queue.find(faceId) != pi->queue.end()) {
-        NFD_LOG_DEBUG(interest << " already scheduled pitEntry-to=" << outFace.getId());
-        //std::cerr << "Impossible point" << std::endl;
-          auto item = pi->queue.find(ingress.face.getId());
-          if (item == pi->queue.end()) {
-            NFD_LOG_DEBUG("Got the modified looped interest, but no even was scheduled for the face");
-            return;
-          }
-
-          if (shouldCancelTransmission(*pitEntry, interest)) {
-            item->second.cancel();
-              //std::cout<<"cancelling:"<<std::endl;
-            //this->onAction(interest.getName(), Canceled, posX1, posY1);
-
-            // don't do anything to the PIT entry (let it expire as usual)
-            NFD_LOG_DEBUG("Canceling transmission of " << interest << " via=" << ingress.face.getId());
-            pi->queue.erase(item);
-          }
-        //shouldCancelTransmission(*pitEntry ,interest);
-        continue;
+      NFD_LOG_DEBUG(interest << " already scheduled pitEntry-to=" << outFace.getId());
+      //std::cerr << "Impossible point" << std::endl;
+      auto item = pi->queue.find(ingress.face.getId());
+      if (item == pi->queue.end()) {
+        NFD_LOG_DEBUG("Got the modified looped interest, but no even was scheduled for the face");
+        return;
       }
 
-      /*if(shouldLimitTransmission(interest)) {
-        NFD_LOG_DEBUG("limiting the transmission of " << interest);
-        //std::cerr << "limiting transmission point" << std::endl;
-        continue;
-      }*/
+      if (shouldCancelTransmission(*pitEntry, interest)) {
+        item->second.cancel();
+        //std::cout<<"cancelling:"<<std::endl;
+        //this->onAction(interest.getName(), Canceled, posX1, posY1);
+
+        // don't do anything to the PIT entry (let it expire as usual)
+        NFD_LOG_DEBUG("Canceling transmission of " << interest << " via=" << ingress.face.getId());
+        pi->queue.erase(item);
+      }
+      //shouldCancelTransmission(*pitEntry ,interest);
+      continue;
+    }
         
-      if(shouldNotTransmit(interest)) {
-        NFD_LOG_DEBUG("limiting the transmission of " << interest);
-        continue;
-      }
+    if(shouldNotTransmit(interest)) {
+      NFD_LOG_DEBUG("limiting the transmission of " << interest);
+      continue;
+    }
 
       // calculate time to delay interest
-      auto delay = calculateDelay(interest);
-      NFD_LOG_DEBUG("Delaying by " << delay);
-      if (delay > 0_s) {
-        scheduler::ScopedEventId event = getScheduler().schedule(delay, [this, pitEntryWeakPtr,
+    auto delay = calculateDelay(interest);
+    NFD_LOG_DEBUG("Delaying by " << delay);
+    if (delay > 0_s) {
+      scheduler::ScopedEventId event = getScheduler().schedule(delay, [this, pitEntryWeakPtr,
                                                                        faceId, interest] {
-          auto pitEntry = pitEntryWeakPtr.lock();
-          auto outFace = getFaceTable().get(faceId);
-          if (pitEntry == nullptr || outFace == nullptr) {
-            // something bad happened to the PIT entry, nothing to process
-            return;
-          }
+      auto pitEntry = pitEntryWeakPtr.lock();
+      auto outFace = getFaceTable().get(faceId);
+      if (pitEntry == nullptr || outFace == nullptr) {
+        // something bad happened to the PIT entry, nothing to process
+        return;
+      }
 
-          this->sendInterest(pitEntry, FaceEndpoint(*outFace, 0), interest);
-          double posX =0.0;
-          double posY =0.0;
-          ndn::optional<ns3::Vector> pos = getSelfPosition();
-          if(pos){
-            posX = pos->x;
-            posY = pos->y;
-          }
-          //std::cout << x;
-          this->onAction(interest.getName(), Sent, posX, posY);
-          NFD_LOG_DEBUG("delayed " << interest << " pitEntry-to=" << faceId);
-        });
+      this->sendInterest(pitEntry, FaceEndpoint(*outFace, 0), interest);
+      double posX =0.0;
+      double posY =0.0;
+      ndn::optional<ns3::Vector> pos = getSelfPosition();
+      if(pos){
+        posX = pos->x;
+        posY = pos->y;
+      }
+      //std::cout << x;
+      this->onAction(interest.getName(), Sent, posX, posY);
+      NFD_LOG_DEBUG("delayed " << interest << " pitEntry-to=" << faceId);
+      });
 
         // save `event` into pitEntry
-        pi->queue.emplace(faceId, std::move(event));
+      pi->queue.emplace(faceId, std::move(event));
+    }
+    else {
+      this->sendInterest(pitEntry, FaceEndpoint(outFace, 0), interest);
+      double posX =0.0;
+      double posY =0.0;
+      ndn::optional<ns3::Vector> pos = getSelfPosition();
+      if(pos){
+        posX = pos->x;
+        posY = pos->y;
       }
-      else {
-        this->sendInterest(pitEntry, FaceEndpoint(outFace, 0), interest);
-        double posX =0.0;
-        double posY =0.0;
-        ndn::optional<ns3::Vector> pos = getSelfPosition();
-        if(pos){
-          posX = pos->x;
-          posY = pos->y;
-        }
-        //std::cout << x;
-        this->onAction(interest.getName(), Sent, posX, posY);
+      //std::cout << x;
+      this->onAction(interest.getName(), Sent, posX, posY);
 
 
         //this->onAction(interest.getName(), Sent, posx, posy);
-        NFD_LOG_DEBUG("Could not determine to delay interest");
-        NFD_LOG_DEBUG(interest << " from=" << ingress << " pitEntry-to=" << outFace.getId());
-      }
+      NFD_LOG_DEBUG("Could not determine to delay interest");
+      NFD_LOG_DEBUG(interest << " from=" << ingress << " pitEntry-to=" << outFace.getId());
     }
-
-    ++nEligibleNextHops;
   }
 
-  // if (nEligibleNextHops == 0) {
-  //   NFD_LOG_DEBUG(interest << " from=" << ingress << " noNextHop");
-
-  //   // don't support NACKs (for now or ever)
-
-  //   // lp::NackHeader nackHeader;
-  //   // nackHeader.setReason(lp::NackReason::NO_ROUTE);
-  //   // this->sendNack(pitEntry, ingress, nackHeader);
-
-  //   this->rejectPendingInterest(pitEntry);
-  // }
+  ++nEligibleNextHops;
+  }
 }
 
 void
@@ -406,15 +388,20 @@ DirectedGeocastStrategy::modifiedshouldCancelTransmission(const pit::Entry& oldP
   double distanceCurDest = CalculateDistance(*cur, destination);
   double distancePrevDest = CalculateDistance(*prev, destination);
   double distanceCurPrev = CalculateDistance(*cur, *prev);
-
+  
+  // this check means if the previous node from which the current node receives the Interest, is nearer to the destination,
+  // then, it should cancel the scheduled rebroadcast as a node closer to the destination already rebroadcast that.
   if (distanceCurDest > distancePrevDest) {
     NFD_LOG_DEBUG("Interest need to be cancelled due to distance");
     return true;
    }
-  /*if (distanceCurPrev < 30) {
+    
+  // this check means, if a node receive a looped interest from another node that is in a very close proximity, then it might
+  // cancel its scehduled rebroadcast.
+  if (distanceCurPrev < 20) {
     NFD_LOG_DEBUG ("Internet need to be cancelled due to close proximity");
     return true;
-  }*/
+  }
   NFD_LOG_DEBUG("Interest need not to be cancelled");
   return false;
 }
@@ -496,7 +483,7 @@ DirectedGeocastStrategy::shouldNotTransmit(const Interest& interest)
   }
 
   // Interest name format
-  // /v2vSafety/[targetVector]/[sourceVector]/[targetTimePointIsoString]/[LimitNumber]
+  // /v2vSafety/[targetVector]/[targetTimePointIsoString]/[LimitNumber]
 
   ns3::Vector destination;
   ns3::Vector source;
@@ -532,25 +519,25 @@ DirectedGeocastStrategy::shouldNotTransmit(const Interest& interest)
   double cosineAngle = (pow(distCurSrc, 2) - pow(distCurDest, 2) + pow(distSrcDest, 2)) /
                     (2 * distCurSrc * distSrcDest);
   double angle = (acos(cosineAngle)*180)/3.141592;
-  /*double projection = distCurSrc * cosineAngle;
+  double projection = distCurSrc * cosineAngle;
     //std::cout<< distSrcDest <<" " <<distCurSrc <<" "<<distCurDest<<std::endl;
-  if (distCurSrc < 5 || distCurDest < 5) {
+  if (distCurSrc < 10 || distCurDest < 10) {
     return true;
-  }*/
+  }
   //std::cout<<angle<<std::endl;
   if (isnan(angle) || angle < 0 || angle > 90) {
     NFD_LOG_DEBUG("limiting for angle " << angle);
     return true;
   }
     
-  /*if (distSrcDest < 120) {
-    std::cout << "limiting for less than 1 hop distance" << std::endl;
+  if (distSrcDest < 120) {
+    //std::cout << "limiting for less than 1 hop distance" << std::endl;
     return true;
-  }*/
-  /*else if (projection > distSrcDest + limit) {
+  }
+  if (projection > distSrcDest + limit) {
     NFD_LOG_DEBUG("limiting for distance");
     return true;
-  }*/
+  }
 
  return false;
 }
