@@ -169,7 +169,7 @@ V2vConsumer::scheduledRequest(Position target)
   Interest i(request);
   i.setCanBePrefix(false);
   i.setMustBeFresh(true);
-  i.setInterestLifetime(1_s);
+  i.setInterestLifetime(500_ms);
 
   //std::cout<<"Interest Name: "<<i<<std::endl;
 
@@ -202,7 +202,7 @@ V2vConsumer::scheduledRequest(Position target)
                            //this->m_doesRequireAdjustment = false;
                            NDN_LOG_DEBUG("Did not get Data");
                            //std::cerr <<"Did not get Data" <<std::endl;
-                           m_scheduler.schedule(200_ms, [this, target] () { this->scheduledRequest(target); });
+                           //m_scheduler.schedule(200_ms, [this, target] () { this->scheduledRequest(target); });
                          });
 }
 

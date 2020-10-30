@@ -130,81 +130,81 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
 
       PitInfo* pi = pitEntry->insertStrategyInfo<PitInfo>().first;
       if (pi->queue.find(faceId) != pi->queue.end()) {
-      NFD_LOG_DEBUG(interest << " already scheduled pitEntry-to=" << outFace.getId());
-      //std::cerr << "Impossible point" << std::endl;
-      auto item = pi->queue.find(ingress.face.getId());
-      if (item == pi->queue.end()) {
-        NFD_LOG_DEBUG("Got the modified looped interest, but no even was scheduled for the face");
-        return;
-      }
+        NFD_LOG_DEBUG(interest << " already scheduled pitEntry-to=" << outFace.getId());
+        //std::cerr << "Impossible point" << std::endl;
+        auto item = pi->queue.find(ingress.face.getId());
+        if (item == pi->queue.end()) {
+          NFD_LOG_DEBUG("Got the modified looped interest, but no even was scheduled for the face");
+          return;
+        }
 
-      if (shouldCancelTransmission(*pitEntry, interest)) {
-        item->second.cancel();
-        //std::cout<<"cancelling:"<<std::endl;
-        //this->onAction(interest.getName(), Canceled, posX1, posY1);
+        if (shouldCancelTransmission(*pitEntry, interest)) {
+          item->second.cancel();
+          //std::cout<<"cancelling:"<<std::endl;
+          //this->onAction(interest.getName(), Canceled, posX1, posY1);
 
-        // don't do anything to the PIT entry (let it expire as usual)
-        NFD_LOG_DEBUG("Canceling transmission of " << interest << " via=" << ingress.face.getId());
-        pi->queue.erase(item);
+          // don't do anything to the PIT entry (let it expire as usual)
+          NFD_LOG_DEBUG("Canceling transmission of " << interest << " via=" << ingress.face.getId());
+          pi->queue.erase(item);
+        }
+        //shouldCancelTransmission(*pitEntry ,interest);
+        continue;
       }
-      //shouldCancelTransmission(*pitEntry ,interest);
-      continue;
-    }
         
-    if(shouldNotTransmit(interest)) {
-      NFD_LOG_DEBUG("limiting the transmission of " << interest);
-      continue;
-    }
+      if(shouldNotTransmit(*pitEntry, interest)) {
+        NFD_LOG_DEBUG("limiting the transmission of " << interest);
+        continue;
+      }
 
       // calculate time to delay interest
-    auto delay = calculateDelay(interest);
-    NFD_LOG_DEBUG("Delaying by " << delay);
-    if (delay > 0_s) {
-      scheduler::ScopedEventId event = getScheduler().schedule(delay, [this, pitEntryWeakPtr,
+      auto delay = calculateDelay(interest);
+      NFD_LOG_DEBUG("Delaying by " << delay);
+      if (delay > 0_s) {
+        scheduler::ScopedEventId event = getScheduler().schedule(delay, [this, pitEntryWeakPtr,
                                                                        faceId, interest] {
-      auto pitEntry = pitEntryWeakPtr.lock();
-      auto outFace = getFaceTable().get(faceId);
-      if (pitEntry == nullptr || outFace == nullptr) {
-        // something bad happened to the PIT entry, nothing to process
-        return;
-      }
+        auto pitEntry = pitEntryWeakPtr.lock();
+        auto outFace = getFaceTable().get(faceId);
+        if (pitEntry == nullptr || outFace == nullptr) {
+          // something bad happened to the PIT entry, nothing to process
+          return;
+        }
 
-      this->sendInterest(pitEntry, FaceEndpoint(*outFace, 0), interest);
-      double posX =0.0;
-      double posY =0.0;
-      ndn::optional<ns3::Vector> pos = getSelfPosition();
-      if(pos){
-        posX = pos->x;
-        posY = pos->y;
-      }
-      //std::cout << x;
-      this->onAction(interest.getName(), Sent, posX, posY);
-      NFD_LOG_DEBUG("delayed " << interest << " pitEntry-to=" << faceId);
-      });
+        this->sendInterest(pitEntry, FaceEndpoint(*outFace, 0), interest);
+        double posX =0.0;
+        double posY =0.0;
+        ndn::optional<ns3::Vector> pos = getSelfPosition();
+        if(pos){
+          posX = pos->x;
+          posY = pos->y;
+        }
+        //std::cout << x;
+        this->onAction(interest.getName(), Sent, posX, posY);
+        NFD_LOG_DEBUG("delayed " << interest << " pitEntry-to=" << faceId);
+        });
 
         // save `event` into pitEntry
-      pi->queue.emplace(faceId, std::move(event));
-    }
-    else {
-      this->sendInterest(pitEntry, FaceEndpoint(outFace, 0), interest);
-      double posX =0.0;
-      double posY =0.0;
-      ndn::optional<ns3::Vector> pos = getSelfPosition();
-      if(pos){
-        posX = pos->x;
-        posY = pos->y;
+        pi->queue.emplace(faceId, std::move(event));
       }
-      //std::cout << x;
-      this->onAction(interest.getName(), Sent, posX, posY);
+      else {
+        this->sendInterest(pitEntry, FaceEndpoint(outFace, 0), interest);
+        double posX =0.0;
+        double posY =0.0;
+        ndn::optional<ns3::Vector> pos = getSelfPosition();
+        if(pos){
+          posX = pos->x;
+          posY = pos->y;
+        }
+        //std::cout << x;
+        this->onAction(interest.getName(), Sent, posX, posY);
 
 
         //this->onAction(interest.getName(), Sent, posx, posy);
-      NFD_LOG_DEBUG("Could not determine to delay interest");
-      NFD_LOG_DEBUG(interest << " from=" << ingress << " pitEntry-to=" << outFace.getId());
+        NFD_LOG_DEBUG("Could not determine to delay interest");
+        NFD_LOG_DEBUG(interest << " from=" << ingress << " pitEntry-to=" << outFace.getId());
+      }
     }
-  }
 
-  ++nEligibleNextHops;
+    ++nEligibleNextHops;
   }
 }
 
@@ -472,14 +472,24 @@ DirectedGeocastStrategy::shouldLimitTransmission(const Interest& interest)
 }
 
 bool
-DirectedGeocastStrategy::shouldNotTransmit(const Interest& interest)
+DirectedGeocastStrategy::shouldNotTransmit(const pit::Entry& oldPitEntry, const Interest& interest)
 {
   NFD_LOG_DEBUG("Entered in should not transmit");
     //std::cout<<"Entered in should not transmit"<<std::endl;
   auto newFrom = extractPositionFromTag(interest);
+  auto oldFrom = extractPositionFromTag(oldPitEntry.getInterest());
   if (!newFrom) {
-    // originator
-    return false;
+    if( !oldFrom){
+      std::cout<< "originator"<<std::endl;
+      return false;// originator
+    }
+    else {
+      std::cout<< "oldInterest " <<oldPitEntry.getInterest() <<std::endl;
+      std::cout<< "newInterest " <<interest <<std::endl;
+      if(interest.matchesInterest(oldPitEntry.getInterest()))
+        return true;
+      return false;
+    }
   }
 
   // Interest name format

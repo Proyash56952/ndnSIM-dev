@@ -88,7 +88,7 @@ private:
   shouldLimitTransmission(const Interest& interest);
     
   static bool
-  shouldNotTransmit(const Interest& interest);
+  shouldNotTransmit(const pit::Entry& oldPitEntry, const Interest& interest);
 private: // StrategyInfo
   /** \brief StrategyInfo on PIT entry
    */
