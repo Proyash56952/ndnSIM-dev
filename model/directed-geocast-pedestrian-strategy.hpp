@@ -50,7 +50,11 @@ public:
   afterReceiveLoopedInterest(const FaceEndpoint& ingress, const Interest& interest,
                              pit::Entry& pitEntry) override;
 
-
+  void
+  satisfyInterest(const shared_ptr<pit::Entry>& pitEntry,
+                  const FaceEndpoint& ingress, const Data& data,
+                  std::set<std::pair<Face*, EndpointId>>& satisfiedDownstreams,
+                  std::set<std::pair<Face*, EndpointId>>& unsatisfiedDownstreams) override;
 
 private: // StrategyInfo
   /** \brief StrategyInfo on PIT entry
@@ -66,6 +70,8 @@ private: // StrategyInfo
 
   public:
     std::map<FaceId, scheduler::ScopedEventId> queue;
+
+    std::map<FaceId, scheduler::ScopedEventId> dataSendingQueue;
   };
 
   ns3::Ptr<ns3::UniformRandomVariable> m_randVar;

@@ -150,7 +150,7 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
         //shouldCancelTransmission(*pitEntry ,interest);
         continue;
       }
-        
+
       if(shouldNotTransmit(*pitEntry, interest)) {
         NFD_LOG_DEBUG("limiting the transmission of " << interest);
         continue;
@@ -374,7 +374,7 @@ DirectedGeocastStrategy::modifiedshouldCancelTransmission(const pit::Entry& oldP
 {
   auto cur = getSelfPosition();
   auto prev = extractPositionFromTag(newInterest);
-    
+
   ns3::Vector destination;
   ::ndn::Vector t(newInterest.getName()[-3]);
   destination = ns3::Vector(t.x, t.y, t.z);
@@ -388,14 +388,14 @@ DirectedGeocastStrategy::modifiedshouldCancelTransmission(const pit::Entry& oldP
   double distanceCurDest = CalculateDistance(*cur, destination);
   double distancePrevDest = CalculateDistance(*prev, destination);
   double distanceCurPrev = CalculateDistance(*cur, *prev);
-  
+
   // this check means if the previous node from which the current node receives the Interest, is nearer to the destination,
   // then, it should cancel the scheduled rebroadcast as a node closer to the destination already rebroadcast that.
   if (distanceCurDest > distancePrevDest) {
     NFD_LOG_DEBUG("Interest need to be cancelled due to distance");
     return true;
    }
-    
+
   // this check means, if a node receive a looped interest from another node that is in a very close proximity, then it might
   // cancel its scehduled rebroadcast.
   if (distanceCurPrev < 20) {
@@ -539,7 +539,7 @@ DirectedGeocastStrategy::shouldNotTransmit(const pit::Entry& oldPitEntry, const 
     NFD_LOG_DEBUG("limiting for angle " << angle);
     return true;
   }
-    
+
   if (distSrcDest < 120) {
     //std::cout << "limiting for less than 1 hop distance" << std::endl;
     return true;
@@ -550,6 +550,80 @@ DirectedGeocastStrategy::shouldNotTransmit(const pit::Entry& oldPitEntry, const 
   }
 
  return false;
+}
+
+
+void
+DirectedGeocastStrategy::satisfyInterest(const shared_ptr<pit::Entry>& pitEntry,
+                                         const FaceEndpoint& ingress, const Data& data,
+                                         std::set<std::pair<Face*, EndpointId>>& satisfiedDownstreams,
+                                         std::set<std::pair<Face*, EndpointId>>& unsatisfiedDownstreams)
+{
+  NFD_LOG_DEBUG("satisfyInterest pitEntry=" << pitEntry->getName()
+                << " in=" << ingress << " data=" << data.getName());
+
+  NFD_LOG_DEBUG("onIncomingData matching=" << pitEntry->getName());
+
+  auto now = time::steady_clock::now();
+
+  std::weak_ptr<pit::Entry> pitEntryWeakPtr = pitEntry;
+
+  // remember pending downstreams
+  for (const pit::InRecord& inRecord : pitEntry->getInRecords()) {
+    if (inRecord.getExpiry() > now) {
+
+      if (inRecord.getFace().getLinkType() != ndn::nfd::LINK_TYPE_AD_HOC) {
+        // normal processing, satisfy (request satisfying) the interest right away
+        satisfiedDownstreams.emplace(&inRecord.getFace(), 0);
+      }
+      else {
+        // only do it for ad hoc links, like LTE SideLink
+
+        PitInfo* pi = pitEntry->insertStrategyInfo<PitInfo>().first;
+
+        auto it = pi->dataSendingQueue.find(inRecord.getFace().getId());
+        if (it != pi->dataSendingQueue.end()) {
+          // have a scheduled data to the face, but we not necessarily want to cancel it.
+          // definitely should not cancel, if we receive data on another (ad hoc or not) face
+          // however, even if we received on the same, we may keep it (though for now we going to cancel)
+
+          if (ingress.face.getId() == inRecord.getFace().getId()) {
+            // cancel
+            pi->dataSendingQueue.erase(it); // this will remove entry from list and automatically cancel the transmission
+
+            // and don't forget to remove the entry
+            pitEntry->deleteInRecord(inRecord.getFace());
+          }
+          else {
+            // do nothing. Some other data already scheduled and nothing to do
+          }
+        }
+        else {
+          // need to schedule sending data, so we have a chance to cancel transmission
+
+          auto delay = time::duration_cast<time::nanoseconds>(time::duration<double>{m_randVar->GetValue()});
+          scheduler::ScopedEventId event =
+            getScheduler().schedule(delay, [this, pitEntryWeakPtr,
+                                            faceId=inRecord.getFace().getId(), data] {
+                                      auto pitEntry = pitEntryWeakPtr.lock();
+                                      auto outFace = getFaceTable().get(faceId);
+                                      if (pitEntry == nullptr || outFace == nullptr) {
+                                        // something bad happened to the PIT entry, nothing to process
+                                        return;
+                                      }
+
+                                      this->sendData(pitEntry, data, FaceEndpoint(*outFace, 0));
+                                      // if it is the last incoming entry in PIT, it will be automatically deleted by sendData
+                                    });
+
+          pi->dataSendingQueue.emplace(inRecord.getFace().getId(), std::move(event));
+        }
+      }
+    }
+  }
+
+  // invoke PIT satisfy callback
+  beforeSatisfyInterest(pitEntry, ingress, data);
 }
 
 } // namespace fw

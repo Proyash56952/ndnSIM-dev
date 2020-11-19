@@ -50,6 +50,12 @@ public:
   afterReceiveLoopedInterest(const FaceEndpoint& ingress, const Interest& interest,
                              pit::Entry& pitEntry) override;
 
+  void
+  satisfyInterest(const shared_ptr<pit::Entry>& pitEntry,
+                  const FaceEndpoint& ingress, const Data& data,
+                  std::set<std::pair<Face*, EndpointId>>& satisfiedDownstreams,
+                  std::set<std::pair<Face*, EndpointId>>& unsatisfiedDownstreams) override;
+
   enum {
     Sent = 0,
     Received = 1,
@@ -71,7 +77,7 @@ private:
    */
   time::nanoseconds
   calculateDelay(const Interest& interest);
-    
+
   time::nanoseconds
   prevcalculateDelay(const Interest& interest);
 
@@ -80,13 +86,13 @@ private:
    */
   static bool
   shouldCancelTransmission(const pit::Entry& oldPitEntry, const Interest& newInterest);
-    
+
   static bool
   modifiedshouldCancelTransmission(const pit::Entry& oldPitEntry, const Interest& newInterest);
 
   static bool
   shouldLimitTransmission(const Interest& interest);
-    
+
   static bool
   shouldNotTransmit(const pit::Entry& oldPitEntry, const Interest& interest);
 private: // StrategyInfo
@@ -103,6 +109,8 @@ private: // StrategyInfo
 
   public:
     std::map<FaceId, scheduler::ScopedEventId> queue;
+
+    std::map<FaceId, scheduler::ScopedEventId> dataSendingQueue;
   };
 
   ns3::Ptr<ns3::UniformRandomVariable> m_randVar;
