@@ -578,6 +578,7 @@ DirectedGeocastStrategy::satisfyInterest(const shared_ptr<pit::Entry>& pitEntry,
       }
       else {
         // only do it for ad hoc links, like LTE SideLink
+        unsatisfiedDownstreams.emplace(&inRecord.getFace(), 0);
 
         PitInfo* pi = pitEntry->insertStrategyInfo<PitInfo>().first;
 
