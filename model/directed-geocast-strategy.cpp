@@ -568,6 +568,7 @@ DirectedGeocastStrategy::satisfyInterest(const shared_ptr<pit::Entry>& pitEntry,
 
   std::weak_ptr<pit::Entry> pitEntryWeakPtr = pitEntry;
 
+  std::vector<Face*> inRecordsToDelete;
   // remember pending downstreams
   for (const pit::InRecord& inRecord : pitEntry->getInRecords()) {
     if (inRecord.getExpiry() > now) {
@@ -593,7 +594,7 @@ DirectedGeocastStrategy::satisfyInterest(const shared_ptr<pit::Entry>& pitEntry,
             pi->dataSendingQueue.erase(it); // this will remove entry from list and automatically cancel the transmission
 
             // and don't forget to remove the entry
-            pitEntry->deleteInRecord(inRecord.getFace());
+            inRecordsToDelete.push_back(&inRecord.getFace());
           }
           else {
             // do nothing. Some other data already scheduled and nothing to do
@@ -621,6 +622,10 @@ DirectedGeocastStrategy::satisfyInterest(const shared_ptr<pit::Entry>& pitEntry,
         }
       }
     }
+  }
+
+  for (const auto& face : inRecordsToDelete) {
+    pitEntry->deleteInRecord(*face);
   }
 
   // invoke PIT satisfy callback
