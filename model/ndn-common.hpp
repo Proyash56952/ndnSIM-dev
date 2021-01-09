@@ -59,6 +59,7 @@ using namespace ::ndn::lp;
 using std::shared_ptr;
 using std::make_shared;
 
+using ::ndn::PacketBase;
 using ::ndn::Interest;
 using ::ndn::Data;
 using ::ndn::KeyLocator;

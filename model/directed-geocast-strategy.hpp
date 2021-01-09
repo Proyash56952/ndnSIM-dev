@@ -69,7 +69,7 @@ private:
   getSelfPosition();
 
   static ndn::optional<ns3::Vector>
-  extractPositionFromTag(const Interest& interest);
+  extractPositionFromTag(const ndn::PacketBase& interest);
 
 
   /**

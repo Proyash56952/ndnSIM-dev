@@ -261,7 +261,7 @@ DirectedGeocastStrategy::getSelfPosition()
 }
 
 ndn::optional<ns3::Vector>
-DirectedGeocastStrategy::extractPositionFromTag(const Interest& interest)
+DirectedGeocastStrategy::extractPositionFromTag(const ndn::PacketBase& interest)
 {
   auto tag = interest.getTag<ndn::lp::GeoTag>();
   //NFD_LOG_DEBUG("the tag is " << tag);
@@ -578,6 +578,16 @@ DirectedGeocastStrategy::satisfyInterest(const shared_ptr<pit::Entry>& pitEntry,
         satisfiedDownstreams.emplace(&inRecord.getFace(), 0);
       }
       else {
+        // decide if we need to send anything in the first place
+        auto self = getSelfPosition();
+        auto oldFrom = extractPositionFromTag(data);
+
+        if (self && oldFrom && CalculateDistance(*self, *oldFrom) < 80) {
+          // if too close, just remove in record and pretend it never existed
+          pitEntry->deleteInRecord(inRecord.getFace());
+          continue;
+        }
+
         // only do it for ad hoc links, like LTE SideLink
         unsatisfiedDownstreams.emplace(&inRecord.getFace(), 0);
 

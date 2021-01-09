@@ -85,6 +85,38 @@ DirectedGeocastPedestrianStrategy::getStrategyName()
   return strategyName;
 }
 
+
+ndn::optional<ns3::Vector>
+DirectedGeocastPedestrianStrategy::getSelfPosition()
+{
+  auto node = ns3::NodeList::GetNode(ns3::Simulator::GetContext());
+  if (node == nullptr) {
+    return nullopt;
+  }
+
+  auto mobility = node->GetObject<ns3::MobilityModel>();
+  if (mobility == nullptr) {
+    return nullopt;
+  }
+  NFD_LOG_DEBUG("self position is: " << mobility->GetPosition());
+  return mobility->GetPosition();
+}
+
+ndn::optional<ns3::Vector>
+DirectedGeocastPedestrianStrategy::extractPositionFromTag(const ndn::PacketBase& interest)
+{
+  auto tag = interest.getTag<ndn::lp::GeoTag>();
+  //NFD_LOG_DEBUG("the tag is " << tag);
+  if (tag == nullptr) {
+    return nullopt;
+  }
+
+  auto pos = tag->getPos();
+  NFD_LOG_DEBUG("the position is " << ns3::Vector(std::get<0>(pos), std::get<1>(pos), std::get<2>(pos)));
+  return ns3::Vector(std::get<0>(pos), std::get<1>(pos), std::get<2>(pos));
+}
+
+
 /*void
 DirectedGeocastPedestrianStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const Interest& interest,
                                               const shared_ptr<pit::Entry>& pitEntry)
@@ -231,6 +263,22 @@ DirectedGeocastPedestrianStrategy::satisfyInterest(const shared_ptr<pit::Entry>&
         satisfiedDownstreams.emplace(&inRecord.getFace(), 0);
       }
       else {
+        // disable pedestrians to ever re-broadcast data that was received over LTE
+        if (ingress.face.getLinkType() == ndn::nfd::LINK_TYPE_AD_HOC) {
+          pitEntry->deleteInRecord(inRecord.getFace());
+          continue;
+        }
+
+        // decide if we need to send anything in the first place
+        auto self = getSelfPosition();
+        auto oldFrom = extractPositionFromTag(data);
+
+        if (self && oldFrom && CalculateDistance(*self, *oldFrom) < 80) {
+          // if too close, just remove in record and pretend it never existed
+          pitEntry->deleteInRecord(inRecord.getFace());
+          continue;
+        }
+
         // only do it for ad hoc links, like LTE SideLink
         unsatisfiedDownstreams.emplace(&inRecord.getFace(), 0);
 

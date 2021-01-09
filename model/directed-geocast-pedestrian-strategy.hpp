@@ -56,6 +56,13 @@ public:
                   std::set<std::pair<Face*, EndpointId>>& satisfiedDownstreams,
                   std::set<std::pair<Face*, EndpointId>>& unsatisfiedDownstreams) override;
 
+private:
+  static ndn::optional<ns3::Vector>
+  getSelfPosition();
+
+  static ndn::optional<ns3::Vector>
+  extractPositionFromTag(const ndn::PacketBase& interest);
+
 private: // StrategyInfo
   /** \brief StrategyInfo on PIT entry
    */
