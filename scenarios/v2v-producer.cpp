@@ -79,9 +79,9 @@ V2vProducer::respondIfCrashEstimate(const Interest& interest)
       
     NDN_LOG_DEBUG(expectedPosition);
     NDN_LOG_DEBUG(expectedPosition.getDistance(target));
-    if (expectedPosition.getDistance(target) < 40) { // within 40 meters
+    if (expectedPosition.getDistance(target) < 6) { // within 40 meters
       NDN_LOG_DEBUG("Data will be sent");
-      std::cout<<"Data will be sent from expected position of "<<expectedPosition<<std::endl;
+      //std::cout<<"Data will be sent from expected position of "<<expectedPosition<<" and the target is: "<<target<<std::endl;
       Data data(interest.getName());
       data.setFreshnessPeriod(500_ms);
 

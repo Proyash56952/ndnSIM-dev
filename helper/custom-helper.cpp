@@ -35,6 +35,7 @@ CustomHelper::CustomHelper()
 
   // Set the UEs power in dBm
   Config::SetDefault ("ns3::LteUePhy::TxPower", DoubleValue(23.0));
+  //Config::SetDefault ("ns3::LteUePowerControl::PsschTxPower", DoubleValue(40.0));
 
   // Create the helpers
   m_lteHelper = CreateObject<LteHelper>();

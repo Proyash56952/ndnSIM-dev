@@ -300,33 +300,6 @@ DirectedGeocastStrategy::calculateDelay(const Interest& interest)
   }
 }
 
-time::nanoseconds
-DirectedGeocastStrategy::prevcalculateDelay(const Interest& interest)
-{
-  auto self = getSelfPosition();
-  auto from = extractPositionFromTag(interest);
-  //NFD_LOG_DEBUG("the interest is " << interest);
-
-  if (!self || !from) {
-    NFD_LOG_DEBUG("self or from position is missing");
-    return 0_s;
-  }
-
-  double maxDist = 200;
-  double distance = CalculateDistance(*self,*from);
-    //std::cout<<distance<<std::endl;
-  if (distance < maxDist) {
-    auto RandomNo = m_randVar->GetValue ();
-    auto delay = (m_maxTime) * ((maxDist - distance) / maxDist) + RandomNo;
-    std::cout<< time::duration_cast<time::nanoseconds>(time::duration<double>{delay}) <<std::endl;
-    return time::duration_cast<time::nanoseconds>(time::duration<double>{delay});
-  }
-
-  else {
-    NFD_LOG_DEBUG("Minimum Delay added is: 10ms ");
-    return 10_ms;
-  }
-}
 
 bool
 DirectedGeocastStrategy::shouldCancelTransmission(const pit::Entry& oldPitEntry, const Interest& newInterest)
@@ -398,8 +371,9 @@ DirectedGeocastStrategy::modifiedshouldCancelTransmission(const pit::Entry& oldP
 
   // this check means, if a node receive a looped interest from another node that is in a very close proximity, then it might
   // cancel its scehduled rebroadcast.
-  if (distanceCurPrev < 20) {
+  if (distanceCurPrev < 100) {
     NFD_LOG_DEBUG ("Internet need to be cancelled due to close proximity");
+    std::cout<<"Internet need to be cancelled due to close proximity"<<std::endl;
     return true;
   }
   NFD_LOG_DEBUG("Interest need not to be cancelled");
@@ -480,14 +454,16 @@ DirectedGeocastStrategy::shouldNotTransmit(const pit::Entry& oldPitEntry, const 
   auto oldFrom = extractPositionFromTag(oldPitEntry.getInterest());
   if (!newFrom) {
     if( !oldFrom){
-      std::cout<< "originator"<<std::endl;
+      //std::cout<< "originator"<<std::endl;
       return false;// originator
     }
     else {
-      std::cout<< "oldInterest " <<oldPitEntry.getInterest() <<std::endl;
-      std::cout<< "newInterest " <<interest <<std::endl;
-      if(interest.matchesInterest(oldPitEntry.getInterest()))
+      //std::cout<< "oldInterest " <<oldPitEntry.getInterest() <<std::endl;
+      //std::cout<< "newInterest " <<interest <<std::endl;
+      if(interest.matchesInterest(oldPitEntry.getInterest())){
+        std::cout<<"Interest is being suppressed"<<std::endl;
         return true;
+      }
       return false;
     }
   }
@@ -531,7 +507,14 @@ DirectedGeocastStrategy::shouldNotTransmit(const pit::Entry& oldPitEntry, const 
   double angle = (acos(cosineAngle)*180)/3.141592;
   double projection = distCurSrc * cosineAngle;
     //std::cout<< distSrcDest <<" " <<distCurSrc <<" "<<distCurDest<<std::endl;
-  if (distCurSrc < 10 || distCurDest < 10) {
+  /*if (distCurSrc < 10 || distCurDest < 10) {
+    return true;
+  }*/
+    
+  if (distCurSrc < 100) { //1 hop distance is 120 m, so in a high density scenario, if a car
+                            // receive an Interest at approx 2/3 * 120 = 80 m, it can assume that any further node
+                                //has received the Interest and will forward it.
+    //std::cout<<"Its limiting"<<std::endl;
     return true;
   }
   //std::cout<<angle<<std::endl;
@@ -540,7 +523,7 @@ DirectedGeocastStrategy::shouldNotTransmit(const pit::Entry& oldPitEntry, const 
     return true;
   }
 
-  if (distSrcDest < 120) {
+  if (distSrcDest < 100) {
     //std::cout << "limiting for less than 1 hop distance" << std::endl;
     return true;
   }
@@ -584,7 +567,9 @@ DirectedGeocastStrategy::satisfyInterest(const shared_ptr<pit::Entry>& pitEntry,
 
         if (self && oldFrom && CalculateDistance(*self, *oldFrom) < 80) {
           // if too close, just remove in record and pretend it never existed
-          pitEntry->deleteInRecord(inRecord.getFace());
+          //pitEntry->deleteInRecord(inRecord.getFace());
+          NFD_LOG_DEBUG("Cancelling Cars for distance");
+          inRecordsToDelete.push_back(&inRecord.getFace());
           continue;
         }
 

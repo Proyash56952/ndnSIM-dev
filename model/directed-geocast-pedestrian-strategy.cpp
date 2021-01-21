@@ -265,7 +265,10 @@ DirectedGeocastPedestrianStrategy::satisfyInterest(const shared_ptr<pit::Entry>&
       else {
         // disable pedestrians to ever re-broadcast data that was received over LTE
         if (ingress.face.getLinkType() == ndn::nfd::LINK_TYPE_AD_HOC) {
-          pitEntry->deleteInRecord(inRecord.getFace());
+          //pitEntry->deleteInRecord(inRecord.getFace());
+          NFD_LOG_DEBUG("Other pedestrians trying to rebroadcast Data");
+          //std::cout<<"Other pedestrians trying to rebroadcast Data"<<std::endl;
+          inRecordsToDelete.push_back(&inRecord.getFace());
           continue;
         }
 
@@ -275,7 +278,10 @@ DirectedGeocastPedestrianStrategy::satisfyInterest(const shared_ptr<pit::Entry>&
 
         if (self && oldFrom && CalculateDistance(*self, *oldFrom) < 80) {
           // if too close, just remove in record and pretend it never existed
-          pitEntry->deleteInRecord(inRecord.getFace());
+         // pitEntry->deleteInRecord(inRecord.getFace());
+          NFD_LOG_DEBUG("Cancelling Data due to distance");
+          std::cout<<"Cancelling Data due to distance"<<std::endl;
+          inRecordsToDelete.push_back(&inRecord.getFace());
           continue;
         }
 
@@ -293,7 +299,8 @@ DirectedGeocastPedestrianStrategy::satisfyInterest(const shared_ptr<pit::Entry>&
           if (ingress.face.getId() == inRecord.getFace().getId()) {
             // cancel
             pi->dataSendingQueue.erase(it); // this will remove entry from list and automatically cancel the transmission
-
+            NFD_LOG_DEBUG("Data Packet is suppressing");
+            std::cout<<"Data packet is suppressing"<<std::endl;
             // and don't forget to remove the entry
             inRecordsToDelete.push_back(&inRecord.getFace());
           }
@@ -318,7 +325,8 @@ DirectedGeocastPedestrianStrategy::satisfyInterest(const shared_ptr<pit::Entry>&
                                       this->sendData(pitEntry, data, FaceEndpoint(*outFace, 0));
                                       // if it is the last incoming entry in PIT, it will be automatically deleted by sendData
                                     });
-
+          NFD_LOG_DEBUG("Data = " <<data<< "is scheduled to trasmit after delay of: " <<delay );
+            //std::cout<<"Data = " <<data<< "is scheduled to trasmit after delay of: " <<delay<<std::endl;
           pi->dataSendingQueue.emplace(inRecord.getFace().getId(), std::move(event));
         }
       }

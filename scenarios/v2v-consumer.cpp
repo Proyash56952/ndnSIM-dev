@@ -71,18 +71,18 @@ V2vConsumer::scheduledRequest(Position target)
   // whereas 483.1 will be converted into 480
 
   double rem;
-  rem = (int)target.x % 100;
+  rem = (int)target.x % 10;
 
-  if(rem >= 50.0) {
-    target.x = (int)target.x + (100.0-rem);
+  if(rem >= 5.0) {
+    target.x = (int)target.x + (10.0-rem);
   }
   else {
     target.x = (int)target.x - rem;
   }
     
-  rem = (int)target.y % 100;
-  if(rem >= 50.0) {
-    target.y = (int)target.y + (100.0-rem);
+  rem = (int)target.y % 10;
+  if(rem >= 5.0) {
+    target.y = (int)target.y + (10.0-rem);
   }
   else {
     target.y = (int)target.y - rem;
