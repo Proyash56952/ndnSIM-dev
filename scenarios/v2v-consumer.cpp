@@ -87,7 +87,7 @@ V2vConsumer::scheduledRequest(Position target)
   else {
     target.y = (int)target.y - rem;
   }
-  //std::cout<<"coarse target: " << target <<std::endl;
+  std::cout<<"coarse target: " << target <<std::endl;
   auto distance = target - position;
   
   /*if (distance.x * velocity.x < 0 ||
@@ -147,21 +147,26 @@ V2vConsumer::scheduledRequest(Position target)
     
   // Here, we make the expected arrival time coarses.
   // We are converting the time into complete integers with no fraction (i.e., 25 seconds, 42 seconds etc.).
-
-  auto a = time::toUnixTimestamp(expectToBeAtTarget).count();
+  auto nowTime = time::system_clock::now();
+  auto a = time::toUnixTimestamp(nowTime).count();
     //std::cout<<"seconds (): "<<a<<std::endl;
   a = a - (a%1000);
-  //std::cout<<"seconds: "<<a<<std::endl;
-  if(a < 0)
-    std::cout<<a<<std::endl;
+
+    /*auto b = (a/1000) % 5;
+    if(b<3)
+        a = a-(b*1000);
+    else
+        a = a+(5-b)*1000;*/
     
-  expectToBeAtTarget = time::fromUnixTimestamp(time::milliseconds(a));
+  //expectToBeAtTarget = time::fromUnixTimestamp(time::milliseconds(a));
+  nowTime = time::fromUnixTimestamp(time::milliseconds(a));
 
   Name request("/v2vSafety");
   request
     .append(name::Component(target.wireEncode()))
     //.append(name::Component(position.wireEncode()))
-    .append(time::toIsoString(expectToBeAtTarget))
+    //.append(time::toIsoString(expectToBeAtTarget))
+    .append(time::toIsoString(nowTime))
     .appendNumber(20);
 
   m_requestInProgress = true;
@@ -171,7 +176,7 @@ V2vConsumer::scheduledRequest(Position target)
   i.setMustBeFresh(true);
   i.setInterestLifetime(500_ms);
 
-  //std::cout<<"Interest Name: "<<i<<std::endl;
+  std::cout<<"Interest Name: "<<i<<std::endl;
 
   ++m_interestCounter;
   m_face.expressInterest(i,

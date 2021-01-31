@@ -153,9 +153,9 @@ DirectedGeocastStrategy::afterReceiveInterest(const FaceEndpoint& ingress, const
 
       if(shouldNotTransmit(*pitEntry, interest)) {
         NFD_LOG_DEBUG("limiting the transmission of " << interest);
-        continue;
+        return;
       }
-
+        
       // calculate time to delay interest
       auto delay = calculateDelay(interest);
       NFD_LOG_DEBUG("Delaying by " << delay);
@@ -371,7 +371,7 @@ DirectedGeocastStrategy::modifiedshouldCancelTransmission(const pit::Entry& oldP
 
   // this check means, if a node receive a looped interest from another node that is in a very close proximity, then it might
   // cancel its scehduled rebroadcast.
-  if (distanceCurPrev < 100) {
+  if (distanceCurPrev < 50) {
     NFD_LOG_DEBUG ("Internet need to be cancelled due to close proximity");
     std::cout<<"Internet need to be cancelled due to close proximity"<<std::endl;
     return true;
@@ -380,70 +380,6 @@ DirectedGeocastStrategy::modifiedshouldCancelTransmission(const pit::Entry& oldP
   return false;
 }
 
-bool
-DirectedGeocastStrategy::shouldLimitTransmission(const Interest& interest)
-{
-  NFD_LOG_DEBUG("Entered in should Limit Tranmission");
-  auto newFrom = extractPositionFromTag(interest);
-  if (!newFrom) {
-    // originator
-    return false;
-  }
-
-  // Interest name format
-  // /v2vSafety/[targetVector]/[sourceVector]/[targetTimePointIsoString]/[LimitNumber]
-
-  ns3::Vector destination;
-  ns3::Vector source;
-  double limit = 0;
-
-  try {
-    if (interest.getName().size() < 5) {
-      NFD_LOG_DEBUG("Interest doesn't look like v2vsafety (not enough components)");
-      return false;
-    }
-    limit = interest.getName()[-1].toNumber();
-    // strategy ignores time
-    ::ndn::Vector s(interest.getName()[-3]);
-    ::ndn::Vector t(interest.getName()[-4]);
-
-    source = ns3::Vector(s.x, s.y, s.z);
-    destination = ns3::Vector(t.x, t.y, t.z);
-  }
-  catch (const tlv::Error&) {
-    NFD_LOG_DEBUG("Interest doesn't look like v2vsafety (could not correctly parse name components)");
-    return false;
-  }
-
-  auto self = getSelfPosition();
-  if (!self) {
-    NFD_LOG_DEBUG("self position is missing");
-    return false;
-  }
-
-  double distSrcDest = CalculateDistance(source, destination);
-  double distCurSrc = CalculateDistance(source, *self);
-  double distCurDest = CalculateDistance(destination, *self);
-  double cosineAngle = (pow(distCurSrc, 2) - pow(distCurDest, 2) + pow(distSrcDest, 2)) /
-                    (2 * distCurSrc * distSrcDest);
-  double angle = (acos(cosineAngle)*180)/3.141592;
-  double projection = distCurSrc * cosineAngle;
-    //std::cout<< distSrcDest <<" " <<distCurSrc <<" "<<distCurDest<<std::endl;
-  if (distCurSrc < 5 || distCurDest < 5) {
-    return true;
-  }
-
-  if (isnan(angle) || angle < 0 || angle > 90) {
-    NFD_LOG_DEBUG("limiting for angle " << angle);
-    return true;
-  }
-  else if (projection > distSrcDest + limit) {
-    NFD_LOG_DEBUG("limiting for distance");
-    return true;
-  }
-
- return false;
-}
 
 bool
 DirectedGeocastStrategy::shouldNotTransmit(const pit::Entry& oldPitEntry, const Interest& interest)
@@ -455,16 +391,18 @@ DirectedGeocastStrategy::shouldNotTransmit(const pit::Entry& oldPitEntry, const 
   if (!newFrom) {
     if( !oldFrom){
       //std::cout<< "originator"<<std::endl;
+      NFD_LOG_DEBUG("Originator");
       return false;// originator
     }
     else {
-      //std::cout<< "oldInterest " <<oldPitEntry.getInterest() <<std::endl;
-      //std::cout<< "newInterest " <<interest <<std::endl;
+      std::cout<< "oldInterest " <<oldPitEntry.getInterest() <<std::endl;
+      std::cout<< "newInterest " <<interest <<std::endl;
       if(interest.matchesInterest(oldPitEntry.getInterest())){
         std::cout<<"Interest is being suppressed"<<std::endl;
         return true;
       }
-      return false;
+      NFD_LOG_DEBUG("What is actually happening");
+      //return false;
     }
   }
 
@@ -511,10 +449,11 @@ DirectedGeocastStrategy::shouldNotTransmit(const pit::Entry& oldPitEntry, const 
     return true;
   }*/
     
-  if (distCurSrc < 100) { //1 hop distance is 120 m, so in a high density scenario, if a car
-                            // receive an Interest at approx 2/3 * 120 = 80 m, it can assume that any further node
+  if (distCurSrc < 50) { //1 hop distance is 120 m, so in a high density scenario, if a car
+                            // receives an Interest at approx 1/2 * 120 = 60 m, it can assume that any further node
                                 //has received the Interest and will forward it.
     //std::cout<<"Its limiting"<<std::endl;
+    NFD_LOG_DEBUG("This Interest is being limited for distance from source to current node of : " << distCurSrc);
     return true;
   }
   //std::cout<<angle<<std::endl;
@@ -525,6 +464,7 @@ DirectedGeocastStrategy::shouldNotTransmit(const pit::Entry& oldPitEntry, const 
 
   if (distSrcDest < 100) {
     //std::cout << "limiting for less than 1 hop distance" << std::endl;
+    NFD_LOG_DEBUG("limiting for less than 1 hop distance");
     return true;
   }
   if (projection > distSrcDest + limit) {
